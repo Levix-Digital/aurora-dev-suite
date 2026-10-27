@@ -1,0 +1,14 @@
+---
+source: crates/aurora-engines/src/contract.rs
+assertion_line: 99
+expression: reply
+---
+VersionReply {
+    version: "0.5.0",
+    capabilities: [
+        Capability {
+            name: "radar",
+            schema_major: 1,
+        },
+    ],
+}

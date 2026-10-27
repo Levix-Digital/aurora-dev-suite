@@ -8,6 +8,10 @@ authors.workspace = true
 license-file.workspace = true
 publish.workspace = true
 
+[features]
+# Embeds the built interface (`crates/aurora-ui/dist`) instead of loading `devUrl`.
+custom-protocol = ["tauri/custom-protocol"]
+
 [[bin]]
 name = "aurora"
 path = "src/main.rs"

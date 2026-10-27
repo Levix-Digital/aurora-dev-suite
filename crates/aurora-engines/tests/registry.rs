@@ -212,8 +212,10 @@ fn settings_are_kept_and_unreadable_settings_fall_back_to_defaults() {
     let config = tempfile::tempdir().unwrap();
     let store = TomlSettings::open(config.path());
     assert_eq!(store.load(), Settings::default());
-    let mut settings = Settings::default();
-    settings.theme = ThemeChoice::Dark;
+    let mut settings = Settings {
+        theme: ThemeChoice::Dark,
+        ..Settings::default()
+    };
     settings.engines.gedo.timeout_ms = 3_000;
     store.save(&settings).unwrap();
     assert_eq!(TomlSettings::open(config.path()).load(), settings);

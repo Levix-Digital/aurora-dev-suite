@@ -57,7 +57,7 @@ The developer opens the Engines view and sees, for the Dev Cycle Protocol, Gedo 
 
 1. **Given** no engine is installed, **When** the user opens the Engines view, **Then** each engine is shown as missing with what to install, and Aurora keeps working.
 2. **Given** an engine that reports its version and capabilities in the agreed machine-readable form, **When** the view loads, **Then** it shows the engine as ready with its version and capabilities and lists the Aurora features it enables.
-3. **Given** an engine that is installed but does not offer the agreed machine-readable form yet (today's AnyContext, today's Dev Cycle scripts), **When** the view loads, **Then** it shows the engine as installed without the contract, says which Aurora features are limited, and, for the Dev Cycle, that the stand-in reader will be used.
+3. **Given** an engine that is installed but does not offer the agreed machine-readable form yet (for example today's AnyContext), **When** the view loads, **Then** it shows the engine as installed without the contract and says which Aurora features are unavailable and what to update.
 4. **Given** an engine that reports a contract version Aurora does not support, **When** the view loads, **Then** it shows the engine as degraded with "update Aurora" or "update the engine", whichever applies.
 5. **Given** an engine that hangs or crashes when asked, **When** the view loads, **Then** only that engine is shown as degraded after the time limit, the others load normally, and the user can open the engine's last error output.
 6. **Given** the user installs or updates an engine while Aurora is open, **When** they ask to refresh, **Then** the view reflects the new state without restarting Aurora.
@@ -112,7 +112,7 @@ A developer of Aurora works on the interface with realistic sample data, without
 
 - **FR-011**: Aurora MUST look for each engine (Dev Cycle Protocol, Gedo, AnyContext) in the system's search path and in a location the user can set per engine in the settings.
 - **FR-012**: Aurora MUST ask each found engine for its version and capabilities in the versioned machine-readable form agreed with the engines (ADR-0003), and accept every contract version it supports.
-- **FR-013**: For an engine found without that form, Aurora MUST report it as installed without the contract; for the Dev Cycle it MUST also report whether the stand-in reader can be used (the protocol's files and scripts are present).
+- **FR-013**: For an engine found without that form, Aurora MUST report it as installed without the contract. Aurora MUST NOT use any other way to read an engine (no scripts, interpreters or engine files; ADR-0006).
 - **FR-014**: Aurora MUST know which capabilities each of its features needs, show for each engine the features it enables, and for a missing capability say what to install or update.
 - **FR-015**: Every request to an engine MUST run without a shell, with a time limit and a size limit on its reply; a failure, a timeout or an invalid reply affects only that engine and keeps its error output for the user to open.
 - **FR-016**: Users MUST be able to refresh engine detection without restarting Aurora.
@@ -152,4 +152,4 @@ A developer of Aurora works on the interface with realistic sample data, without
 - The Agents and Knowledge views are not part of this release; they arrive with Gedo and AnyContext.
 - Desktop packages for distribution are part of v0.2.0; in this release Aurora is built from source and run by the team.
 - The interface is in English; other languages come later.
-- Engines are looked up by their command names `dcp`, `gedo` and `actx`.
+- Engines are looked up by their command names `dcp`, `gedo` and `actx`, the Rust binaries of each product; the Dev Cycle Protocol counts as installed only through `dcp`, never through its Python scripts (ADR-0006).

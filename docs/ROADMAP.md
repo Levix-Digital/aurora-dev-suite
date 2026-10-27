@@ -9,15 +9,15 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Goal**: The Levix team opens Aurora on Windows and Linux, registers its projects and sees which engines are installed and what each feature needs, with every engine behind a port and fixtures in place.
 - **Items**: FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-006, FEAT-007, FEAT-008, FEAT-009, FEAT-010, FEAT-011, FEAT-012
 
-## v0.2.0: Portfolio from today's Dev Cycle
+## v0.2.0: Portfolio on the dcp contract
 - **Status**: planned
-- **Goal**: Every registered project's cycle state and what waits for the user, read from the Dev Cycle files and scripts that exist today, and installable packages.
-- **Items**: FEAT-013, FEAT-014, FEAT-015, FEAT-017, FEAT-005
+- **Goal**: Every registered project's cycle state and what waits for the user, read through the dcp binary's versioned JSON; built and tested against fixtures, it lights up when the first dcp release with the contract is installed. Plus installable packages.
+- **Items**: FEAT-014, FEAT-015, FEAT-017, FEAT-005, FEAT-016
 
-## v0.3.0: dcp contract
+## v0.3.0: Inbox actions
 - **Status**: planned
-- **Goal**: Aurora reads the Dev Cycle through the dcp binary's versioned JSON and can act on the inbox; waits for the first dcp release with the contract.
-- **Items**: FEAT-016, FEAT-018
+- **Goal**: Approve a gate, record a manual test result or open a pull request from the inbox, through dcp commands.
+- **Items**: FEAT-018
 
 ## v0.4.0: Agents
 - **Status**: planned

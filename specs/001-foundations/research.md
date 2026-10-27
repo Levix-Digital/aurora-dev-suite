@@ -34,8 +34,8 @@ Decisions taken while planning v0.1.0. Founding decisions are in the ADRs (`docs
 
 ## R6. Recognizing engines without the contract
 
-- **Decision**: `<engine> version --json` is tried first. If it fails or does not answer with the envelope (`schema`, `schema_version`), `<engine> --version` is tried: a successful answer means "installed without the contract". For the Dev Cycle, when no `dcp` is found, the stand-in is usable when the protocol's scripts are found (the setting `devcycle.skills_root`, else `~/.ai-code-agent-skills/dev-cycle-protocol`) and a Python 3 interpreter is on the search path.
-- **Rationale**: FR-013 and the real state of the engines today (no contract anywhere; AnyContext answers `--version`; the Dev Cycle is Python scripts).
+- **Decision**: `<engine> version --json` is tried first. If it fails or does not answer with the envelope (`schema`, `schema_version`), `<engine> --version` is tried: a successful answer means "installed without the contract". There is no stand-in for any engine (ADR-0006): Aurora never looks for the Dev Cycle's Python scripts or an engine's files.
+- **Rationale**: FR-013 and the real state of the engines today (no contract anywhere; AnyContext answers `--version`; `dcp` does not exist yet).
 
 ## R7. The version reply Aurora expects
 

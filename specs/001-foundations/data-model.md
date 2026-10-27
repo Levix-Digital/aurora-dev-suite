@@ -38,7 +38,6 @@ Load outcomes (`RegistryLoad`): `Loaded(Vec<Project>)`, `Empty` (no file yet), `
 | `theme` | `ThemeChoice` (`system`, `light`, `dark`) | `system` |
 | `engines.<kind>.path` | optional path | none: search path |
 | `engines.<kind>.timeout_ms` | `u64` | `10000` |
-| `devcycle.skills_root` | optional path | see research R6 |
 
 ## Engine
 
@@ -53,7 +52,6 @@ Load outcomes (`RegistryLoad`): `Loaded(Vec<Project>)`, `Empty` (no file yet), `
 | `location` | optional path | Where the binary was found |
 | `version` | optional `String` | From the contract or from `--version` |
 | `capabilities` | `Vec<Capability>` | Empty without the contract |
-| `stand_in` | optional `StandIn` | Dev Cycle only: whether the stand-in reader can be used, and where the scripts are |
 | `last_error` | optional `String` | Standard error and the reason of the last failed request, up to 64 KiB |
 | `checked_at` | RFC 3339 string | |
 
@@ -74,11 +72,11 @@ Load outcomes (`RegistryLoad`): `Loaded(Vec<Project>)`, `Empty` (no file yet), `
 
 | Feature | Engine | Needs | Without it |
 |---|---|---|---|
-| Portfolio, Project view, Inbox | Dev Cycle | `dcp` capability `diagnose` (schema 1), or the stand-in | "Install the Dev Cycle Protocol (dcp), or its scripts for the limited view" |
+| Portfolio, Project view, Inbox | Dev Cycle | `dcp` capability `diagnose` (schema 1) | "Install the Dev Cycle Protocol (dcp)" |
 | Agents | Gedo | `radar`, `scope`, `stream` | "Install Gedo 0.5 or later" |
 | Knowledge | AnyContext | `ask`, `workspaces` | "Update AnyContext to a version with --json output" |
 
-`FeatureAvailability { feature, state }` with `state`: `Available`, `Limited { reason }` (stand-in), `Unavailable { missing: Vec<String>, hint }`, `NotInThisRelease { release }`.
+`FeatureAvailability { feature, state }` with `state`: `Available`, `Unavailable { missing: Vec<String>, hint }`, `NotInThisRelease { release }`.
 
 ## Ports (`aurora-core::ports`)
 

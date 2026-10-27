@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build the first runnable Aurora: a Rust workspace of four crates following ADR-0001. A pure core holds the domain, the capability catalog, the ports and the fixtures. The engine adapters crate holds the safe command runner, the engine probe (contract, `--version` fallback, Dev Cycle stand-in detection) and the TOML registry and settings. The desktop crate is a Tauri 2 shell with one command per use case and parallel engine probes streamed as events. The interface crate is Leptos with the Aurora Borealis theme, the four views and a fixture backend for the browser preview. CI runs on Windows and Linux, and `cargo xtask arch-check` enforces the dependency rule.
+Build the first runnable Aurora: a Rust workspace of four crates following ADR-0001. A pure core holds the domain, the capability catalog, the ports and the fixtures. The engine adapters crate holds the safe command runner, the engine probe (contract, then `--version` fallback; no stand-ins, ADR-0006) and the TOML registry and settings. The desktop crate is a Tauri 2 shell with one command per use case and parallel engine probes streamed as events. The interface crate is Leptos with the Aurora Borealis theme, the four views and a fixture backend for the browser preview. CI runs on Windows and Linux, and `cargo xtask arch-check` enforces the dependency rule.
 
 ## Technical Context
 
@@ -34,7 +34,7 @@ Build the first runnable Aurora: a Rust workspace of four crates following ADR-0
 
 | Principle | How this plan complies | Status |
 |---|---|---|
-| I. Design: one responsibility per unit, explicit errors | Errors are `thiserror` enums per module (`ProjectError`, `ProbeError`, `CommandError`); no `unwrap` on input; fallbacks (`--version`, stand-in, recovered registry) are visible in status | Pass |
+| I. Design: one responsibility per unit, explicit errors | Errors are `thiserror` enums per module (`ProjectError`, `ProbeError`, `CommandError`); no `unwrap` on input; fallbacks (`--version`, recovered registry) are visible in status | Pass |
 | II. Simplicity First | Three ports only, each with two implementations now (real and fixture); `CycleSource`, `CollaborationSource` and `KnowledgeSource` deferred to the release that calls them; navigation by signal, no router | Pass |
 | III. Hexagonal | Core has no I/O, framework or adapter dependency (checked by `xtask arch-check` and `check_design.py`); adapters implement core ports; the desktop is the composition root; the interface only renders core types | Pass |
 | IV. Development cycle: evidence | Every FR has an automated test except visual and keyboard checks, which go to the manual suite | Pass |
@@ -82,7 +82,7 @@ crates/
 │   ├── src/
 │   │   ├── lib.rs
 │   │   ├── runner.rs         command execution, timeout, size limits, envelope check
-│   │   ├── probe.rs          EngineProbe: locate, version --json, --version, stand-in
+│   │   ├── probe.rs          EngineProbe: locate, version --json, --version
 │   │   ├── contract.rs       typed version reply (schema MAJOR 1)
 │   │   ├── registry.rs       ProjectRegistry and SettingsStore over TOML, atomic writes
 │   │   ├── repo.rs           repository root discovery, path canonicalization
@@ -120,8 +120,8 @@ FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-006, FEAT-007, FEAT-008, FEAT-009, 
 
 ### Tests (quality-assurance)
 
-- **Core unit tests**: name validation; capability evaluation for every feature and engine status (ready, without contract, stand-in, degraded, missing); availability messages; use cases over the fixtures (add, duplicate, rename, remove, relocate, recovered registry notice).
-- **Adapter integration tests** (`aurora-engines/tests`): the runner with the fake engine (normal reply, timeout and kill, reply over 1 MiB, invalid JSON, wrong schema, error output kept); the probe for each status, including the `--version` fallback and the Dev Cycle stand-in detection in a temporary home; the registry in a temporary configuration directory (add from a sub-folder, duplicates through another path and through letter case on Windows, missing folder, damaged file moved aside, read-only directory, atomic write); `insta` snapshots of parsed version replies.
+- **Core unit tests**: name validation; capability evaluation for every feature and engine status (ready, without contract, degraded, missing); availability messages; use cases over the fixtures (add, duplicate, rename, remove, relocate, recovered registry notice).
+- **Adapter integration tests** (`aurora-engines/tests`): the runner with the fake engine (normal reply, timeout and kill, reply over 1 MiB, invalid JSON, wrong schema, error output kept); the probe for each status, including the `--version` fallback; the registry in a temporary configuration directory (add from a sub-folder, duplicates through another path and through letter case on Windows, missing folder, damaged file moved aside, read-only directory, atomic write); `insta` snapshots of parsed version replies.
 - **Interface tests**: contrast of every text and background token pair in both themes (WCAG 2.2 AA, 4.5:1 for body text, 3:1 for large text and focus indicators); the fixture backend returns every state.
 - **Manual tests** (new curated suite `tests/MANUAL_TESTS.md`, feature "Foundations"): window opens on Windows and Linux; keyboard-only navigation with visible focus; theme follows the system and the setting; folder dialog add; engine refresh after installing a fake engine; Linux message when WebKitGTK is missing.
 - **Acceptance criteria**: the acceptance scenarios of US1 to US4 and SC-001 to SC-007 of the spec.

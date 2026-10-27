@@ -101,10 +101,10 @@ description: "Tasks of the Foundations feature (v0.1.0)"
 
 ### Tests for User Story 3
 
-- [ ] T029 [P] [US3] Fake engine `crates/aurora-engines/src/bin/aurora-fake-engine.rs` (feature `fake-engine`; modes from `AURORA_FAKE_MODE`: ready, legacy, unsupported, invalid, huge, hang, crash; answers as `dcp`, `gedo` or `actx` from its file name)
+- [ ] T029 [P] [US3] Fake engine `crates/aurora-engines/src/bin/aurora-fake-engine.rs` (feature `fake-engine`; modes from `AURORA_FAKE_MODE`: ready, no-contract, unsupported, invalid, huge, hang, crash; answers as `dcp`, `gedo` or `actx` from its file name)
 - [ ] T030 [P] [US3] Core tests of the capability catalog and availability for every feature and status in `crates/aurora-core/src/capabilities.rs`
 - [ ] T031 [P] [US3] Runner tests in `crates/aurora-engines/tests/runner.rs` (reply, timeout and kill within the limit, 1 MiB cap, invalid JSON, wrong schema, error output kept, no shell interpretation of arguments)
-- [ ] T032 [P] [US3] Probe tests in `crates/aurora-engines/tests/probe.rs` (each status; `--version` fallback; configured path wins over the search path; Dev Cycle stand-in found in a temporary home with and without Python) and `insta` snapshots of parsed version replies
+- [ ] T032 [P] [US3] Probe tests in `crates/aurora-engines/tests/probe.rs` (each status; `--version` fallback; configured path wins over the search path) and `insta` snapshots of parsed version replies
 
 ### Implementation for User Story 3
 

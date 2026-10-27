@@ -8,7 +8,7 @@ subsystems: [core, engines]
 supersedes: []
 superseded_by: []
 amends: []
-amended_by: []
+amended_by: [6]
 ---
 
 # ADR-0003: Engines integrated only through their command lines with versioned JSON

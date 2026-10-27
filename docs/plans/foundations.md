@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Foundations
 kind: feature
 version: v0.1.0
-status: active
+status: in_progress
 author: Levi
 created_at: '2026-10-27T17:18:26'
-updated_at: '2026-10-27T17:24:06'
+updated_at: '2026-10-27T17:52:06'
 session_id: null
 tags: []
 supersedes: null
@@ -54,6 +54,10 @@ status_log:
   by: Levi
   status: active
   note: Plan complete, submitted for approval (gate 3)
+- at: '2026-10-27T17:52:06'
+  by: Levi
+  status: in_progress
+  note: Approved by Levi on 2026-10-27 after removing the Dev Cycle stand-in (ADR-0006); keeping the interface preview
 ---
 
 # Foundations

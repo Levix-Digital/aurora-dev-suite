@@ -31,7 +31,7 @@ Aurora Dev Suite is a native desktop application written entirely in Rust: a Tau
 
 ## Architecture Overview
 
-Four crates (ADR-0001): `aurora-core` (domain, use cases, ports; no I/O; also compiles to WebAssembly), `aurora-engines` (command runner, engine probe, one adapter per engine and contract version, stand-ins and fixtures, the project registry), `aurora-desktop` (Tauri, composition root, one command per use case) and `aurora-ui` (Leptos views). The interface talks only to the desktop commands; the desktop builds the adapters and calls the core; the adapters run the engines' command lines. See [TECDOC.md](../../TECDOC.md).
+Four crates (ADR-0001): `aurora-core` (domain, use cases, ports; no I/O; also compiles to WebAssembly), `aurora-engines` (command runner, engine probe, one adapter per engine and contract version, the project registry); fixtures live in the core (`fixtures` feature), `aurora-desktop` (Tauri, composition root, one command per use case) and `aurora-ui` (Leptos views). The interface talks only to the desktop commands; the desktop builds the adapters and calls the core; the adapters run the engines' command lines. See [TECDOC.md](../../TECDOC.md).
 
 ## Non-Functional Requirements
 
@@ -63,7 +63,7 @@ A desktop application without a service. Recovery means: a missing or broken eng
 
 | System | Direction | How | When unavailable |
 |---|---|---|---|
-| Dev Cycle Protocol | Aurora reads | `dcp … --json` once it exists; until then the repository files and the Python scripts' `--json` (stand-in) | Project view shows only what the files give, marked degraded |
+| Dev Cycle Protocol | Aurora reads | `dcp … --json` once the Rust `dcp` ships it (ADR-0006); nothing before | Portfolio, Project and Inbox views unavailable with "install dcp" |
 | Gedo | Aurora reads | `gedo … --json` (from Gedo v0.4.0, schemas of its ADR-0013) | Agents view disabled with "install Gedo" |
 | AnyContext | Aurora reads, sends questions | `actx … --json` once it exists | Knowledge view disabled with "update AnyContext" |
 | `levix-platform` | Aurora links crates | Licensing and verified catalog, by git tag, once built | No license check (internal use) |

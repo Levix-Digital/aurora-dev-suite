@@ -11,7 +11,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-001: Rust workspace with the four crates
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: aurora-core, aurora-engines, aurora-desktop and aurora-ui with workspace dependencies, edition 2024, MSRV 1.95, publish = false, cargo-deny and check_design passing.
@@ -19,7 +19,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-002: Tauri 2 shell with a Leptos interface
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: The desktop application opens a window that renders the Leptos interface built by Trunk; one sample command round-trips a core type.
@@ -27,7 +27,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-003: Aurora Borealis theme and navigation
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: CSS tokens from the Aurora Borealis palette, light and dark, and the navigation between Portfolio, Project, Engines and Inbox views.
@@ -35,7 +35,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-004: CI on Windows and Linux
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: Pull request CI: fmt, clippy, tests, cargo-deny, check_design and a desktop build on windows-latest and ubuntu-latest.
@@ -51,7 +51,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-006: Interface preview with fixture data
 - **Priority**: medium
 - **Epic**: EPIC-001
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: The interface runs in a browser during development with fixture data, without the desktop shell.
@@ -59,7 +59,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-007: Command runner
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: Run an engine command without a shell, with timeout, working directory and standard error capture, and check the JSON envelope (schema, schema_version) with size limits.
@@ -67,7 +67,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-008: Engine probe and capabilities
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: Find each engine binary and read its version and capabilities with version --json; each feature declares the capabilities it needs and is disabled with a clear message when one is missing.
@@ -75,7 +75,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-009: Fixture adapters for every port
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: Fixture implementations of every core port, used by tests and by the interface preview.
@@ -83,7 +83,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-010: Project registry
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: Add, rename and remove projects in projects.toml in the user's configuration directory; validate paths; recover from a corrupt file (ADR-0004).
@@ -91,7 +91,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-011: Engines view
 - **Priority**: high
 - **Epic**: EPIC-003
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: A view with each engine's status (ready, degraded, missing), version, capabilities, and the features they enable.
@@ -99,18 +99,10 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-012: Refresh and diagnostics
 - **Priority**: medium
 - **Epic**: EPIC-003
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-10-27
 - **Plan**: foundations
 - **Description**: Refresh engine detection on demand and show the last command's standard error for a degraded engine.
-
-### FEAT-013: Dev Cycle stand-in adapter
-- **Priority**: high
-- **Epic**: EPIC-004
-- **Status**: open
-- **Found**: 2026-10-27
-- **Plan**: -
-- **Description**: Read .dev-cycle.json, docs/BACKLOG.md, docs/ROADMAP.md and docs/plans frontmatter, and the current scripts' --json when Python is available.
 
 ### FEAT-014: Portfolio view
 - **Priority**: high
@@ -129,12 +121,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Description**: One project's cycle state: plans and milestones, backlog summary, roadmap, release candidate, pull requests, gates and blocking bugs.
 
 ### FEAT-016: dcp adapter
-- **Priority**: medium
+- **Priority**: high
 - **Epic**: EPIC-004
 - **Status**: open
 - **Found**: 2026-10-27
 - **Plan**: -
-- **Description**: CycleSource over the dcp binary's versioned --json, replacing the stand-in once dcp publishes its contract.
+- **Description**: CycleSource over the dcp binary's versioned --json (ADR-0006), built against fixtures that follow the contract.
 
 ### FEAT-017: Inbox view
 - **Priority**: medium
@@ -232,7 +224,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Priority**: high
 - **Status**: open
 - **Found**: 2026-10-27
-- **Description**: Run the engines through their command lines with versioned JSON, discover capabilities, and stand in for engines that are not ready (ADR-0003).
+- **Description**: Run the engines through their Rust binaries' versioned JSON and discover their capabilities (ADR-0003, ADR-0006).
 
 ### EPIC-003: Engine health
 - **Priority**: high
@@ -277,3 +269,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Description**: Suite and per-engine licenses verified offline through levix-platform, with a free tier (ADR-0005).
 
 ## Closed
+
+### FEAT-013: Dev Cycle stand-in adapter
+- **Priority**: high
+- **Epic**: EPIC-004
+- **Status**: dropped
+- **Found**: 2026-10-27
+- **Plan**: -
+- **Closed**: 2026-10-27, No stand-in adapters (ADR-0006): the Dev Cycle is plugged in only through the Rust dcp binary.
+- **Description**: Read .dev-cycle.json, docs/BACKLOG.md, docs/ROADMAP.md and docs/plans frontmatter, and the current scripts' --json when Python is available.

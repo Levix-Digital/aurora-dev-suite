@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: 75e2572d504b11d172394a4412eb7188d52558a8051799dc56710dea6ebb68f4
-content-sha256: c80396b14b7a982c42e3d60e2c4e3b03e2aec3928a6d68dffa2b72afcc7a409e
+sources-sha256: 8942da4035d770cf0fbd95aae2031e3153d299ca441e22491a840a17656ca5ee
+content-sha256: 4ef7386e57038cf858d67abe054b5c46392e847c52e6d641849d9bfe1fdaf37c
 -->
 # aurora-dev-suite Constitution
 
@@ -166,6 +166,7 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0003: Engines integrated only through their command lines with versioned JSON (`docs/adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md`)
 - ADR-0004: Local-first state derived from the repositories (`docs/adr/0004-local-first-state-derived-from-the-repositories.md`)
 - ADR-0005: Proprietary binary-only distribution with Levix licenses (`docs/adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md`)
+- ADR-0006: No stand-in adapters: engines plugged in only through their Rust binaries (`docs/adr/0006-no-stand-in-adapters-engines-plugged-in-only-through-their-r.md`)
 
 ## Governance
 
@@ -173,4 +174,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
+**Version**: 1.2.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27

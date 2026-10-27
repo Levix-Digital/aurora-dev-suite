@@ -1,7 +1,7 @@
 ---
 id: 3
 title: Engines integrated only through their command lines with versioned JSON
-status: proposed
+status: accepted
 date: '2026-10-27'
 version: null
 subsystems: [core, engines]

@@ -1,7 +1,7 @@
 ---
 id: 2
 title: Desktop application with Tauri 2 and a Leptos interface
-status: proposed
+status: accepted
 date: '2026-10-27'
 version: null
 subsystems: [desktop, ui]

@@ -11,33 +11,33 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-001: Rust workspace with the four crates
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: aurora-core, aurora-engines, aurora-desktop and aurora-ui with workspace dependencies, edition 2024, MSRV 1.95, publish = false, cargo-deny and check_design passing.
 
 ### FEAT-002: Tauri 2 shell with a Leptos interface
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: The desktop application opens a window that renders the Leptos interface built by Trunk; one sample command round-trips a core type.
 
 ### FEAT-003: Aurora Borealis theme and navigation
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: CSS tokens from the Aurora Borealis palette, light and dark, and the navigation between Portfolio, Project, Engines and Inbox views.
 
 ### FEAT-004: CI on Windows and Linux
 - **Priority**: high
 - **Epic**: EPIC-001
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: Pull request CI: fmt, clippy, tests, cargo-deny, check_design and a desktop build on windows-latest and ubuntu-latest.
 
 ### FEAT-005: Desktop packages
@@ -51,57 +51,57 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-006: Interface preview with fixture data
 - **Priority**: medium
 - **Epic**: EPIC-001
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: The interface runs in a browser during development with fixture data, without the desktop shell.
 
 ### FEAT-007: Command runner
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: Run an engine command without a shell, with timeout, working directory and standard error capture, and check the JSON envelope (schema, schema_version) with size limits.
 
 ### FEAT-008: Engine probe and capabilities
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: Find each engine binary and read its version and capabilities with version --json; each feature declares the capabilities it needs and is disabled with a clear message when one is missing.
 
 ### FEAT-009: Fixture adapters for every port
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: Fixture implementations of every core port, used by tests and by the interface preview.
 
 ### FEAT-010: Project registry
 - **Priority**: high
 - **Epic**: EPIC-002
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: Add, rename and remove projects in projects.toml in the user's configuration directory; validate paths; recover from a corrupt file (ADR-0004).
 
 ### FEAT-011: Engines view
 - **Priority**: high
 - **Epic**: EPIC-003
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: A view with each engine's status (ready, degraded, missing), version, capabilities, and the features they enable.
 
 ### FEAT-012: Refresh and diagnostics
 - **Priority**: medium
 - **Epic**: EPIC-003
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: foundations
 - **Description**: Refresh engine detection on demand and show the last command's standard error for a degraded engine.
 
 ### FEAT-013: Dev Cycle stand-in adapter

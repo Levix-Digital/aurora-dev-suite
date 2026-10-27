@@ -80,7 +80,7 @@ Every engine call goes through the versioned JSON contract and capability discov
 
 ## Constraints
 
-- Proprietary, binary-only distribution; every crate `publish = false`; dependencies limited to permissive licenses (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode-3.0), checked with `cargo-deny` (ADR-0005).
+- Proprietary, binary-only distribution; every crate `publish = false`; dependencies limited to permissive licenses (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode-3.0), checked with `cargo-deny` (ADR-0005). Named exceptions in `deny.toml`, each used unmodified: MPL-2.0 (file-level copyleft) for `cssparser`, `cssparser-macros`, `selectors` and `dtoa-short` of the Tauri tree and `option-ext` of `directories`; CC0-1.0 for `base16` and BSL-1.0 for `xxhash-rust`. Any other crate outside the list needs a new review.
 - No engine crate is linked (ADR-0003); the engines' schedules decide when each feature can ship.
 - One small team (Levi and coding agents): the foundations stay small, and every feature is testable with fixtures before its engine exists.
 - Windows and Linux are both first-class: CI builds and tests on both.

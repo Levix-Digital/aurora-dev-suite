@@ -36,8 +36,8 @@ Load outcomes (`RegistryLoad`): `Loaded(Vec<Project>)`, `Empty` (no file yet), `
 |---|---|---|
 | `version` | `u32` | `1` |
 | `theme` | `ThemeChoice` (`system`, `light`, `dark`) | `system` |
-| `engines.<kind>.path` | optional path | none: search path |
-| `engines.<kind>.timeout_ms` | `u64` | `10000` |
+| `engines.<kind>.path` (`<kind>`: `devCycle`, `gedo`, `anyContext`) | optional path | none: search path |
+| `engines.<kind>.timeoutMs` | `u64` | `10000` |
 
 ## Engine
 

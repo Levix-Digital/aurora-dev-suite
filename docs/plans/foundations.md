@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Foundations
 kind: feature
 version: v0.1.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-10-27T17:18:26'
-updated_at: '2026-10-27T17:52:06'
+updated_at: '2026-10-27T18:27:45'
 session_id: null
 tags: []
 supersedes: null
@@ -28,19 +28,33 @@ backlog_items:
 spec_dir: specs/001-foundations
 milestones:
 - name: M1 Setup
-  done: false
+  done: true
+  done_at: '2026-10-27'
+  by: Levi
 - name: M2 Foundation
-  done: false
+  done: true
+  done_at: '2026-10-27'
+  by: Levi
 - name: M3 Window and navigation
-  done: false
+  done: true
+  done_at: '2026-10-27'
+  by: Levi
 - name: M4 Projects
-  done: false
+  done: true
+  done_at: '2026-10-27'
+  by: Levi
 - name: M5 Engines
-  done: false
+  done: true
+  done_at: '2026-10-27'
+  by: Levi
 - name: M6 Preview
-  done: false
+  done: true
+  done_at: '2026-10-27'
+  by: Levi
 - name: M7 CI and docs
-  done: false
+  done: true
+  done_at: '2026-10-27'
+  by: Levi
 status_log:
 - at: '2026-10-27T17:18:26'
   by: Levi
@@ -58,6 +72,31 @@ status_log:
   by: Levi
   status: in_progress
   note: Approved by Levi on 2026-10-27 after removing the Dev Cycle stand-in (ADR-0006); keeping the interface preview
+- at: '2026-10-27T18:03:15'
+  by: Levi
+  note: 'Milestone ''M1 Setup'' completed: Workspace, toolchain, cargo-deny (named license exceptions pending Levi''s confirmation), xtask arch-check'
+- at: '2026-10-27T18:27:39'
+  by: Levi
+  note: Milestone 'M2 Foundation' completed
+- at: '2026-10-27T18:27:41'
+  by: Levi
+  note: Milestone 'M3 Window and navigation' completed
+- at: '2026-10-27T18:27:42'
+  by: Levi
+  note: Milestone 'M4 Projects' completed
+- at: '2026-10-27T18:27:43'
+  by: Levi
+  note: Milestone 'M5 Engines' completed
+- at: '2026-10-27T18:27:44'
+  by: Levi
+  note: Milestone 'M6 Preview' completed
+- at: '2026-10-27T18:27:45'
+  by: Levi
+  note: Milestone 'M7 CI and docs' completed
+- at: '2026-10-27T18:27:45'
+  by: Levi
+  status: completed
+  note: All milestones completed
 ---
 
 # Foundations

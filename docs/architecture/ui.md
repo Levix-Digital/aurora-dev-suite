@@ -1,30 +1,43 @@
 ---
 title: User Interface
-summary: 'The Leptos interface compiled to WebAssembly: views, components and the Aurora Borealis theme.'
+summary: 'The Leptos interface compiled to WebAssembly: views, navigation, the backends and the Aurora Borealis theme.'
 code: [crates/aurora-ui]
 ---
 
 # User Interface
 
-The Leptos interface compiled to WebAssembly: views, components and the Aurora Borealis theme. Not built yet: this page describes the design of the foundations.
+The Leptos interface compiled to WebAssembly: views, navigation, the backends and the Aurora Borealis theme.
 
 ## Responsibilities
 
-- Render the views and send the user's actions as Tauri commands.
+- Render the views and send the user's actions to a backend.
 - The theme: Aurora Borealis tokens as CSS custom properties, light and dark.
-- It holds no rules: filtering, ordering and statuses come from the core.
+- It holds no rules: availability, statuses and validation come from the core.
 
 ## Structure
 
-`crates/aurora-ui` (Leptos, client-side rendering, built with Trunk). Views of the foundations: **Portfolio** (registered projects and their phase), **Project** (cycle state of one project), **Engines** (health and capabilities) and **Inbox** (what waits for the user). **Agents** and **Knowledge** come with Gedo and AnyContext.
+| Path | Holds |
+|---|---|
+| `src/app.rs` | the shell: `View` signal, navigation, Alt shortcuts, theme, shared `AppContext`, preview banner |
+| `src/backend/` | `Backend`: `Tauri` (`tauri.rs`) or `Fixture` (`fixture.rs`) |
+| `src/views/` | `portfolio`, `project`, `engines`, `inbox`, `settings`, and shared helpers |
+| `src/theme_contrast.rs` | the contrast test of the tokens |
+| `styles/tokens.css`, `styles/app.css` | the theme and the layout |
+| `index.html`, `Trunk.toml` | the Trunk build; `trunk serve` listens on port 1420 |
 
 ## Behavior
 
-Each view loads its data with one command and shows a per-section status (ready, degraded with the reason, unavailable). Without the desktop shell (in a browser during development) the interface uses the core's fixture data.
+**Backends.** At start-up the interface uses Tauri when `window.__TAURI__` exists, otherwise the fixture backend. The fixture backend answers every command of the desktop from the core's fixtures, and simulates the engine events after a short delay. Each refresh alternates Gedo between ready and degraded, so the preview shows every engine state. A banner says the preview shows sample data. A test checks that the fixture backend answers every command listed in the desktop contract.
+
+**Navigation.** One `View` signal: Portfolio, Project, Engines, Inbox, Settings. The navigation is a list of buttons; the arrow keys move between them, and Alt+1 to Alt+5 open the views. Every focused element has a visible outline, and a skip link leads to the content.
+
+**Views.** Portfolio lists the projects with add (folder dialog or typed path), rename, remove with confirmation, and locate for missing ones, plus the registry notices. Engines shows each engine's status, version, location, capabilities, the features it enables, and its last error output, with a Refresh button. Settings holds the theme and each engine's location and time limit. Project and Inbox say what they will show and that it comes in v0.2.0. Every section shows ready, degraded, unavailable with what is needed, or the release that brings it. Results and errors go to a polite live region.
+
+**Theme.** `<html data-theme>` is `light` or `dark`, resolved from the setting and from `prefers-color-scheme` while the setting is "system". The dark tokens come from AnyContext's `AuroraTheme`, with muted text lightened to `#94A3B8` and errors to `#F87171` for contrast; the light tokens are derived. The test checks every text and background pair at 4.5:1 and focus indicators at 3:1, in both themes. Views use classes only, no inline styles, to fit the content security policy.
 
 ## Interfaces
 
-Calls `aurora-desktop` commands; uses the types of `aurora-core`.
+Calls `aurora-desktop` commands and listens to its events; uses the types of `aurora-core`.
 
 ## Decisions
 

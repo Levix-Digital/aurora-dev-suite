@@ -33,9 +33,9 @@ flowchart LR
 | Subsystem | Summary |
 |---|---|
 | [Aurora Core](docs/architecture/core.md) | Domain model of the suite, the use cases and the ports every engine and surface goes through. |
-| [Desktop Shell](docs/architecture/desktop.md) | The Tauri 2 application: composition root, commands exposed to the interface, windows, packaging and updates. |
-| [Engine Adapters](docs/architecture/engines.md) | Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust binaries' versioned JSON. |
-| [User Interface](docs/architecture/ui.md) | The Leptos interface compiled to WebAssembly: views, components and the Aurora Borealis theme. |
+| [Desktop Shell](docs/architecture/desktop.md) | The Tauri 2 application: composition root, commands exposed to the interface, engine events, security and logging. |
+| [Engine Adapters](docs/architecture/engines.md) | Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust binaries' versioned JSON, and store the project list and settings. |
+| [User Interface](docs/architecture/ui.md) | The Leptos interface compiled to WebAssembly: views, navigation, the backends and the Aurora Borealis theme. |
 <!-- architecture-docs:subsystems:end -->
 
 ## Architecture Decision Records

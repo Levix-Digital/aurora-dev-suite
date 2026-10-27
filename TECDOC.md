@@ -43,11 +43,11 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
-| [ADR-0005](docs/adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md) | Proprietary binary-only distribution with Levix licenses | proposed |  | 2026-10-27 |
-| [ADR-0004](docs/adr/0004-local-first-state-derived-from-the-repositories.md) | Local-first state derived from the repositories | proposed |  | 2026-10-27 |
-| [ADR-0003](docs/adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md) | Engines integrated only through their command lines with versioned JSON | proposed |  | 2026-10-27 |
-| [ADR-0002](docs/adr/0002-desktop-application-with-tauri-2-and-a-leptos-interface.md) | Desktop application with Tauri 2 and a Leptos interface | proposed |  | 2026-10-27 |
-| [ADR-0001](docs/adr/0001-hexagonal-architecture-with-the-engines-behind-ports.md) | Hexagonal architecture with the engines behind ports | proposed |  | 2026-10-27 |
+| [ADR-0005](docs/adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md) | Proprietary binary-only distribution with Levix licenses | accepted |  | 2026-10-27 |
+| [ADR-0004](docs/adr/0004-local-first-state-derived-from-the-repositories.md) | Local-first state derived from the repositories | accepted |  | 2026-10-27 |
+| [ADR-0003](docs/adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md) | Engines integrated only through their command lines with versioned JSON | accepted |  | 2026-10-27 |
+| [ADR-0002](docs/adr/0002-desktop-application-with-tauri-2-and-a-leptos-interface.md) | Desktop application with Tauri 2 and a Leptos interface | accepted |  | 2026-10-27 |
+| [ADR-0001](docs/adr/0001-hexagonal-architecture-with-the-engines-behind-ports.md) | Hexagonal architecture with the engines behind ports | accepted |  | 2026-10-27 |
 <!-- architecture-docs:adrs:end -->
 
 ## How to Update This Documentation

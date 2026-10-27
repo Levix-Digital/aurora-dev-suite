@@ -1,7 +1,7 @@
 ---
 id: 5
 title: Proprietary binary-only distribution with Levix licenses
-status: proposed
+status: accepted
 date: '2026-10-27'
 version: null
 subsystems: [desktop]

@@ -1,7 +1,7 @@
 ---
 id: 4
 title: Local-first state derived from the repositories
-status: proposed
+status: accepted
 date: '2026-10-27'
 version: null
 subsystems: [core, engines]

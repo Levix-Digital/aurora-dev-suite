@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: 2beb5de0022d2280bae9f7107328bc979741336911a3314284a0938b7c1a5931
-content-sha256: 6db551adc4436a298d1f204f00bece21e3b75126c4b6cd0003dc9e670356079a
+sources-sha256: 75e2572d504b11d172394a4412eb7188d52558a8051799dc56710dea6ebb68f4
+content-sha256: c80396b14b7a982c42e3d60e2c4e3b03e2aec3928a6d68dffa2b72afcc7a409e
 -->
 # aurora-dev-suite Constitution
 
@@ -157,10 +157,20 @@ A desktop application without a service. Recovery means: a missing or broken eng
 - One small team (Levi and coding agents): the foundations stay small, and every feature is testable with fixtures before its engine exists.
 - Windows and Linux are both first-class: CI builds and tests on both.
 
+## Architecture Decisions
+
+Accepted decisions; a plan that contradicts one needs a new ADR that supersedes it.
+
+- ADR-0001: Hexagonal architecture with the engines behind ports (`docs/adr/0001-hexagonal-architecture-with-the-engines-behind-ports.md`)
+- ADR-0002: Desktop application with Tauri 2 and a Leptos interface (`docs/adr/0002-desktop-application-with-tauri-2-and-a-leptos-interface.md`)
+- ADR-0003: Engines integrated only through their command lines with versioned JSON (`docs/adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md`)
+- ADR-0004: Local-first state derived from the repositories (`docs/adr/0004-local-first-state-derived-from-the-repositories.md`)
+- ADR-0005: Proprietary binary-only distribution with Levix licenses (`docs/adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md`)
+
 ## Governance
 
 - This constitution supersedes other practices for specifications, plans and tasks. A plan passes the Constitution Check or records each justified violation in its Complexity Tracking table; a lasting exception becomes an ADR.
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27
+**Version**: 1.1.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-27

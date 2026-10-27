@@ -1,7 +1,7 @@
 ---
 id: 1
 title: Hexagonal architecture with the engines behind ports
-status: proposed
+status: accepted
 date: '2026-10-27'
 version: null
 subsystems: [core, engines, desktop, ui]

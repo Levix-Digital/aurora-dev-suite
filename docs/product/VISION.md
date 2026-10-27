@@ -72,12 +72,10 @@ The foundations are built first, while the engines mature: the desktop shell, th
 - **The engines are not ready yet.** Gedo is a library until its v0.4.0 brings the command line; `dcp` is still Python scripts until its migration to Rust; AnyContext has no `--json` output. Reduced by agreeing on the contracts now (suggestions to each repository) and by building Aurora's foundations first, with each engine behind a port: until an engine's contract exists, its adapter reads fixtures or the files and commands that exist today (for the Dev Cycle, the Markdown files and the Python scripts' `--json`), and the real adapter replaces it when the engine is ready.
 - **The contracts may drift.** Reduced by versioned `--json` schemas and capability discovery in every engine, following Gedo's ADR-0013.
 - **The license change.** Gedo and the Dev Cycle Protocol documents still describe an open-core model with MIT or Apache licenses; the move to proprietary must be reflected in each repository before anything is published.
-- **Desktop UI in Rust.** The maturity of the chosen UI stack on Windows and Linux is a technical risk; reduced by choosing it in the architecture step with a prototype.
+- **Desktop UI in Rust.** Leptos has fewer ready components than web frameworks in other languages, and the web view differs between Windows (WebView2) and Linux (WebKitGTK); reduced by a first release that exercises the shell, the theme and CI on both systems (ADR-0002).
 - **One small team.** Aurora competes for time with the engines themselves; reduced by keeping the foundations small (the shell, the engine ports and the first views) and plugging each engine in as it becomes ready.
 
 ## Open Questions
 
-- Desktop UI stack in Rust: Tauri (Rust core with a web view) or a native Rust UI toolkit; decided in the architecture step.
 - Plans, prices and tier contents of the suite and of each engine.
 - The final product name: "Aurora Dev Suite" replaces "Mission Control" (Gedo's planned team dashboard); is "Levix DevOS" retired?
-- Which engine versions each Aurora feature waits for (Gedo v0.4.0 and v0.5.0, the first `dcp` binary, AnyContext `--json`).

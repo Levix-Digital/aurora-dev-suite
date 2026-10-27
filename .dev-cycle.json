@@ -1,0 +1,36 @@
+{
+  "project_name": "aurora-dev-suite",
+  "docs": {
+    "user_doc": "README.md"
+  },
+  "devops": {
+    "branching": "trunk",
+    "production_branch": "main",
+    "version_files": [
+      "Cargo.toml"
+    ]
+  },
+  "speckit": {
+    "enabled": false
+  },
+  "architecture": {
+    "style": "hexagonal",
+    "core_path": "crates/aurora-core",
+    "surfaces": [
+      "desktop"
+    ],
+    "forbidden_core_imports": [
+      "tauri",
+      "leptos",
+      "aurora_engines",
+      "aurora_desktop",
+      "aurora_ui",
+      "tokio::process",
+      "std::process"
+    ]
+  },
+  "product": {
+    "vision": "docs/product/VISION.md",
+    "tech_spec": "docs/product/TECH_SPEC.md"
+  }
+}

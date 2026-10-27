@@ -76,3 +76,20 @@ fn a_missing_program_fails_to_start() {
     let result = runner::run(&spec(&dir.path().join("nothing"), &[], 1_000));
     assert!(matches!(result, Err(RunError::Spawn { .. })), "{result:?}");
 }
+
+#[test]
+fn an_engine_leaving_a_child_on_its_pipes_does_not_block_past_the_limit() {
+    let dir = common::engine_dir();
+    let gedo = common::install_fake(dir.path(), "gedo", "orphan");
+    let started = Instant::now();
+    let result = runner::run(&spec(&gedo, &["--version"], 1_000));
+    assert!(
+        matches!(result, Err(RunError::TimedOut { .. })),
+        "{result:?}"
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(3),
+        "{:?}",
+        started.elapsed()
+    );
+}

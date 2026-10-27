@@ -19,7 +19,7 @@ Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust 
 
 | Module | Holds |
 |---|---|
-| `runner` | process execution without a shell, standard input closed, time limit with kill, standard output capped at 1 MiB, standard error kept up to 64 KiB |
+| `runner` | process execution without a shell, standard input closed, time limit with kill, standard output capped at 1 MiB, standard error kept up to 64 KiB; output still open 250 ms after the limit (a child of the engine holding the pipes) counts as a timeout |
 | `contract` | the version reply (`<engine>.version`, `schema_version` MAJOR 1, `version`, `capabilities`); unknown fields are ignored |
 | `probe` | `CliProbe`: locate, ask `version --json`, fall back to `--version` |
 | `repo` | repository root discovery (a `.git` directory or file, without running Git), canonical paths without `\\?\` on Windows, case-insensitive comparison on Windows |
@@ -28,7 +28,7 @@ Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust 
 
 ## Behavior
 
-**Probing an engine.** The configured location wins; otherwise the command name is looked up on the search path. A configured location that is not a file, or a command not found, is `Missing`. Then:
+**Probing an engine.** The time limit from the settings is kept between 100 ms and 120 s. The configured location wins; otherwise the command name is looked up on the search path. A configured location that is not a file, or a command not found, is `Missing`. Then:
 
 1. `<engine> version --json`. A valid reply with MAJOR 1 is `Ready` with its version and capabilities. A reply with another MAJOR is `Degraded` with "update Aurora" (newer) or "update the engine" (older). A wrong schema or missing fields is `Degraded`.
 2. When the reply is not a JSON envelope or the command fails, `<engine> --version`. Success is `InstalledWithoutContract`, with the version read from the first line.
@@ -47,7 +47,7 @@ Nothing else is ever run or read: no scripts, interpreters or engine files (ADR-
 
 Unreadable or newer settings fall back to the defaults without touching the file.
 
-**Tests.** `tests/runner.rs` and `tests/probe.rs` run the fake engine (feature `fake-engine`, so `cargo test --all-features`) in every mode: `ready`, `no-contract`, `unsupported`, `invalid`, `huge`, `hang`, `crash` and `echo`. The mode comes from a `<binary>.mode` file next to the binary, or `AURORA_FAKE_MODE`. The tests hard-link the binary into Cargo's target directory to avoid "text file busy" on Linux.
+**Tests.** `tests/runner.rs` and `tests/probe.rs` run the fake engine (feature `fake-engine`, so `cargo test --all-features`) in every mode: `ready`, `no-contract`, `unsupported`, `invalid`, `huge`, `hang`, `crash`, `echo` and `orphan`. The mode comes from a `<binary>.mode` file next to the binary, or `AURORA_FAKE_MODE`. The tests hard-link the binary into Cargo's target directory to avoid "text file busy" on Linux.
 
 ## Interfaces
 

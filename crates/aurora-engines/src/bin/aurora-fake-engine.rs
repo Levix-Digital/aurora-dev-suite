@@ -1,7 +1,8 @@
 //! A test double for `dcp`, `gedo` and `actx` (feature `fake-engine`). It answers as the
 //! engine its file is named after. The mode comes from a `<file>.mode` file next to the
 //! binary, else from `AURORA_FAKE_MODE`, else `ready`:
-//! ready, no-contract, unsupported, invalid, huge, hang, crash, echo.
+//! ready, no-contract, unsupported, invalid, huge, hang, crash, echo, orphan (answers, but
+//! leaves a child process holding its output open).
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -17,6 +18,11 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let contract = args == ["version", "--json"];
     let plain = args == ["--version"];
+
+    if args == ["--sleep-forever"] {
+        std::thread::sleep(Duration::from_secs(120));
+        return;
+    }
 
     match mode.as_str() {
         "hang" => std::thread::sleep(Duration::from_secs(120)),
@@ -34,6 +40,13 @@ fn main() {
             }
         }
         "echo" => println!("{}", json_strings(&args)),
+        "orphan" => {
+            // The child inherits standard output and error and outlives this process.
+            let _ = std::process::Command::new(&exe)
+                .arg("--sleep-forever")
+                .spawn();
+            println!("{engine} 1.2.3");
+        }
         "no-contract" if contract => {
             eprintln!("error: unrecognized subcommand 'version'");
             std::process::exit(2);

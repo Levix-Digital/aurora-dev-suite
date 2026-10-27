@@ -4,6 +4,7 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -13,6 +14,9 @@ use wait_timeout::ChildExt;
 pub const MAX_STDOUT_BYTES: usize = 1024 * 1024;
 /// The largest standard error kept for diagnostics.
 pub const MAX_STDERR_BYTES: usize = 64 * 1024;
+/// How long the output may take to close after the engine exited or was killed. A child
+/// process of the engine can keep the pipes open; Aurora does not wait for it.
+const PIPE_GRACE: Duration = Duration::from_millis(250);
 
 #[derive(Debug, Clone)]
 pub struct CommandSpec {
@@ -112,22 +116,29 @@ pub fn run(spec: &CommandSpec) -> Result<CommandOutput, RunError> {
         }
     };
 
-    let (stdout, stdout_overflow) = join(stdout_reader);
-    let (stderr_bytes, _) = join(stderr_reader);
-    let stderr = String::from_utf8_lossy(&stderr_bytes).into_owned();
+    // The pipes close when every process holding them is gone: wait at most until the
+    // time limit, plus a short grace.
+    let deadline = (started + spec.timeout).max(Instant::now()) + PIPE_GRACE;
+    let stdout = collect(stdout_reader, deadline);
+    let stderr = collect(stderr_reader, deadline);
+    let stderr_text = stderr
+        .as_ref()
+        .map(|(bytes, _)| String::from_utf8_lossy(bytes).into_owned())
+        .unwrap_or_default();
 
-    let Some(status) = status else {
+    let (Some(status), Some((stdout, stdout_overflow))) = (status, stdout) else {
         return Err(RunError::TimedOut {
             timeout: spec.timeout,
-            stderr,
+            stderr: stderr_text,
         });
     };
     if stdout_overflow {
         return Err(RunError::TooLarge {
             limit: MAX_STDOUT_BYTES,
-            stderr,
+            stderr: stderr_text,
         });
     }
+    let stderr = stderr_text;
     Ok(CommandOutput {
         stdout,
         stderr,
@@ -136,11 +147,13 @@ pub fn run(spec: &CommandSpec) -> Result<CommandOutput, RunError> {
     })
 }
 
-type Reader = thread::JoinHandle<(Vec<u8>, bool)>;
+type Reader = mpsc::Receiver<(Vec<u8>, bool)>;
 
-/// Reads a pipe to its end, keeping at most `limit` bytes; the rest is drained so the
-/// child never blocks on a full pipe. Returns the bytes and whether more were discarded.
+/// Reads a pipe to its end on its own thread, keeping at most `limit` bytes; the rest is
+/// drained so the child never blocks on a full pipe. Sends the bytes and whether more were
+/// discarded.
 fn read_capped<R: Read + Send + 'static>(mut pipe: R, limit: usize) -> Reader {
+    let (sender, receiver) = mpsc::channel();
     thread::spawn(move || {
         let mut kept = Vec::new();
         let mut overflow = false;
@@ -157,12 +170,19 @@ fn read_capped<R: Read + Send + 'static>(mut pipe: R, limit: usize) -> Reader {
                 }
             }
         }
-        (kept, overflow)
-    })
+        // The receiver is gone when the runner stopped waiting.
+        let _ = sender.send((kept, overflow));
+    });
+    receiver
 }
 
-fn join(reader: Option<Reader>) -> (Vec<u8>, bool) {
+/// The output of a reader, or `None` when its pipe is still open at `deadline`; the
+/// thread is then left to finish on its own.
+fn collect(reader: Option<Reader>, deadline: Instant) -> Option<(Vec<u8>, bool)> {
+    let Some(reader) = reader else {
+        return Some((Vec::new(), false));
+    };
     reader
-        .and_then(|handle| handle.join().ok())
-        .unwrap_or_default()
+        .recv_timeout(deadline.saturating_duration_since(Instant::now()))
+        .ok()
 }

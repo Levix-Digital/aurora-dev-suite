@@ -61,7 +61,7 @@ impl EngineProbe for CliProbe {
                 };
             }
         };
-        let timeout = Duration::from_millis(settings.timeout_ms);
+        let timeout = time_limit(settings.timeout_ms);
         let finding = probe_binary(kind, &location, timeout);
         tracing::info!(
             engine = kind.command(),
@@ -79,6 +79,15 @@ impl EngineProbe for CliProbe {
             checked_at,
         }
     }
+}
+
+/// The shortest and longest time limits accepted from the settings file.
+pub const MIN_TIMEOUT_MS: u64 = 100;
+pub const MAX_TIMEOUT_MS: u64 = 120_000;
+
+/// The settings' time limit, kept within bounds: the file can be edited by hand.
+fn time_limit(timeout_ms: u64) -> Duration {
+    Duration::from_millis(timeout_ms.clamp(MIN_TIMEOUT_MS, MAX_TIMEOUT_MS))
 }
 
 struct Finding {
@@ -207,6 +216,13 @@ fn version_from_text(text: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn time_limits_from_the_settings_are_kept_within_bounds() {
+        assert_eq!(time_limit(0), Duration::from_millis(MIN_TIMEOUT_MS));
+        assert_eq!(time_limit(5_000), Duration::from_secs(5));
+        assert_eq!(time_limit(u64::MAX), Duration::from_millis(MAX_TIMEOUT_MS));
+    }
 
     #[test]
     fn reads_the_version_from_common_lines() {

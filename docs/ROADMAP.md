@@ -14,10 +14,10 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Goal**: Every registered project's cycle state and what waits for the user, read through the dcp binary's versioned JSON; built and tested against fixtures, it lights up when the first dcp release with the contract is installed. Plus installable packages.
 - **Items**: FEAT-014, FEAT-015, FEAT-017, FEAT-005, FEAT-016
 
-## v0.3.0: Inbox actions
+## v0.3.0: Actions through dcp
 - **Status**: planned
-- **Goal**: Approve a gate, record a manual test result or open a pull request from the inbox, through dcp commands.
-- **Items**: FEAT-018
+- **Goal**: Approve a gate, record a manual test result or open a pull request from the inbox, and change a project's Dev Cycle settings, all through dcp commands.
+- **Items**: FEAT-018, FEAT-027
 
 ## v0.4.0: Agents
 - **Status**: planned

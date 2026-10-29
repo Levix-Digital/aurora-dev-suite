@@ -136,6 +136,54 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: A Metrics tab per project and release (first-pass gate rate, rework, time per phase, escaped bugs, tokens when reported, trends across releases) and a combined view across the portfolio with totals and the protocol's baseline marker, read only from dcp metrics --json (schema dcp.metrics, capability metrics). No stand-in: without the capability the views say to update dcp (ADR-0006). Release assigned when dcp metrics has a date.
 
+### FEAT-029: Integration subscriptions
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Description**: A project declares in .aurora/integrations.json, committed once on its work branch, the projects it depends on, their repositories, what it consumes from each (a command line and its JSON, a schema, an API) and the branches it follows. Created and validated through the integrations provider, never edited by Aurora's interface directly.
+
+### FEAT-030: Merge notices
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Description**: When a change is merged into a followed branch, the provider writes a notice (title, description, branch, version or tag, changed files and contracts, taken from Git) to the aurora/inbox branch of every project that declared a dependency. Written by the provider at the Dev Cycle's merge or release step, so it works on any Git host (GitHub, Azure DevOps, GitLab, Bitbucket, a local server) without host automation.
+
+### FEAT-031: Integration negotiation
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Description**: At the integration step the receiving project checks each notice against what it consumes; when affected it opens an integration (numbered by its own counter, so projects never collide) with a proposal in the other project's aurora/inbox, which answers with an agreement or a counter-proposal. At most three rounds, then the user decides. Messages unrelated to the current work are deferred with a reason and shown to the user. Commands with --json: check, show, propose, counter, agree, defer.
+
+### FEAT-032: Integration gate
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Description**: An agreed integration is shown to the user, who approves or rejects it; both projects receive the decision and each records its own backlog item. The gate is registered by the integrations provider through the Dev Cycle's extension point, not built into the protocol.
+
+### FEAT-033: Integrations view
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Description**: A tab with notices, open integrations and their conversations, and the integration gate, read from local clones through the provider's --json. Aurora stays air-gapped: it never fetches or pushes; the provider does through Git.
+
+### FEAT-034: Integrations provider
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Description**: The Rust binary shipped with Aurora that implements the integrations commands and plugs into dcp through its extension point (needs the DCP extension point, suggestion 2026-10-29). It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing.
+
 ## Improvements
 
 ## Adjustments
@@ -195,6 +243,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-27
 - **Description**: Suite and per-engine licenses verified offline through levix-platform, with a free tier (ADR-0005).
+
+### EPIC-010: Aurora Integrations
+- **Priority**: medium
+- **Status**: open
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Description**: Projects that depend on each other learn about each other's merges and agree on integrations before changing code: notices and messages travel through plain Git on an orphan aurora/inbox branch of each project's repository, the Dev Cycle's integration step runs through dcp with any agent or a person, and the user approves each agreed integration at an integration gate. Agnostic to coding agents and Git hosts; available only with Aurora (ADR-0007).
 
 ## Closed
 
@@ -305,3 +359,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: foundations
 - **Closed**: 2026-10-27, plan foundations
 - **Description**: Refresh engine detection on demand and show the last command's standard error for a degraded engine.
+
+### IMP-001: Provisional cross-project messages
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Closed**: 2026-10-29, aurora/inbox branch of aurora-dev-suite, first message sent 2026-10-29
+- **Description**: Until the integrations provider exists, a small provisional tool kept on this repository's aurora/inbox branch (not in the product) sends free messages between Levix projects through each project's aurora/inbox branch, in the message format of ADR-0007, with the same command names and --json output the provider will have.

@@ -62,3 +62,4 @@ Called by `aurora-desktop` (one Tauri command per use case) and, for the preview
 - [ADR-0001](../adr/0001-hexagonal-architecture-with-the-engines-behind-ports.md): hexagonal workspace, engines behind ports.
 - [ADR-0003](../adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md): capabilities decide which features run.
 - [ADR-0004](../adr/0004-local-first-state-derived-from-the-repositories.md): the only own state is the project registry and the settings.
+- [ADR-0007](../adr/0007-cross-project-integrations-through-git-on-an-orphan-inbox-br.md): cross-project integrations through Git on an orphan `aurora/inbox` branch, written only by the integrations provider.

@@ -186,14 +186,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Improvements
 
-### IMP-001: Provisional cross-project messages
-- **Priority**: high
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-10-29, 2026-10-29, Levi
-- **Plan**: -
-- **Description**: Until the integrations provider exists, a small provisional tool kept on this repository's aurora/inbox branch (not in the product) sends free messages between Levix projects through each project's aurora/inbox branch, in the message format of ADR-0007, with the same command names and --json output the provider will have.
-
 ## Adjustments
 
 ## Epics
@@ -367,3 +359,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: foundations
 - **Closed**: 2026-10-27, plan foundations
 - **Description**: Refresh engine detection on demand and show the last command's standard error for a degraded engine.
+
+### IMP-001: Provisional cross-project messages
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-10-29, 2026-10-29, Levi
+- **Plan**: -
+- **Closed**: 2026-10-29, aurora/inbox branch of aurora-dev-suite, first message sent 2026-10-29
+- **Description**: Until the integrations provider exists, a small provisional tool kept on this repository's aurora/inbox branch (not in the product) sends free messages between Levix projects through each project's aurora/inbox branch, in the message format of ADR-0007, with the same command names and --json output the provider will have.

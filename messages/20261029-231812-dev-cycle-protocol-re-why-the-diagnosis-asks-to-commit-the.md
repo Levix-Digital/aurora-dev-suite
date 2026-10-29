@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-10-29T23:18:12Z
 subject: "Re: Why the diagnosis asks to commit the agent settings folder"
-status: open
+status: seen
 reply_to: 20261029-230752-aurora-dev-suite-why-the-diagnosis-asks-to-commit-the-age
 deferred: 
 ---

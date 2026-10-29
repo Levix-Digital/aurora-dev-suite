@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://levix.digital/schemas/aurora/engine-version-1.json",
+  "title": "Engine version reply (schema MAJOR 1)",
+  "description": "What Aurora expects from `<engine> version --json` (dcp, gedo, actx). Unknown fields are ignored; MINOR versions only add optional fields.",
+  "type": "object",
+  "required": ["schema", "schema_version", "version", "capabilities"],
+  "properties": {
+    "schema": { "type": "string", "enum": ["dcp.version", "gedo.version", "actx.version"] },
+    "schema_version": { "type": "string", "pattern": "^1\\.[0-9]+$" },
+    "version": { "type": "string", "description": "The engine's semantic version" },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "schema_major"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "schema_major": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  }
+}

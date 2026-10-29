@@ -1,0 +1,40 @@
+/* Aurora Borealis tokens. Dark comes from AnyContext's AuroraTheme (ADR-0114, ADR-0117
+   of any-context); light is derived from it. Every text and background pair is checked
+   for WCAG 2.2 AA by src/theme_contrast.rs: keep the `--name: #RRGGBB;` form. */
+
+:root,
+:root[data-theme="dark"] {
+  --bg: #0B0F19;
+  --surface: #161F30;
+  --border: #334155;
+  --text: #F1F5F9;
+  --text-body: #CBD5E1;
+  --text-muted: #94A3B8;
+  --primary: #00E5A3;
+  --on-primary: #0B0F19;
+  --accent: #00F0FF;
+  --focus: #00F0FF;
+  --reasoning: #C084FC;
+  --ok: #00E5A3;
+  --warn: #F59E0B;
+  --error: #F87171;
+  --info: #38BDF8;
+}
+
+:root[data-theme="light"] {
+  --bg: #F8FAFC;
+  --surface: #FFFFFF;
+  --border: #CBD5E1;
+  --text: #0F172A;
+  --text-body: #334155;
+  --text-muted: #475569;
+  --primary: #047857;
+  --on-primary: #FFFFFF;
+  --accent: #0E7490;
+  --focus: #0E7490;
+  --reasoning: #7E22CE;
+  --ok: #047857;
+  --warn: #B45309;
+  --error: #B91C1C;
+  --info: #0369A1;
+}

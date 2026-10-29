@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Aurora",
+  "identifier": "digital.levix.aurora",
+  "build": {
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../aurora-ui/dist",
+    "beforeDevCommand": { "script": "trunk serve", "cwd": "../aurora-ui", "wait": false },
+    "beforeBuildCommand": { "script": "trunk build --release", "cwd": "../aurora-ui" }
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Aurora",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 560
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png", "icons/icon.ico"]
+  }
+}

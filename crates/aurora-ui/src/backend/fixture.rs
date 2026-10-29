@@ -1,0 +1,252 @@
+//! The preview backend: every command answered by the core's fixtures, with the engine
+//! events simulated after a short delay (FR-017, FR-018).
+
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+use std::time::Duration;
+
+use aurora_core::domain::{
+    AddOutcome, EngineKind, EngineReport, EnginesOverview, Project, ProjectId, ProjectList,
+    Settings,
+};
+use aurora_core::fixtures::{self, MemoryRegistry, MemorySettings};
+use aurora_core::usecases::{engines, projects, settings};
+
+use super::{CommandError, OnReady, OnReport, Reply};
+
+const EVENT_DELAY: Duration = Duration::from_millis(350);
+
+#[derive(Default)]
+struct Subscribers {
+    on_report: Option<OnReport>,
+    on_ready: Option<OnReady>,
+}
+
+pub struct FixtureBackend {
+    registry: MemoryRegistry,
+    settings: MemorySettings,
+    refreshes: Mutex<u32>,
+    picks: Mutex<u32>,
+    subscribers: Mutex<Subscribers>,
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+impl FixtureBackend {
+    pub fn sample() -> Self {
+        Self {
+            registry: fixtures::sample_registry(),
+            settings: MemorySettings::default(),
+            refreshes: Mutex::new(0),
+            picks: Mutex::new(0),
+            subscribers: Mutex::new(Subscribers::default()),
+        }
+    }
+
+    pub fn list_projects(&self) -> ProjectList {
+        projects::list(&self.registry)
+    }
+
+    pub fn add_project(&self, path: &Path, name: Option<&str>) -> Reply<AddOutcome> {
+        Ok(projects::add(&self.registry, path, name)?)
+    }
+
+    /// There is no folder dialog in a browser: each pick adds the next sample repository.
+    pub fn pick_and_add_project(&self) -> Reply<Option<AddOutcome>> {
+        let mut picks = lock(&self.picks);
+        *picks += 1;
+        let path = PathBuf::from(format!("/repos/sample-{}", *picks));
+        Ok(Some(projects::add(&self.registry, &path, None)?))
+    }
+
+    pub fn rename_project(&self, id: &str, name: &str) -> Reply<Project> {
+        Ok(projects::rename(
+            &self.registry,
+            &ProjectId(id.to_owned()),
+            name,
+        )?)
+    }
+
+    pub fn remove_project(&self, id: &str) -> Reply<()> {
+        Ok(projects::remove(&self.registry, &ProjectId(id.to_owned()))?)
+    }
+
+    pub fn relocate_project(&self, id: &str, path: &Path) -> Reply<Project> {
+        Ok(projects::relocate(
+            &self.registry,
+            &ProjectId(id.to_owned()),
+            path,
+        )?)
+    }
+
+    /// The sample engines; every other refresh shows Gedo hanging, so the preview covers
+    /// ready, without contract, degraded and missing.
+    pub fn engines_overview(&self) -> EnginesOverview {
+        engines::overview(self.reports(*lock(&self.refreshes)))
+    }
+
+    fn reports(&self, refresh: u32) -> Vec<EngineReport> {
+        let mut reports = fixtures::sample_reports();
+        if refresh % 2 == 1 {
+            for report in &mut reports {
+                if report.kind == EngineKind::Gedo {
+                    *report = fixtures::degraded_report(EngineKind::Gedo, "no answer after 10 s");
+                }
+            }
+        }
+        reports
+    }
+
+    pub fn subscribe_engines(&self, on_report: OnReport, on_ready: OnReady) {
+        *lock(&self.subscribers) = Subscribers {
+            on_report: Some(on_report),
+            on_ready: Some(on_ready),
+        };
+    }
+
+    pub fn refresh_engines(&self) {
+        let refresh = {
+            let mut refreshes = lock(&self.refreshes);
+            *refreshes += 1;
+            *refreshes
+        };
+        let reports = self.reports(refresh);
+        let overview = engines::overview(reports.clone());
+        let subscribers = lock(&self.subscribers);
+        let mut delay = EVENT_DELAY;
+        if let Some(on_report) = &subscribers.on_report {
+            for report in reports {
+                let on_report = on_report.clone();
+                leptos::prelude::set_timeout(move || on_report(report), delay);
+                delay += EVENT_DELAY;
+            }
+        }
+        if let Some(on_ready) = subscribers.on_ready.clone() {
+            leptos::prelude::set_timeout(move || on_ready(overview), delay);
+        }
+    }
+
+    pub fn get_settings(&self) -> Settings {
+        settings::get(&self.settings)
+    }
+
+    pub fn save_settings(&self, new: Settings) -> Reply<Settings> {
+        settings::save(&self.settings, new).map_err(|error| CommandError {
+            kind: "storage".to_owned(),
+            message: error.to_string(),
+        })
+    }
+}
+
+impl From<aurora_core::domain::ProjectError> for CommandError {
+    fn from(error: aurora_core::domain::ProjectError) -> Self {
+        let kind = serde_json_kind(&error);
+        Self {
+            kind,
+            message: error.to_string(),
+        }
+    }
+}
+
+/// The `kind` tag the desktop sends for a project error.
+fn serde_json_kind(error: &aurora_core::domain::ProjectError) -> String {
+    use aurora_core::domain::ProjectError as E;
+    match error {
+        E::NotFound { .. } => "notFound",
+        E::NotARepository { .. } => "notARepository",
+        E::AlreadyRegistered { .. } => "alreadyRegistered",
+        E::InvalidName { .. } => "invalidName",
+        E::UnknownProject { .. } => "unknownProject",
+        E::Storage { .. } => "storage",
+    }
+    .to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use aurora_core::domain::{EngineStatus, Presence};
+
+    use super::*;
+
+    /// The commands of contracts/desktop-commands.md that this backend answers.
+    const COMMANDS: &[&str] = &[
+        "list_projects",
+        "add_project",
+        "pick_and_add_project",
+        "rename_project",
+        "remove_project",
+        "relocate_project",
+        "engines_overview",
+        "refresh_engines",
+        "get_settings",
+        "save_settings",
+    ];
+
+    const CONTRACT: &str =
+        include_str!("../../../../specs/001-foundations/contracts/desktop-commands.md");
+
+    #[test]
+    fn answers_every_command_of_the_contract() {
+        let documented: Vec<&str> = CONTRACT
+            .lines()
+            .filter_map(|line| line.strip_prefix("| `"))
+            .filter_map(|rest| rest.split('`').next())
+            .filter(|name| !name.contains('-'))
+            .collect();
+        assert_eq!(documented, COMMANDS);
+    }
+
+    #[test]
+    fn the_sample_covers_every_project_and_engine_state() {
+        let backend = FixtureBackend::sample();
+        let list = backend.list_projects();
+        assert!(
+            list.projects
+                .iter()
+                .any(|p| p.presence == Presence::Present)
+        );
+        assert!(
+            list.projects
+                .iter()
+                .any(|p| p.presence == Presence::Missing)
+        );
+
+        let mut statuses: Vec<EngineStatus> =
+            backend.reports(0).into_iter().map(|r| r.status).collect();
+        statuses.extend(backend.reports(1).into_iter().map(|r| r.status));
+        assert!(statuses.contains(&EngineStatus::Ready));
+        assert!(statuses.contains(&EngineStatus::InstalledWithoutContract));
+        assert!(statuses.contains(&EngineStatus::Missing));
+        assert!(
+            statuses
+                .iter()
+                .any(|s| matches!(s, EngineStatus::Degraded { .. }))
+        );
+    }
+
+    #[test]
+    fn project_commands_work_on_the_sample() {
+        let backend = FixtureBackend::sample();
+        let picked = backend
+            .pick_and_add_project()
+            .expect("pick")
+            .expect("added");
+        assert_eq!(picked.project.name.as_str(), "sample-1");
+        let renamed = backend
+            .rename_project(&picked.project.id.0, "Sample")
+            .expect("rename");
+        assert_eq!(renamed.name.as_str(), "Sample");
+        backend
+            .remove_project(&picked.project.id.0)
+            .expect("remove");
+        let refused = backend.add_project(Path::new("/tmp/not-a-repo"), None);
+        assert_eq!(
+            refused.map_err(|e| e.kind),
+            Err("notARepository".to_owned())
+        );
+    }
+}

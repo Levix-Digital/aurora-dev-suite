@@ -33,9 +33,9 @@ flowchart LR
 | Subsystem | Summary |
 |---|---|
 | [Aurora Core](docs/architecture/core.md) | Domain model of the suite, the use cases and the ports every engine and surface goes through. |
-| [Desktop Shell](docs/architecture/desktop.md) | The Tauri 2 application: composition root, commands exposed to the interface, windows, packaging and updates. |
-| [Engine Adapters](docs/architecture/engines.md) | Driven adapters that read the Dev Cycle, Gedo and AnyContext through their command lines, plus stand-in adapters until each contract exists. |
-| [User Interface](docs/architecture/ui.md) | The Leptos interface compiled to WebAssembly: views, components and the Aurora Borealis theme. |
+| [Desktop Shell](docs/architecture/desktop.md) | The Tauri 2 application: composition root, commands exposed to the interface, engine events, security and logging. |
+| [Engine Adapters](docs/architecture/engines.md) | Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust binaries' versioned JSON, and store the project list and settings. |
+| [User Interface](docs/architecture/ui.md) | The Leptos interface compiled to WebAssembly: views, navigation, the backends and the Aurora Borealis theme. |
 <!-- architecture-docs:subsystems:end -->
 
 ## Architecture Decision Records
@@ -43,6 +43,7 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
+| [ADR-0006](docs/adr/0006-no-stand-in-adapters-engines-plugged-in-only-through-their-r.md) | No stand-in adapters: engines plugged in only through their Rust binaries | accepted |  | 2026-10-27 |
 | [ADR-0005](docs/adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md) | Proprietary binary-only distribution with Levix licenses | accepted |  | 2026-10-27 |
 | [ADR-0004](docs/adr/0004-local-first-state-derived-from-the-repositories.md) | Local-first state derived from the repositories | accepted |  | 2026-10-27 |
 | [ADR-0003](docs/adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md) | Engines integrated only through their command lines with versioned JSON | accepted |  | 2026-10-27 |

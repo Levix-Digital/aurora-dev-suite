@@ -53,9 +53,9 @@ The complete product, as capability areas:
 5. **Decision inbox:** everything waiting for the user across projects (gates to approve, release candidates to test, review threads, untriaged bugs), first as a view and later with actions.
 6. **Agent work view:** the agents running on each repository, their Gedo streams and scopes, and the collisions and contract breaks Gedo reports.
 7. **Knowledge:** AnyContext questions and answers with citations over each project's sources, from inside Aurora.
-8. **Engine integration contract:** Aurora reads the engines only through their command lines with versioned `--json` output and capability discovery, each engine behind a port with a stand-in adapter until its contract exists.
+8. **Engine integration contract:** Aurora reads the engines only through their command lines with versioned `--json` output and capability discovery, each engine behind a port, with fixtures until its Rust binary offers the contract (ADR-0006).
 
-The foundations are built first, while the engines mature: the desktop shell, the engine ports with stand-in adapters, engine health, and the project portfolio from the Dev Cycle files that exist today. Each engine's real adapter and the features that depend on it follow its release.
+The foundations are built first, while the engines mature: the desktop shell, the engine ports, engine health, and every view built and tested against fixtures that follow the engines' contracts. Each engine's real adapter, and the features that depend on it, arrive with the engine's Rust binary (ADR-0006).
 
 ## Non-Goals
 
@@ -69,7 +69,7 @@ The foundations are built first, while the engines mature: the desktop shell, th
 
 ## Risks and Assumptions
 
-- **The engines are not ready yet.** Gedo is a library until its v0.4.0 brings the command line; `dcp` is still Python scripts until its migration to Rust; AnyContext has no `--json` output. Reduced by agreeing on the contracts now (suggestions to each repository) and by building Aurora's foundations first, with each engine behind a port: until an engine's contract exists, its adapter reads fixtures or the files and commands that exist today (for the Dev Cycle, the Markdown files and the Python scripts' `--json`), and the real adapter replaces it when the engine is ready.
+- **The engines are not ready yet.** Gedo is a library until its v0.4.0 brings the command line; `dcp` is still Python scripts until its migration to Rust; AnyContext has no `--json` output. Reduced by agreeing on the contracts now (suggestions to each repository) and by building Aurora's foundations and views first against fixtures that follow those contracts; each engine is plugged in only through its Rust binary when it ships the contract (ADR-0006), never through Python or its files.
 - **The contracts may drift.** Reduced by versioned `--json` schemas and capability discovery in every engine, following Gedo's ADR-0013.
 - **The license change.** Gedo and the Dev Cycle Protocol documents still describe an open-core model with MIT or Apache licenses; the move to proprietary must be reflected in each repository before anything is published.
 - **Desktop UI in Rust.** Leptos has fewer ready components than web frameworks in other languages, and the web view differs between Windows (WebView2) and Linux (WebKitGTK); reduced by a first release that exercises the shell, the theme and CI on both systems (ADR-0002).

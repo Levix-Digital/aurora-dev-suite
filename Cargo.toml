@@ -1,0 +1,63 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/aurora-core",
+    "crates/aurora-engines",
+    "crates/aurora-desktop",
+    "crates/aurora-ui",
+    "xtask",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+authors = ["Levix Digital"]
+license-file = "LICENSE"
+publish = false
+repository = "https://github.com/Levix-Digital/aurora-dev-suite"
+
+[workspace.dependencies]
+aurora-core = { path = "crates/aurora-core" }
+aurora-engines = { path = "crates/aurora-engines" }
+cargo_metadata = "0.23"
+console_error_panic_hook = "0.1"
+directories = "6.0"
+dunce = "1.0"
+insta = { version = "1.49", features = ["json"] }
+js-sys = "0.3"
+leptos = { version = "0.8", features = ["csr"] }
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+serde_json = "1.0"
+tauri = { version = "2.12", features = [] }
+tauri-build = { version = "2.7", features = [] }
+tauri-plugin-dialog = "2.8"
+tempfile = "3.27"
+thiserror = "2.0"
+time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
+toml = "1.1"
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.29", features = ["v4"] }
+wait-timeout = "0.2"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = "0.3"
+which = "8.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+panic = "abort"

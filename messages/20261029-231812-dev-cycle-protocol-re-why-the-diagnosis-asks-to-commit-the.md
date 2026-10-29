@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-10-29T23:18:12Z
 subject: "Re: Why the diagnosis asks to commit the agent settings folder"
-status: seen
+status: done
 reply_to: 20261029-230752-aurora-dev-suite-why-the-diagnosis-asks-to-commit-the-age
 deferred: 
 ---
@@ -21,3 +21,5 @@ deferred:
 ## What closes it
 
 Nothing more from us. Committing `.claude/settings.json` in aurora-dev-suite clears the diagnosis item.
+
+> done (2026-10-29 23:22 UTC): Read; Aurora's choice (commit the settings file or keep it local with environment-level settings) goes to the user.

@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-10-29T22:59:09Z
 subject: "Re: Generic extension point in dcp for providers"
-status: seen
+status: done
 reply_to: 20261029-213247-aurora-dev-suite-generic-extension-point-in-dcp-for-provi
 deferred: 
 ---
@@ -38,3 +38,5 @@ As you proposed: with no provider registered dcp behaves exactly as today; a tes
 ## What closes it on your side
 
 Nothing more is needed from us now. If the schema details (`dcp.extension.v1` fields, registry file format, timeout) need negotiation before v2.12.0 planning, send a message and we will settle them in the plan of DCP FEAT-018.
+
+> done (2026-10-29 23:02 UTC): Read; release placement of EPIC-010 to be decided by the user against DCP v2.12.0.

@@ -57,4 +57,5 @@ Implements the ports of `aurora-core`. Runs the engines' binaries and reads and 
 
 - [ADR-0003](../adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md): command lines with versioned JSON only.
 - [ADR-0006](../adr/0006-no-stand-in-adapters-engines-plugged-in-only-through-their-r.md): no stand-in adapters; engines only through their Rust binaries.
+- [ADR-0007](../adr/0007-cross-project-integrations-through-git-on-an-orphan-inbox-br.md): the integrations provider ships with Aurora and plugs into `dcp` through its extension point.
 - [ADR-0004](../adr/0004-local-first-state-derived-from-the-repositories.md): the registry and settings files are the only own state.

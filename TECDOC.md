@@ -43,6 +43,7 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
+| [ADR-0007](docs/adr/0007-cross-project-integrations-through-git-on-an-orphan-inbox-br.md) | Cross-project integrations through Git on an orphan inbox branch | accepted |  | 2026-10-29 |
 | [ADR-0006](docs/adr/0006-no-stand-in-adapters-engines-plugged-in-only-through-their-r.md) | No stand-in adapters: engines plugged in only through their Rust binaries | accepted |  | 2026-10-27 |
 | [ADR-0005](docs/adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md) | Proprietary binary-only distribution with Levix licenses | accepted |  | 2026-10-27 |
 | [ADR-0004](docs/adr/0004-local-first-state-derived-from-the-repositories.md) | Local-first state derived from the repositories | accepted |  | 2026-10-27 |

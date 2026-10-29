@@ -120,6 +120,22 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: Show the user's plan, what it includes and how to upgrade.
 
+### FEAT-027: Project settings
+- **Priority**: medium
+- **Epic**: EPIC-004
+- **Status**: open
+- **Found**: 2026-10-28, Dev Cycle Protocol suggestion 2026-10-28
+- **Plan**: -
+- **Description**: A Settings tab per project rendered from dcp config get --json (schema dcp.config: value, allowed values, default, type, read-only, group); changes previewed with dcp config set --dry-run --json and applied with dcp config set, errors shown next to the field. Aurora never reads or writes .dev-cycle.json and does not commit: the user commits the change. Needs the dcp capability config (ADR-0003, ADR-0006).
+
+### FEAT-028: Cycle metrics
+- **Priority**: medium
+- **Epic**: EPIC-004
+- **Status**: open
+- **Found**: 2026-10-28, Dev Cycle Protocol suggestion 2026-10-28
+- **Plan**: -
+- **Description**: A Metrics tab per project and release (first-pass gate rate, rework, time per phase, escaped bugs, tokens when reported, trends across releases) and a combined view across the portfolio with totals and the protocol's baseline marker, read only from dcp metrics --json (schema dcp.metrics, capability metrics). No stand-in: without the capability the views say to update dcp (ADR-0006). Release assigned when dcp metrics has a date.
+
 ## Improvements
 
 ## Adjustments

@@ -11,6 +11,7 @@ const COMMANDS: &[&str] = &[
     "refresh_engines",
     "get_settings",
     "save_settings",
+    "project_cycle_state",
 ];
 
 fn main() {

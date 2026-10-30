@@ -54,10 +54,10 @@ fn violations(schema: &Value, root: &Value, value: &Value, at: &str, out: &mut V
             violations(part, root, value, at, out);
         }
     }
-    if let Some(expected) = schema.get("const") {
-        if value != expected {
-            out.push(format!("{at}: expected {expected}"));
-        }
+    if let Some(expected) = schema.get("const")
+        && value != expected
+    {
+        out.push(format!("{at}: expected {expected}"));
     }
     if let Some(types) = schema.get("type") {
         let allowed: Vec<&str> = match types {
@@ -73,10 +73,9 @@ fn violations(schema: &Value, root: &Value, value: &Value, at: &str, out: &mut V
     if let (Some(minimum), Some(number)) = (
         schema.get("minimum").and_then(Value::as_f64),
         value.as_f64(),
-    ) {
-        if number < minimum {
-            out.push(format!("{at}: below {minimum}"));
-        }
+    ) && number < minimum
+    {
+        out.push(format!("{at}: below {minimum}"));
     }
     if let Value::Object(object) = value {
         for field in schema

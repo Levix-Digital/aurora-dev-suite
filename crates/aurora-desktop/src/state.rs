@@ -4,13 +4,14 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use aurora_core::domain::EnginesOverview;
-use aurora_core::ports::{EngineProbe, ProjectRegistry, SettingsStore};
-use aurora_engines::{CliProbe, TomlRegistry, TomlSettings};
+use aurora_core::ports::{CycleSource, EngineProbe, ProjectRegistry, SettingsStore};
+use aurora_engines::{CliProbe, DcpCycleSource, TomlRegistry, TomlSettings};
 
 pub struct AppState {
     pub registry: Arc<dyn ProjectRegistry>,
     pub settings: Arc<dyn SettingsStore>,
     pub probe: Arc<dyn EngineProbe>,
+    pub cycle: Arc<dyn CycleSource>,
     /// The result of the last complete probe of the engines.
     pub engines: Arc<Mutex<Option<EnginesOverview>>>,
 }
@@ -22,6 +23,7 @@ impl AppState {
             registry: Arc::new(TomlRegistry::open(&config_dir)),
             settings: Arc::new(TomlSettings::open(&config_dir)),
             probe: Arc::new(CliProbe::new()),
+            cycle: Arc::new(DcpCycleSource::new()),
             engines: Arc::new(Mutex::new(None)),
         }
     }

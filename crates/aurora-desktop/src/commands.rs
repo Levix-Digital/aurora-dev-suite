@@ -5,9 +5,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aurora_core::domain::{
-    AddOutcome, EnginesOverview, Project, ProjectError, ProjectId, ProjectList, Settings,
+    AddOutcome, CycleError, CycleState, EngineKind, EnginesOverview, Project, ProjectError,
+    ProjectId, ProjectList, Settings,
 };
-use aurora_core::usecases::{projects, settings};
+use aurora_core::usecases::{cycle, projects, settings};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -21,6 +22,9 @@ use crate::state::AppState;
 pub struct CommandError {
     pub kind: String,
     pub message: String,
+    /// The cycle error itself, for the `cycle` kind.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<CycleError>,
 }
 
 impl CommandError {
@@ -28,6 +32,16 @@ impl CommandError {
         Self {
             kind: kind.to_owned(),
             message: message.to_string(),
+            detail: None,
+        }
+    }
+}
+
+impl From<CycleError> for CommandError {
+    fn from(error: CycleError) -> Self {
+        Self {
+            detail: Some(error.clone()),
+            ..Self::new("cycle", error)
         }
     }
 }
@@ -186,6 +200,37 @@ fn probe_and_publish(
     overview
 }
 
+/// A project's development cycle state through `dcp`, using the last engine probe (the
+/// first call probes and waits, as `engines_overview` does).
+#[tauri::command]
+pub async fn project_cycle_state(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Reply<CycleState> {
+    let overview = engines_overview(app, state.clone()).await?;
+    let (registry, store, source) = (
+        Arc::clone(&state.registry),
+        Arc::clone(&state.settings),
+        Arc::clone(&state.cycle),
+    );
+    blocking(move || {
+        let id = ProjectId(id);
+        let project = projects::list(registry.as_ref())
+            .projects
+            .into_iter()
+            .find(|project| project.id == id)
+            .ok_or_else(|| ProjectError::UnknownProject { id: id.0.clone() })?;
+        let dcp = overview
+            .reports
+            .iter()
+            .find(|report| report.kind == EngineKind::DevCycle);
+        let current = settings::get(store.as_ref());
+        cycle::cycle_state(source.as_ref(), dcp, &current, &project).map_err(CommandError::from)
+    })
+    .await
+}
+
 #[tauri::command]
 pub async fn get_settings(state: State<'_, AppState>) -> Reply<Settings> {
     let store = Arc::clone(&state.settings);
@@ -213,5 +258,19 @@ mod tests {
         });
         assert_eq!(error.kind, "alreadyRegistered");
         assert!(error.message.contains("gedo"));
+        assert_eq!(error.detail, None);
+    }
+
+    #[test]
+    fn cycle_errors_keep_the_error_as_detail() {
+        let cause = CycleError::TimedOut {
+            timeout_ms: 10_000,
+            stderr: String::new(),
+        };
+        let error = CommandError::from(cause.clone());
+        assert_eq!(error.kind, "cycle");
+        assert_eq!(error.message, cause.to_string());
+        let json = serde_json::to_value(&error).expect("serializes");
+        assert_eq!(json["detail"]["kind"], "timedOut");
     }
 }

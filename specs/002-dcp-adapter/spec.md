@@ -81,7 +81,7 @@ A developer of Aurora builds the Portfolio, Project and Inbox views and their te
 - **FR-007**: The cycle state MUST carry: the current release with its open items; the plans in progress with milestones done and total; the latest release candidate run with tests not run and failed and whether it was released; the open pull requests with a summary, whether they need action and how many threads wait for the user; the blocking bugs; the untriaged bugs with the reason; the recommended next step with its options; the findings the engine reported; and when it was read.
 - **FR-008**: The core MUST define the cycle state source as a port with a real implementation over `dcp` and a sample implementation used by the tests and by the interface preview.
 - **FR-009**: The desktop application MUST offer the interface one command that returns a project's cycle state or its failure reason; the interface preview MUST answer the same command with sample data.
-- **FR-010**: Every request MUST be logged with the project's identifier, the duration and the outcome, never the reply's content.
+- **FR-010**: Every request MUST be logged with the project's root, the duration and the outcome, never the reply's content.
 
 ### Key Entities
 

@@ -7,7 +7,7 @@ version: v0.2.0
 status: in_progress
 author: Levi
 created_at: '2026-10-29T23:37:26'
-updated_at: '2026-10-30T01:15:46'
+updated_at: '2026-10-30T01:37:52'
 session_id: null
 tags: []
 supersedes: null
@@ -18,13 +18,21 @@ backlog_items:
 spec_dir: specs/002-dcp-adapter
 milestones:
 - name: M1 Contract and core
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M2 Adapter
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M3 Desktop and preview
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M4 Docs and contract request
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 status_log:
 - at: '2026-10-29T23:37:26'
   by: Levi

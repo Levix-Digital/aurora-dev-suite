@@ -27,7 +27,7 @@ The Leptos interface compiled to WebAssembly: views, navigation, the backends an
 
 ## Behavior
 
-**Backends.** At start-up the interface uses Tauri when `window.__TAURI__` exists, otherwise the fixture backend. The fixture backend answers every command of the desktop from the core's fixtures, and simulates the engine events after a short delay. Each refresh alternates Gedo between ready and degraded, so the preview shows every engine state. A banner says the preview shows sample data. A test checks that the fixture backend answers every command listed in the desktop contract.
+**Backends.** At start-up the interface uses Tauri when `window.__TAURI__` exists, otherwise the fixture backend. The fixture backend answers every command of the desktop from the core's fixtures, and simulates the engine events after a short delay. Each refresh alternates Gedo between ready and degraded, so the preview shows every engine state. A banner says the preview shows sample data. A test checks that the fixture backend answers every command listed in the desktop contracts. For `project_cycle_state` the fixture backend takes `dcp` as ready with the contract, so the views can be built before `dcp` ships it, while the Engines view keeps showing the sample engines; no view calls it yet (FEAT-014, FEAT-015 and FEAT-017 will).
 
 **Navigation.** One `View` signal: Portfolio, Project, Engines, Inbox, Settings. The navigation is a list of buttons; the arrow keys move between them, and Alt+1 to Alt+5 open the views. Every focused element has a visible outline, and a skip link leads to the content.
 

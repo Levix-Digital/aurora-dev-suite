@@ -12,11 +12,11 @@ Add the `CycleSource` port to the core with Aurora's own cycle state types, a us
 
 **Language/Version**: Rust stable, edition 2024, MSRV 1.95 (unchanged)
 
-**Primary Dependencies**: existing ones (`serde`, `serde_json`, `thiserror`, `tracing`, `insta`); new dev-dependency `jsonschema` (MIT) with default features off, to validate the sample replies against the published schema in tests. If `cargo deny` finds a license outside the allowed list in its tree, the validation is dropped and Levi is asked before any exception.
+**Primary Dependencies**: existing ones only (`serde`, `serde_json`, `thiserror`, `tracing`). The `jsonschema` crate was considered for validating the samples, but its tree brings `borrow-or-share` under MIT-0, outside the allowed licenses; the tests instead check the samples with a small checker of the schema keywords the contract uses (`type`, `const`, `required`, `properties`, `items`, `allOf`, `minimum`, local `$ref`), which is itself tested against broken samples.
 
 **Storage**: none (the cycle state is read on demand and not stored; ADR-0004)
 
-**Testing**: core unit tests over the fixtures; adapter integration tests with the fake engine as `dcp` in every mode; `insta` snapshots of parsed replies; schema validation of every sample reply
+**Testing**: core unit tests over the fixtures; adapter integration tests with the fake engine as `dcp` in every mode; parsed replies compared with the core's sample states; schema check of every sample reply
 
 **Target Platform**: Windows 10 22H2+ and 11, Linux x86_64 (unchanged)
 
@@ -101,7 +101,7 @@ FEAT-016 dcp adapter, release v0.2.0 "Portfolio on the dcp contract" (`docs/ROAD
 ### Tests (quality-assurance)
 
 - **Core**: `cycle_state` returns `Unavailable` for `dcp` missing, without contract, degraded, and ready without `diagnose` or with `diagnose` at another MAJOR, without calling the port (a counting source proves it); `ProjectMissing` for a missing folder; passes through the source's state and errors otherwise; every `CycleError` has a message.
-- **Adapter** (`aurora-engines/tests/cycle.rs`, fake engine as `dcp`): a valid reply becomes the expected `CycleState` (`insta` snapshot); unknown fields ignored; empty state; reply for another root refused; path with spaces and non-ASCII characters passed intact; `hang` gives `TimedOut` within the limit plus one second; `crash` gives `Failed` with the error output; `huge` gives `TooLarge`; `invalid` gives `Invalid`; `unsupported` gives `Unsupported` with the side to update; warnings on standard error with exit 0 still succeed.
+- **Adapter** (`aurora-engines/tests/cycle.rs`, fake engine as `dcp`): a valid reply becomes the expected `CycleState` (equal to the core's busy sample); unknown fields ignored; empty state; reply for another root refused; path with spaces and non-ASCII characters passed intact; `hang` gives `TimedOut` within the limit plus one second; `crash` gives `Failed` with the error output; `huge` gives `TooLarge`; `invalid` gives `Invalid`; `unsupported` gives `Unsupported` with the side to update; warnings on standard error with exit 0 still succeed.
 - **Contract**: every sample reply under `tests/fixtures/dcp-diagnose/` and the fake engine's reply are valid against `contracts/dcp-diagnose.schema.json`; the fixtures in the core are built from the same samples, so the preview and the tests cannot drift from the contract.
 - **Desktop and interface**: the command error carries the serialized `CycleError`; the fixture backend answers `project_cycle_state` for every sample project.
 - **Manual tests**: none added; nothing visible changes in this item. The views' manual tests come with FEAT-014, FEAT-015 and FEAT-017.

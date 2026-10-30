@@ -166,7 +166,7 @@ dependencies = [
 
 [[package]]
 name = "aurora-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -175,7 +175,7 @@ dependencies = [
 
 [[package]]
 name = "aurora-desktop"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aurora-core",
  "aurora-engines",
@@ -194,7 +194,7 @@ dependencies = [
 
 [[package]]
 name = "aurora-engines"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aurora-core",
  "directories",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "aurora-ui"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aurora-core",
  "console_error_panic_hook",
@@ -5805,7 +5805,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cargo_metadata 0.23.1",
 ]

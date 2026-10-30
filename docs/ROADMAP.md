@@ -10,7 +10,7 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Items**: FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-006, FEAT-007, FEAT-008, FEAT-009, FEAT-010, FEAT-011, FEAT-012
 
 ## v0.2.0: Portfolio on the dcp contract
-- **Status**: planned
+- **Status**: in_progress
 - **Target**: lights up with dcp v2.11.0 (DCP FEAT-019)
 - **Goal**: Every registered project's cycle state and what waits for the user, read through the dcp binary's versioned JSON; built and tested against fixtures, it lights up when the first dcp release with the contract is installed. Plus installable packages.
 - **Items**: FEAT-014, FEAT-015, FEAT-017, FEAT-005, FEAT-016

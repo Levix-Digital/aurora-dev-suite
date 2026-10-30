@@ -17,6 +17,10 @@ pub const MAX_STDERR_BYTES: usize = 64 * 1024;
 /// How long the output may take to close after the engine exited or was killed. A child
 /// process of the engine can keep the pipes open; Aurora does not wait for it.
 const PIPE_GRACE: Duration = Duration::from_millis(250);
+/// `CREATE_NO_WINDOW`: the engines are console programs, and Windows opens a console window
+/// for each one started by Aurora, which has none of its own.
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 #[derive(Debug, Clone)]
 pub struct CommandSpec {
@@ -83,6 +87,11 @@ pub fn run(spec: &CommandSpec) -> Result<CommandOutput, RunError> {
         .stderr(Stdio::piped());
     if let Some(dir) = &spec.working_dir {
         command.current_dir(dir);
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(CREATE_NO_WINDOW);
     }
     let mut child = command.spawn().map_err(|error| RunError::Spawn {
         program: spec.program.display().to_string(),

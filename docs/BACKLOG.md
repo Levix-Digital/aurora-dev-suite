@@ -14,6 +14,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: The .deb and AppImage of v0.2.0-rc.1 were built on ubuntu-latest (24.04), so the binary needs glibc 2.39 and does not run on Ubuntu 22.04 (glibc 2.35), the oldest supported Linux in TECH_SPEC. Fix: build the Linux packages on ubuntu-22.04 and fail the release when the binary needs a newer glibc than 2.35.
 
+### BUG-002: A console window flashes on Windows when Aurora runs an engine
+- **Severity**: medium
+- **Epic**: EPIC-001
+- **Status**: open
+- **Found**: 2026-10-30, v0.2.0-rc.2, manual tests on Windows
+- **Plan**: -
+- **Description**: On Windows each dcp, gedo or actx command that Aurora runs opens its own console window for a few seconds, because the runner starts the engines without CREATE_NO_WINDOW and Aurora has no console. Linux opens no window. Fix: start engine processes with CREATE_NO_WINDOW on Windows.
+
 ## Features
 
 ### FEAT-018: Inbox actions

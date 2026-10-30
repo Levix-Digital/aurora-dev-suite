@@ -19,9 +19,9 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-014: Portfolio view
 - **Priority**: high
 - **Epic**: EPIC-004
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: portfolio-view
 - **Description**: All registered projects with name, phase, current release and a count of what waits for the user, loaded in parallel and shown progressively.
 
 ### FEAT-015: Project view

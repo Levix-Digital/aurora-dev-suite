@@ -32,10 +32,12 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Covers**: navigation, focus styles (FR-002, SC-005)
 - **Prerequisites**: Aurora open
 - **Steps**:
-  1. Press Tab until the focus is in the navigation; use the Down and Up arrows to move between the items and Enter to open each one
-  2. Press Alt+1 to Alt+5
-  3. In each view, press Tab through every control
+  1. Press Tab once: the "Skip to content" link appears over the top of the content area; press Enter and the focus moves to the content
+  2. Press Tab until the focus is in the navigation; use the Down and Up arrows to move between the items and Enter to open each one
+  3. Press Alt+1 to Alt+5
+  4. In each view, press Tab through every control
 - **Expected**:
+  - The skip link looks like a button and covers nothing in the sidebar
   - The focused element always has a visible outline
   - Alt+1 to Alt+5 open Portfolio, Project, Engines, Inbox and Settings
   - Every button and field can be reached and used without the mouse

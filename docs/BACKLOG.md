@@ -6,6 +6,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
+### BUG-001: Linux packages do not run on Ubuntu 22.04
+- **Severity**: high
+- **Epic**: EPIC-001
+- **Status**: open
+- **Found**: 2026-10-30, v0.2.0-rc.1, MT-PKG-003
+- **Plan**: -
+- **Description**: The .deb and AppImage of v0.2.0-rc.1 were built on ubuntu-latest (24.04), so the binary needs glibc 2.39 and does not run on Ubuntu 22.04 (glibc 2.35), the oldest supported Linux in TECH_SPEC. Fix: build the Linux packages on ubuntu-22.04 and fail the release when the binary needs a newer glibc than 2.35.
+
 ## Features
 
 ### FEAT-018: Inbox actions

@@ -7,7 +7,7 @@ version: v0.2.0
 status: in_progress
 author: Levi
 created_at: '2026-10-30T15:57:17'
-updated_at: '2026-10-30T16:01:39'
+updated_at: '2026-10-30T16:48:00'
 session_id: null
 tags: []
 supersedes: null
@@ -18,11 +18,17 @@ backlog_items:
 spec_dir: specs/006-desktop-packages
 milestones:
 - name: M1 Tag rule
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M2 Packages and release workflows
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M3 Manual tests and docs
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 status_log:
 - at: '2026-10-30T15:57:17'
   by: Levi
@@ -32,6 +38,18 @@ status_log:
   by: Levi
   status: in_progress
   note: Approved at gate 3 with the Tauri CLI 2.x build tool; implementation started
+- at: '2026-10-30T16:48:00'
+  by: Levi
+  note: Milestone 'M1 Tag rule' completed
+- at: '2026-10-30T16:48:00'
+  by: Levi
+  note: Milestone 'M2 Packages and release workflows' completed
+- at: '2026-10-30T16:48:00'
+  by: Levi
+  note: Milestone 'M3 Manual tests and docs' completed
+- at: '2026-10-30T16:48:00'
+  by: Levi
+  note: All milestones done; the release workflow's dry run built the three packages; waits for pull request #15 to merge
 ---
 
 # Desktop packages

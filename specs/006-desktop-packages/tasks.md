@@ -35,7 +35,7 @@ description: "Tasks of the Desktop Packages feature (v0.2.0, FEAT-005)"
 
 - [x] T005 [US3] Add `.github/workflows/release.yml`: tag check, tests and packages on Windows and Linux, sizes in the run summary, one publish job with `SHA256SUMS.txt` (pre-release for candidates; releases repository as a setting), dry run on packaging pull requests and by hand
 - [x] T006 [US3] Add `.github/workflows/promote.yml` (trunk release gate, version from `Cargo.toml`, environment `release`)
-- [ ] T007 [US3] Check the release workflow's dry run on the pull request and attach the evidence
+- [x] T007 [US3] Check the release workflow's dry run on the pull request and attach the evidence
 
 ---
 

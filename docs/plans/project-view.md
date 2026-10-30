@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Project view
 kind: feature
 version: v0.2.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-10-30T14:17:31'
-updated_at: '2026-10-30T14:17:31'
+updated_at: '2026-10-30T14:41:00'
 session_id: null
 tags: []
 supersedes: null
@@ -50,6 +50,10 @@ status_log:
 - at: '2026-10-30T14:35:00'
   by: Levi
   note: All milestones done; waits for the pull request to merge
+- at: '2026-10-30T14:41:00'
+  by: Levi
+  status: completed
+  note: 'Pull request #11 merged; FEAT-015 delivered'
 ---
 
 # Project view

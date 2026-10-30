@@ -16,14 +16,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: Windows installer (NSIS or MSI) and Linux packages (AppImage and deb) built in CI for release candidates.
 
-### FEAT-015: Project view
-- **Priority**: high
-- **Epic**: EPIC-004
-- **Status**: planned
-- **Found**: 2026-10-27
-- **Plan**: project-view
-- **Description**: One project's cycle state: plans and milestones, backlog summary, roadmap, release candidate, pull requests, gates and blocking bugs.
-
 ### FEAT-017: Inbox view
 - **Priority**: medium
 - **Epic**: EPIC-005
@@ -370,3 +362,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: portfolio-view
 - **Closed**: 2026-10-30, plan portfolio-view
 - **Description**: All registered projects with name, phase, current release and a count of what waits for the user, loaded in parallel and shown progressively.
+
+### FEAT-015: Project view
+- **Priority**: high
+- **Epic**: EPIC-004
+- **Status**: done
+- **Found**: 2026-10-27
+- **Plan**: project-view
+- **Closed**: 2026-10-30, plan project-view
+- **Description**: One project's cycle state: plans and milestones, backlog summary, roadmap, release candidate, pull requests, gates and blocking bugs.

@@ -4,8 +4,8 @@
 use std::path::Path;
 
 use crate::domain::{
-    AddOutcome, EngineKind, EngineReport, EngineSettings, Project, ProjectError, ProjectId,
-    ProjectList, ProjectName, Settings,
+    AddOutcome, CycleError, CycleState, EngineKind, EngineReport, EngineSettings, Project,
+    ProjectError, ProjectId, ProjectList, ProjectName, Settings,
 };
 
 /// The list of projects the user follows (ADR-0004).
@@ -32,4 +32,15 @@ pub trait SettingsStore: Send + Sync {
 /// Finds an engine and asks it for its version and capabilities (ADR-0003).
 pub trait EngineProbe: Send + Sync {
     fn probe(&self, kind: EngineKind, settings: &EngineSettings) -> EngineReport;
+}
+
+/// Reads a project's development cycle state from the Dev Cycle Protocol (ADR-0003,
+/// ADR-0006). `engine` is the latest report of `dcp`, which gives its location.
+pub trait CycleSource: Send + Sync {
+    fn cycle_state(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<CycleState, CycleError>;
 }

@@ -62,6 +62,23 @@ const CATALOG: [Requirement; 5] = [
     },
 ];
 
+/// The capability of `dcp` that answers a project's cycle state (`dcp diagnose --json`).
+pub const CYCLE_CAPABILITY: &str = "diagnose";
+
+/// The `dcp` report when it is ready with the cycle capability at the supported MAJOR;
+/// otherwise what to install or update.
+pub fn usable_dcp(report: Option<&EngineReport>) -> Result<&EngineReport, String> {
+    match report {
+        Some(report)
+            if report.kind == EngineKind::DevCycle
+                && report.has_capability(CYCLE_CAPABILITY, SCHEMA_MAJOR) =>
+        {
+            Ok(report)
+        }
+        _ => Err(hint_for(requirement(Feature::ProjectView), report)),
+    }
+}
+
 pub fn requirement(feature: Feature) -> Requirement {
     CATALOG
         .into_iter()

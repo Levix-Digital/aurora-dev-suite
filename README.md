@@ -22,7 +22,24 @@ Aurora works without any engine; each one it finds unlocks its features.
 
 ## Installation
 
-Aurora is built from source for now; there are no installers yet.
+Download the package for your system from the assets of an Aurora release (release candidates are marked "Pre-release"), and check it against `SHA256SUMS.txt` in the same release (`sha256sum -c SHA256SUMS.txt --ignore-missing` on Linux, `Get-FileHash <file>` in PowerShell).
+
+**Windows**: run `Aurora_<version>_x64-setup.exe`. It installs Aurora for your user, without administrator rights, adds it to the Start menu and installs the WebView2 runtime if it is missing. The installer is not signed yet: when Windows SmartScreen says "Windows protected your PC", choose **More info** and then **Run anyway**.
+
+**Debian and Ubuntu**: install the `.deb` with its dependencies (WebKitGTK 4.1 and GTK 3):
+
+```bash
+sudo apt install ./Aurora_<version>_amd64.deb
+```
+
+**Other Linux distributions**: make the AppImage executable and run it; it carries its own libraries:
+
+```bash
+chmod +x Aurora_<version>_amd64.AppImage
+./Aurora_<version>_amd64.AppImage
+```
+
+### Building from source
 
 Linux (Debian and Ubuntu), the system libraries first:
 
@@ -38,7 +55,7 @@ cd crates/aurora-ui && trunk build --release && cd ../..
 cargo build -p aurora-desktop --release --features custom-protocol
 ```
 
-The application is `target/release/aurora` (`target\release\aurora.exe` on Windows). Copy it wherever you like.
+The application is `target/release/aurora` (`target\release\aurora.exe` on Windows). Copy it wherever you like. To build the packages instead, install the Tauri CLI (`cargo install tauri-cli --locked --version "^2"`) and run `cargo tauri build` in `crates/aurora-desktop`; they are written to `target/release/bundle`.
 
 ## Quick Start
 
@@ -96,7 +113,9 @@ Aurora's files are in your configuration folder: `~/.config/aurora` on Linux, `%
 
 ## Updating and Uninstalling
 
-To update, build the new version and replace the binary; your project list and settings stay. To uninstall, delete the binary, and to remove Aurora's data too, delete its configuration folder (above) and its data folder (`~/.local/share/aurora` on Linux, `%LOCALAPPDATA%\Levix\Aurora` on Windows). Your repositories are never changed.
+To update, install the package of the new version over the old one: the Windows installer replaces the installed version, `sudo apt install ./Aurora_<version>_amd64.deb` upgrades the package, and a new AppImage replaces the old file. Your project list and settings stay. If you used a binary built from source before, delete it.
+
+To uninstall, use **Settings > Apps > Installed apps > Aurora > Uninstall** on Windows, `sudo apt remove aurora` on Debian and Ubuntu, or delete the AppImage (or the binary built from source). Your project list and settings stay; to remove them too, delete Aurora's configuration folder (above) and its data folder (`~/.local/share/aurora` on Linux, `%LOCALAPPDATA%\Levix\Aurora` on Windows). Your repositories are never changed.
 
 ## Troubleshooting
 
@@ -104,6 +123,8 @@ To update, build the new version and replace the binary; your project list and s
 |---|---|
 | On Linux, `aurora` stops with `libwebkit2gtk-4.1.so.0: cannot open shared object file` | Install WebKitGTK 4.1: `sudo apt-get install libwebkit2gtk-4.1-0` (Debian, Ubuntu) or `sudo dnf install webkit2gtk4.1` (Fedora) |
 | On Windows, the window does not open | Install the Microsoft Edge WebView2 Runtime from Microsoft's website |
+| Windows SmartScreen blocks the installer | The installer is not signed yet: choose **More info**, then **Run anyway** |
+| The AppImage does not start and mentions FUSE | Install FUSE 2 (`sudo apt install libfuse2` on Ubuntu 22.04, `libfuse2t64` on 24.04), or run it with `--appimage-extract-and-run` |
 | "The saved project list could not be read" | The old file was kept next to the new one as `projects.toml.damaged-<timestamp>`; fix it and rename it back to `projects.toml` with Aurora closed, or start a new list |
 | "Changes to the project list will not be kept" | Aurora cannot write its configuration folder, or the list was written by a newer Aurora; check the folder's permissions, or update Aurora |
 | An engine is Missing although it is installed | Make sure its folder is on the search path of the session that starts Aurora, or set its location in Settings, then **Refresh** |

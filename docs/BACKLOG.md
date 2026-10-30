@@ -11,9 +11,9 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-005: Desktop packages
 - **Priority**: medium
 - **Epic**: EPIC-001
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: desktop-packages
 - **Description**: Windows installer (NSIS or MSI) and Linux packages (AppImage and deb) built in CI for release candidates.
 
 ### FEAT-018: Inbox actions
@@ -151,6 +151,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
 - **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the integrations commands and plugs into dcp through its extension point: external subcommand, registered provider, cycle points discovery, after-merge and before-release-gate, and the integration gate (DCP FEAT-018, dcp v2.12.0). Registered at user level by Aurora's installer, it only adds items, warnings and its own gate, never weakens the protocol's gates. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing.
+
+### FEAT-035: Signed packages
+- **Priority**: medium
+- **Epic**: EPIC-001
+- **Status**: open
+- **Found**: 2026-10-30, FEAT-005 plan
+- **Plan**: -
+- **Description**: Sign the Windows installer (Authenticode) and the Linux packages once Levix has a certificate, in the release workflow, so SmartScreen and package managers trust them (ADR-0005, ADR-0008).
 
 ## Improvements
 

@@ -19,9 +19,9 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-017: Inbox view
 - **Priority**: medium
 - **Epic**: EPIC-005
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: inbox
 - **Description**: Gates to approve, release candidates to test, review threads, untriaged and blocking bugs, across projects, ordered by urgency.
 
 ### FEAT-018: Inbox actions

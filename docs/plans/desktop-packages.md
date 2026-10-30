@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Desktop packages
 kind: feature
 version: v0.2.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-10-30T15:57:17'
-updated_at: '2026-10-30T16:48:00'
+updated_at: '2026-10-30T17:08:56'
 session_id: null
 tags: []
 supersedes: null
@@ -50,6 +50,10 @@ status_log:
 - at: '2026-10-30T16:48:00'
   by: Levi
   note: All milestones done; the release workflow's dry run built the three packages; waits for pull request #15 to merge
+- at: '2026-10-30T17:08:56'
+  by: Levi
+  status: completed
+  note: 'Pull request #15 merged; FEAT-005 delivered'
 ---
 
 # Desktop packages

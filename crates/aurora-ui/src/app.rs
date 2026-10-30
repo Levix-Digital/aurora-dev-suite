@@ -80,6 +80,16 @@ pub struct AppContext {
     pub settings: RwSignal<Settings>,
     pub engines: RwSignal<EnginesState>,
     pub backend: StoredValue<Backend>,
+    /// The project the Project view shows, kept while Aurora runs (spec 004 FR-009).
+    pub project: RwSignal<Option<String>>,
+}
+
+impl AppContext {
+    /// Opens the Project view on the project `id`.
+    pub fn open_project(self, id: String) {
+        self.project.set(Some(id));
+        self.view.set(View::Project);
+    }
 }
 
 #[component]
@@ -91,6 +101,7 @@ pub fn App() -> impl IntoView {
         settings: RwSignal::new(Settings::default()),
         engines: RwSignal::new(EnginesState::default()),
         backend: StoredValue::new(backend),
+        project: RwSignal::new(None),
     };
     provide_context(ctx);
 

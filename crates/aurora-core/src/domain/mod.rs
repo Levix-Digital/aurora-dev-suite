@@ -5,6 +5,7 @@ mod engine;
 mod feature;
 mod portfolio;
 mod project;
+mod project_view;
 mod settings;
 
 pub use cycle::{
@@ -18,4 +19,5 @@ pub use project::{
     AddOutcome, Presence, Project, ProjectError, ProjectId, ProjectList, ProjectName,
     RegistryNotice,
 };
+pub use project_view::{CandidateStage, Gate, GateKind};
 pub use settings::{EnginesSettings, SETTINGS_VERSION, Settings, Theme, ThemeChoice};

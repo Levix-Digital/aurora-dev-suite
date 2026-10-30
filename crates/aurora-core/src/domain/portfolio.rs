@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{CandidateRun, CurrentRelease, CycleState};
+use super::{CandidateRun, CandidateStage, CurrentRelease, CycleState};
 
 /// Where a project stands in its development cycle, derived from its cycle state
 /// (research R1).
@@ -135,12 +135,12 @@ impl WaitingItem {
 }
 
 fn candidate_title(rc: &CandidateRun) -> String {
-    if rc.not_run > 0 {
-        format!("Run the manual tests of {}", rc.run)
-    } else if rc.failed > 0 {
-        format!("Look at the failed tests of {}", rc.run)
-    } else {
-        format!("Approve the release of {}", rc.version)
+    match rc.stage() {
+        CandidateStage::TestsToRun => format!("Run the manual tests of {}", rc.run),
+        CandidateStage::FailuresToReview => format!("Look at the failed tests of {}", rc.run),
+        CandidateStage::ReadyForRelease | CandidateStage::Released => {
+            format!("Approve the release of {}", rc.version)
+        }
     }
 }
 

@@ -54,9 +54,13 @@ The repositories you follow, each with its development cycle at a glance: the ph
 
 A folder inside a repository registers the repository's root. A repository already in the list is refused, even through another path. **Rename** changes only the name Aurora shows. **Remove** stops following the repository and never changes it on disk. A project whose folder was moved or deleted is shown as missing; **Locate…** points it to the new path.
 
-### Project (Alt+2) and Inbox (Alt+4)
+### Project (Alt+2)
 
-One project's development cycle, and the decisions waiting for you across all projects. Both need the Dev Cycle Protocol and are not available yet; until then they say what they will show and which release brings them.
+One project's development cycle, opened with **Open** on its Portfolio row or chosen in the view: the phase and what waits for you (the same as its Portfolio row), the gates that wait for your decision (a choice the protocol asks for, a release candidate to accept, the release gate), the recommended next step and its options, the plans in progress with their milestones, the current release and its open items, the release candidate, the open pull requests, and the blocking and untriaged bugs. **Refresh** reads it again. It reads through the Dev Cycle Protocol (`dcp`) and, without a `dcp` that answers its JSON contract, says what to install.
+
+### Inbox (Alt+4)
+
+The decisions waiting for you across all projects. It needs the Dev Cycle Protocol and is not available yet; until then it says what it will show and which release brings it.
 
 ### Engines (Alt+3)
 

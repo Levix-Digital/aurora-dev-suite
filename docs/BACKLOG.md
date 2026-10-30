@@ -19,9 +19,9 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-015: Project view
 - **Priority**: high
 - **Epic**: EPIC-004
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: project-view
 - **Description**: One project's cycle state: plans and milestones, backlog summary, roadmap, release candidate, pull requests, gates and blocking bugs.
 
 ### FEAT-017: Inbox view

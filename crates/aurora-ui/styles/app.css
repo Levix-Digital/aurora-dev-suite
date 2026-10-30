@@ -82,3 +82,7 @@ th { color: var(--text); font-weight: 600; }
 .cycle { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin: 0.5rem 0; }
 .cycle .waiting { color: var(--text); font-weight: 600; }
 .cycle details { flex-basis: 100%; }
+.section h2 { margin-top: 0; }
+.items { margin: 0; padding-left: 1.25rem; display: grid; gap: 0.4rem; }
+.progress-line { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.25rem; }
+.progress-line progress { width: 12rem; max-width: 100%; }

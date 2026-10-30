@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Portfolio view
 kind: feature
 version: v0.2.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-10-30T12:57:14'
-updated_at: '2026-10-30T13:16:19'
+updated_at: '2026-10-30T13:58:25'
 session_id: null
 tags: []
 supersedes: null
@@ -55,6 +55,10 @@ status_log:
   by: Levi
   status: in_progress
   note: All milestones done; waits for the pull request to merge
+- at: '2026-10-30T13:58:25'
+  by: Levi
+  status: completed
+  note: 'Pull request #9 merged; FEAT-014 delivered'
 ---
 
 # Portfolio view

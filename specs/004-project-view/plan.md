@@ -92,7 +92,7 @@ FEAT-015 Project view, release v0.2.0 "Portfolio on the dcp contract" (`docs/ROA
 ### Tests (quality-assurance)
 
 - **Core**: the stage of a candidate in each condition, and the Portfolio's waiting titles unchanged; gates of each sample (busy: Decision; idle: none; candidate: Decision and Release candidate acceptance) and of hand-built states (release gate, released candidate, ask without a recommended option); next step order with the recommended option first, and with a recommended key that is not among the options; plan progress fraction and label, including zero milestones and more done than total.
-- **Manual tests** (`tests/MANUAL_TESTS.md`, new section "Project view"): MT-PRJ-001 the preview shows every section of the busy sample from "Open" on `gedo`; MT-PRJ-002 gates and next step of the candidate and idle samples; MT-PRJ-003 switching, the missing project and Refresh; MT-PRJ-004 without `dcp` the view says what to install once and starts no process.
+- **Manual tests** (`tests/MANUAL_TESTS.md`, new section "Project view"): MT-PVW-001 the preview shows every section of the busy sample from "Open" on `gedo`; MT-PVW-002 gates and next step of the candidate and idle samples; MT-PVW-003 switching, the missing project and Refresh; MT-PVW-004 without `dcp` the view says what to install once and starts no process.
 - **Acceptance criteria**: the scenarios of US1 to US3 and SC-001 to SC-004.
 
 ### Documentation (architecture-docs, user-docs)

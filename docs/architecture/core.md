@@ -25,6 +25,7 @@ Domain model of the suite, the use cases and the ports every engine and surface 
 | `domain::engine` | `EngineKind` (`dcp`, `gedo`, `actx`), `EngineStatus` (ready, installed without contract, degraded with a reason, missing), `EngineReport`, `Capability`, `EngineSettings` (location, time limit) |
 | `domain::cycle` | `CycleState` (summary, `NextStep` with its options, `CurrentRelease` with open items, `PlanProgress`, `CandidateRun`, `PullRequestState`, blocking `ItemRef`s, `UntriagedBug`s, findings, read time) and `CycleError` (unavailable with a hint, project missing, timed out, too large, failed, invalid, unsupported with the side to update) |
 | `domain::portfolio` | what the views show of a cycle state: `CyclePhase` (release candidate, implementation, review, planning, idle), `WaitingItem`s by `WaitingKind` (release candidate, pull request, blocking bug, untriaged bug) and `CycleSummary` |
+| `domain::project_view` | what the Project view adds: `CandidateStage` of a release candidate (tests to run, failures to look at, ready for release, released), the `Gate`s by `GateKind` (decision, release candidate acceptance, release), `NextStep::ordered` and the progress of a `PlanProgress` |
 | `domain::settings` | `Settings` (version, `ThemeChoice`, per-engine settings) and `Theme` resolution |
 | `domain::feature` | `Feature`, `AvailabilityState` (available, unavailable with what is missing and a hint, not in this release), `EnginesOverview` |
 | `ports` | `ProjectRegistry`, `SettingsStore`, `EngineProbe`, `CycleSource` |
@@ -56,6 +57,8 @@ A feature is unavailable, with the hint of its engine, while its engine is not r
 **Cycle state.** `usecases::cycle::cycle_state` asks the `CycleSource` only when the latest `dcp` report is ready with `diagnose` at schema MAJOR 1 and the project's folder is present; otherwise it returns `Unavailable` with the catalog's hint, or `ProjectMissing`, without running anything. The state is read on demand and never stored. It does not depend on the release gate of the catalog: the views of v0.2.0 decide what to show.
 
 **Phase and waiting items.** `CyclePhase::of` takes the first that applies: a release candidate not released, a plan in progress, an open pull request, a current release with open items, otherwise idle (the `dcp.diagnose` reply has no phase field). `WaitingItem::all` lists what waits for the user: the unreleased release candidate (tests to run, failures to look at, or the release to approve), each pull request that needs action, each blocking bug and each untriaged bug; the recommended next step is not counted, since its options point at the same items. The Portfolio, the Project view and the Inbox share these rules.
+
+**Gates.** `Gate::all` lists the decisions that wait for the user: a decision when the protocol asks (`next.ask`), naming the recommended option, then the release candidate's acceptance while its tests are not run or failed, or the release gate when all passed (`CandidateRun::stage`, which also gives the candidate's waiting title). Plan approval happens before a plan is saved and is not in the contract. `NextStep::ordered` puts the recommended option first.
 
 `CollaborationSource` and `KnowledgeSource` are added with the first release that calls them.
 

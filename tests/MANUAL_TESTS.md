@@ -269,3 +269,66 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Step 2: the summaries come back
 - **Result**: [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
+
+## Project view
+
+### MT-PVW-001: Open a project from the Portfolio and see its whole cycle
+
+- **Covers**: Open, sections of the cycle state (spec 004 US1, SC-001)
+- **Prerequisites**: Trunk 0.22 installed
+- **Steps**:
+  1. Run `trunk serve` in `crates/aurora-ui`, open `http://127.0.0.1:1420` and press **Open** on `gedo`
+- **Expected**:
+  - The Project view opens with the title `gedo` and the project choice set to `gedo`
+  - Overview: "Implementation", "v0.4.0 Command line", "3 wait for you: 1 pull request, 1 blocking bug, 1 untriaged bug", the engine's summary line and the read time, as in the Portfolio row
+  - Plans: "Command line (in_progress)" with a bar and "3 of 5 milestones"
+  - Roadmap: "v0.4.0 Command line" with "FEAT-031 (high) gedo radar --json" and "FEAT-034 (medium) gedo doctor --json"
+  - Release candidate: "No release candidate"
+  - Pull requests: "#41 feat: gedo radar --json", "Needs your action", "2 threads open, CI green. 1 review thread for you"
+  - Blocking bugs: "BUG-012 (high) Merge falls back to text on renamed files"; untriaged bugs: "BUG-015 Slow radar on large repositories: no severity"
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-PVW-002: Gates and the next step
+
+- **Covers**: gates, next step order (spec 004 US2)
+- **Prerequisites**: as MT-PVW-001
+- **Steps**:
+  1. With `gedo` open, look at Gates and Next step
+  2. Choose `ai-code-agent-skills` in the project choice
+  3. Choose `any-context`
+- **Expected**:
+  - Step 1: the gate "Decision" says "Choose how to go on: Fix the blocking bug first"; Next step lists "Fix the blocking bug first" first, marked "Recommended", then "Resume plan command-line" and "Answer the review of pull request 41", each with its reason when it has one
+  - Step 2: "Release candidate" phase; the gates "Decision" and "Release candidate acceptance" with "v2.9.0-rc.1: 4 not run, 1 failed"; the release candidate "v2.9.0-rc.1 of v2.9.0: 4 not run, 1 failed" and "Not released"; the overview lists the finding about pull requests
+  - Step 3: "Idle", "No gate waits for you", "No step recommended", and every other section says it has nothing
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-PVW-003: Switching, a missing project and Refresh
+
+- **Covers**: project choice, failures, Refresh (spec 004 US3, SC-002)
+- **Prerequisites**: as MT-PVW-001, reloaded so nothing is chosen
+- **Steps**:
+  1. Open the Project view with Alt+2
+  2. Choose `levix-platform`
+  3. Choose `gedo`, press **Refresh**
+  4. Switch to the Portfolio and back to the Project view
+- **Expected**:
+  - Step 1: the first registered project is shown
+  - Step 2: "Missing: folder moved or deleted" and "Locate the folder to read its cycle state.", the same text as its Portfolio row
+  - Step 3: the sections stay while "Refreshing…" is shown, then the state comes back
+  - Step 4: `gedo` is still chosen
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-PVW-004: Without dcp the Project view says what to install once
+
+- **Covers**: unavailable state (spec 004 US3, SC-003)
+- **Prerequisites**: no `dcp` on the search path and no `dcp` location in Settings; at least one present project registered
+- **Steps**:
+  1. Start Aurora, press **Open** on a present project
+- **Expected**:
+  - The Project view line at the top says to install the Dev Cycle Protocol with its JSON contract
+  - The view says "Cycle state unavailable." within a second
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:

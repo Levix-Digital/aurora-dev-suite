@@ -11,9 +11,9 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-005: Desktop packages
 - **Priority**: medium
 - **Epic**: EPIC-001
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: desktop-packages
 - **Description**: Windows installer (NSIS or MSI) and Linux packages (AppImage and deb) built in CI for release candidates.
 
 ### FEAT-018: Inbox actions

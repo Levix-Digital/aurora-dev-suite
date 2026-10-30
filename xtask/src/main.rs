@@ -1,17 +1,20 @@
 //! Repository automation. `cargo xtask arch-check` enforces the dependency rule of
 //! ADR-0001: the core depends on no framework, adapter or process code.
+//! `cargo xtask release-check <tag>` checks a release tag against the workspace version.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 mod arch;
+mod release;
 
 fn main() -> ExitCode {
     let task = std::env::args().nth(1);
     match task.as_deref() {
         Some("arch-check") => arch_check(),
+        Some("release-check") => release_check(std::env::args().nth(2).as_deref()),
         _ => {
-            eprintln!("usage: cargo xtask arch-check");
+            eprintln!("usage: cargo xtask arch-check | cargo xtask release-check <tag>");
             ExitCode::from(2)
         }
     }
@@ -58,6 +61,39 @@ fn arch_check() -> ExitCode {
             eprintln!("arch-check: {violation}");
         }
         ExitCode::FAILURE
+    }
+}
+
+fn release_check(tag: Option<&str>) -> ExitCode {
+    let Some(tag) = tag else {
+        eprintln!("usage: cargo xtask release-check <tag>");
+        return ExitCode::from(2);
+    };
+    let metadata = match cargo_metadata::MetadataCommand::new().no_deps().exec() {
+        Ok(metadata) => metadata,
+        Err(error) => {
+            eprintln!("cargo metadata failed: {error}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let Some(desktop) = metadata
+        .workspace_packages()
+        .into_iter()
+        .find(|package| package.name.as_str() == "aurora-desktop")
+    else {
+        eprintln!("aurora-desktop is not in the workspace");
+        return ExitCode::FAILURE;
+    };
+    let version = desktop.version.to_string();
+    match release::check_tag(tag, &version) {
+        Ok(kind) => {
+            println!("release-check: {tag} is a {} of {version}", kind.label());
+            ExitCode::SUCCESS
+        }
+        Err(message) => {
+            eprintln!("release-check: {message}");
+            ExitCode::FAILURE
+        }
     }
 }
 

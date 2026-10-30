@@ -19,7 +19,7 @@ Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust 
 
 | Module | Holds |
 |---|---|
-| `runner` | process execution without a shell, standard input closed, time limit with kill, standard output capped at 1 MiB, standard error kept up to 64 KiB; output still open 250 ms after the limit (a child of the engine holding the pipes) counts as a timeout |
+| `runner` | process execution without a shell, standard input closed, time limit with kill, standard output capped at 1 MiB, standard error kept up to 64 KiB; output still open 250 ms after the limit (a child of the engine holding the pipes) counts as a timeout; on Windows the process starts without a console window (`CREATE_NO_WINDOW`) |
 | `cycle` | `DcpCycleSource`: runs `dcp diagnose --json --dir <root>` and reads the `dcp.diagnose` reply (MAJOR 1) into the core's `CycleState` |
 | `contract` | the version reply (`<engine>.version`, `schema_version` MAJOR 1, `version`, `capabilities`); unknown fields are ignored |
 | `probe` | `CliProbe`: locate, ask `version --json`, fall back to `--version` |

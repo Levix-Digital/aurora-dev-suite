@@ -165,6 +165,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - Step 1: Gedo is "Ready" with version 1.2.3 and its capabilities, and "Agent work" shows "Coming in v0.4.0"
   - Step 2: Gedo is "Installed without contract" with what to update
+  - On Windows, no console window opens at any step
 - **Result** (v0.2.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 

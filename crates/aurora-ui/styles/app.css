@@ -77,3 +77,8 @@ th { color: var(--text); font-weight: 600; }
 
 .empty { text-align: center; padding: 2rem 1rem; }
 .status-line { min-height: 1.5rem; }
+
+.totals { color: var(--text-body); }
+.cycle { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin: 0.5rem 0; }
+.cycle .waiting { color: var(--text); font-weight: 600; }
+.cycle details { flex-basis: 100%; }

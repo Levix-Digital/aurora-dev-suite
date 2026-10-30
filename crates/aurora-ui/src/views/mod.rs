@@ -3,6 +3,7 @@
 
 pub mod engines;
 pub mod inbox;
+pub mod loader;
 pub mod portfolio;
 pub mod project;
 pub mod settings;

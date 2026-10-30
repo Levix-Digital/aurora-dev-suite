@@ -86,7 +86,9 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - os: ubuntu-latest
+          # The oldest supported Ubuntu (TECH_SPEC): the binary links against its glibc, so
+          # the packages also run on Ubuntu 22.04 (a binary built on 24.04 needs glibc 2.39).
+          - os: ubuntu-22.04
             bundles: deb,appimage
           - os: windows-latest
             bundles: nsis
@@ -120,6 +122,15 @@ jobs:
       - name: Build the packages
         working-directory: crates/aurora-desktop
         run: cargo tauri build --bundles ${{ matrix.bundles }} --ci
+
+      - name: The Linux binary runs on Ubuntu 22.04 (glibc 2.35)
+        if: runner.os == 'Linux'
+        run: |
+          needed=$(objdump -T target/release/aurora | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -uV | tail -1)
+          echo "Highest glibc symbol version: $needed" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$(printf '%s\n' "$needed" 2.35 | sort -V | tail -1)" != "2.35" ]; then
+            echo "::error::the binary needs glibc $needed; Ubuntu 22.04 has 2.35"; exit 1
+          fi
 
       - name: Collect the packages
         shell: bash

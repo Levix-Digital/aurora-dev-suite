@@ -34,6 +34,7 @@ which.workspace = true
 [dev-dependencies]
 aurora-core = { workspace = true, features = ["fixtures"] }
 insta.workspace = true
+regex.workspace = true
 tempfile.workspace = true
 
 [lints]

@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use aurora_core::domain::CycleState;
 use aurora_core::fixtures;
 use aurora_engines::cycle::parse_diagnose_reply;
+use regex::Regex;
 use serde_json::Value;
 
 const SAMPLES: [&str; 4] = [
@@ -39,8 +40,28 @@ fn sample(name: &str) -> Value {
     )
 }
 
+/// The JSON Schema keywords the checker below understands. A schema using any other
+/// keyword fails `the_schema_uses_only_checked_keywords`, so a new keyword cannot be
+/// ignored silently.
+const CHECKED_KEYWORDS: [&str; 14] = [
+    "$schema",
+    "$id",
+    "$defs",
+    "$ref",
+    "title",
+    "description",
+    "type",
+    "const",
+    "pattern",
+    "minimum",
+    "required",
+    "properties",
+    "items",
+    "allOf",
+];
+
 /// The subset of JSON Schema the contract uses: `type` (one or several), `const`,
-/// `required`, `properties`, `items`, `allOf`, `minimum` and local `$ref`s.
+/// `pattern`, `minimum`, `required`, `properties`, `items`, `allOf` and local `$ref`s.
 fn violations(schema: &Value, root: &Value, value: &Value, at: &str, out: &mut Vec<String>) {
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str) {
         let pointer = reference.trim_start_matches('#');
@@ -58,6 +79,15 @@ fn violations(schema: &Value, root: &Value, value: &Value, at: &str, out: &mut V
         && value != expected
     {
         out.push(format!("{at}: expected {expected}"));
+    }
+    if let (Some(pattern), Some(text)) = (
+        schema.get("pattern").and_then(Value::as_str),
+        value.as_str(),
+    ) && !Regex::new(pattern)
+        .unwrap_or_else(|e| panic!("pattern {pattern}: {e}"))
+        .is_match(text)
+    {
+        out.push(format!("{at}: `{text}` does not match {pattern}"));
     }
     if let Some(types) = schema.get("type") {
         let allowed: Vec<&str> = match types {
@@ -149,8 +179,51 @@ fn the_checker_catches_contract_breaks() {
         .expect("object")
         .remove("reason");
     broken.as_object_mut().expect("object").remove("findings");
+    broken["schema_version"] = "2.0".into();
+    broken["bugs"]["blocking"][0]["id"] = "bug 12".into();
     let problems = check(&broken);
-    assert_eq!(problems.len(), 4, "{problems:#?}");
+    assert_eq!(problems.len(), 6, "{problems:#?}");
+}
+
+/// Every keyword of every schema object in the contract, with where it is.
+fn keywords(schema: &Value, at: &str, out: &mut Vec<String>) {
+    let Value::Object(object) = schema else {
+        return;
+    };
+    for (key, child) in object {
+        out.push(format!("{at}: {key}"));
+        match key.as_str() {
+            "properties" | "$defs" => {
+                for (name, sub) in child.as_object().into_iter().flatten() {
+                    keywords(sub, &format!("{at}.{name}"), out);
+                }
+            }
+            "items" => keywords(child, &format!("{at}[]"), out),
+            "allOf" => {
+                for sub in child.as_array().into_iter().flatten() {
+                    keywords(sub, at, out);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+#[test]
+fn the_schema_uses_only_checked_keywords() {
+    let mut found = Vec::new();
+    keywords(&schema(), "$", &mut found);
+    let unknown: Vec<&String> = found
+        .iter()
+        .filter(|entry| {
+            let keyword = entry.rsplit(": ").next().unwrap_or_default();
+            !CHECKED_KEYWORDS.contains(&keyword)
+        })
+        .collect();
+    assert!(
+        unknown.is_empty(),
+        "the checker does not understand {unknown:?}; teach it or use a full validator"
+    );
 }
 
 #[test]

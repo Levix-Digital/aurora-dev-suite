@@ -12,7 +12,7 @@ Add the `CycleSource` port to the core with Aurora's own cycle state types, a us
 
 **Language/Version**: Rust stable, edition 2024, MSRV 1.95 (unchanged)
 
-**Primary Dependencies**: existing ones only (`serde`, `serde_json`, `thiserror`, `tracing`; `regex`, already in the dependency tree, as a dev-dependency). The `jsonschema` crate was considered for validating the samples, but its tree brings `borrow-or-share` under MIT-0, outside the allowed licenses; the tests instead check the samples with a small checker of the schema keywords the contract uses (`type`, `const`, `pattern`, `minimum`, `required`, `properties`, `items`, `allOf`, local `$ref`), which is itself tested against broken samples; a test fails when the schema uses any keyword the checker does not understand.
+**Primary Dependencies**: existing ones (`serde`, `serde_json`, `thiserror`, `tracing`); new dev-dependency `jsonschema` (MIT, default features off) to validate the sample replies against the published schema. Its tree brings `borrow-or-share` under MIT-0; Levi approved adding MIT-0 to the allowed licenses on 2026-10-30 (`deny.toml`, `TECH_SPEC.md`).
 
 **Storage**: none (the cycle state is read on demand and not stored; ADR-0004)
 

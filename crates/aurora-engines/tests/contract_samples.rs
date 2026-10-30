@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use aurora_core::domain::CycleState;
 use aurora_core::fixtures;
 use aurora_engines::cycle::parse_diagnose_reply;
-use regex::Regex;
 use serde_json::Value;
 
 const SAMPLES: [&str; 4] = [
@@ -40,118 +39,13 @@ fn sample(name: &str) -> Value {
     )
 }
 
-/// The JSON Schema keywords the checker below understands. A schema using any other
-/// keyword fails `the_schema_uses_only_checked_keywords`, so a new keyword cannot be
-/// ignored silently.
-const CHECKED_KEYWORDS: [&str; 14] = [
-    "$schema",
-    "$id",
-    "$defs",
-    "$ref",
-    "title",
-    "description",
-    "type",
-    "const",
-    "pattern",
-    "minimum",
-    "required",
-    "properties",
-    "items",
-    "allOf",
-];
-
-/// The subset of JSON Schema the contract uses: `type` (one or several), `const`,
-/// `pattern`, `minimum`, `required`, `properties`, `items`, `allOf` and local `$ref`s.
-fn violations(schema: &Value, root: &Value, value: &Value, at: &str, out: &mut Vec<String>) {
-    if let Some(reference) = schema.get("$ref").and_then(Value::as_str) {
-        let pointer = reference.trim_start_matches('#');
-        let target = root
-            .pointer(pointer)
-            .unwrap_or_else(|| panic!("unknown $ref {reference}"));
-        violations(target, root, value, at, out);
-    }
-    if let Some(all) = schema.get("allOf").and_then(Value::as_array) {
-        for part in all {
-            violations(part, root, value, at, out);
-        }
-    }
-    if let Some(expected) = schema.get("const")
-        && value != expected
-    {
-        out.push(format!("{at}: expected {expected}"));
-    }
-    if let (Some(pattern), Some(text)) = (
-        schema.get("pattern").and_then(Value::as_str),
-        value.as_str(),
-    ) && !Regex::new(pattern)
-        .unwrap_or_else(|e| panic!("pattern {pattern}: {e}"))
-        .is_match(text)
-    {
-        out.push(format!("{at}: `{text}` does not match {pattern}"));
-    }
-    if let Some(types) = schema.get("type") {
-        let allowed: Vec<&str> = match types {
-            Value::String(one) => vec![one.as_str()],
-            Value::Array(many) => many.iter().filter_map(Value::as_str).collect(),
-            _ => Vec::new(),
-        };
-        if !allowed.iter().any(|kind| has_type(value, kind)) {
-            out.push(format!("{at}: expected {allowed:?}, got {value}"));
-            return;
-        }
-    }
-    if let (Some(minimum), Some(number)) = (
-        schema.get("minimum").and_then(Value::as_f64),
-        value.as_f64(),
-    ) && number < minimum
-    {
-        out.push(format!("{at}: below {minimum}"));
-    }
-    if let Value::Object(object) = value {
-        for field in schema
-            .get("required")
-            .and_then(Value::as_array)
-            .into_iter()
-            .flatten()
-            .filter_map(Value::as_str)
-        {
-            if !object.contains_key(field) {
-                out.push(format!("{at}: missing `{field}`"));
-            }
-        }
-        if let Some(properties) = schema.get("properties").and_then(Value::as_object) {
-            for (name, property) in properties {
-                if let Some(child) = object.get(name) {
-                    violations(property, root, child, &format!("{at}.{name}"), out);
-                }
-            }
-        }
-    }
-    if let (Value::Array(items), Some(item_schema)) = (value, schema.get("items")) {
-        for (index, item) in items.iter().enumerate() {
-            violations(item_schema, root, item, &format!("{at}[{index}]"), out);
-        }
-    }
-}
-
-fn has_type(value: &Value, kind: &str) -> bool {
-    match kind {
-        "object" => value.is_object(),
-        "array" => value.is_array(),
-        "string" => value.is_string(),
-        "boolean" => value.is_boolean(),
-        "null" => value.is_null(),
-        "integer" => value.is_i64() || value.is_u64(),
-        "number" => value.is_number(),
-        _ => false,
-    }
-}
-
 fn check(value: &Value) -> Vec<String> {
-    let schema = schema();
-    let mut out = Vec::new();
-    violations(&schema, &schema, value, "$", &mut out);
-    out
+    let validator =
+        jsonschema::draft202012::new(&schema()).expect("the contract is a valid schema");
+    validator
+        .iter_errors(value)
+        .map(|error| format!("{}: {error}", error.instance_path()))
+        .collect()
 }
 
 fn parsed(name: &str) -> CycleState {
@@ -170,7 +64,7 @@ fn every_sample_is_valid_against_the_contract() {
 }
 
 #[test]
-fn the_checker_catches_contract_breaks() {
+fn the_validator_catches_contract_breaks() {
     let mut broken = sample("busy.json");
     broken["schema"] = "dcp.version".into();
     broken["plans"][0]["milestones_done"] = (-1).into();
@@ -183,47 +77,6 @@ fn the_checker_catches_contract_breaks() {
     broken["bugs"]["blocking"][0]["id"] = "bug 12".into();
     let problems = check(&broken);
     assert_eq!(problems.len(), 6, "{problems:#?}");
-}
-
-/// Every keyword of every schema object in the contract, with where it is.
-fn keywords(schema: &Value, at: &str, out: &mut Vec<String>) {
-    let Value::Object(object) = schema else {
-        return;
-    };
-    for (key, child) in object {
-        out.push(format!("{at}: {key}"));
-        match key.as_str() {
-            "properties" | "$defs" => {
-                for (name, sub) in child.as_object().into_iter().flatten() {
-                    keywords(sub, &format!("{at}.{name}"), out);
-                }
-            }
-            "items" => keywords(child, &format!("{at}[]"), out),
-            "allOf" => {
-                for sub in child.as_array().into_iter().flatten() {
-                    keywords(sub, at, out);
-                }
-            }
-            _ => {}
-        }
-    }
-}
-
-#[test]
-fn the_schema_uses_only_checked_keywords() {
-    let mut found = Vec::new();
-    keywords(&schema(), "$", &mut found);
-    let unknown: Vec<&String> = found
-        .iter()
-        .filter(|entry| {
-            let keyword = entry.rsplit(": ").next().unwrap_or_default();
-            !CHECKED_KEYWORDS.contains(&keyword)
-        })
-        .collect();
-    assert!(
-        unknown.is_empty(),
-        "the checker does not understand {unknown:?}; teach it or use a full validator"
-    );
 }
 
 #[test]

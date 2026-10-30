@@ -20,7 +20,7 @@ description: "Tasks of the dcp adapter feature (v0.2.0, FEAT-016)"
 **Purpose**: the contract and its samples, which everything else follows
 
 - [x] T001 Add the sample replies under `crates/aurora-engines/tests/fixtures/dcp-diagnose/` (`busy.json`, `idle.json`, `release-candidate.json`, `unknown-fields.json`), each with `schema` `dcp.diagnose` and `schema_version` `1.0`
-- [x] T002 Add a test in `crates/aurora-engines/tests/contract_samples.rs` that checks every sample against `specs/002-dcp-adapter/contracts/dcp-diagnose.schema.json` (a small checker of the keywords the contract uses: `jsonschema` brings an MIT-0 crate, outside the allowed licenses) that the checker catches broken samples, and that the schema uses no keyword the checker does not understand
+- [x] T002 Add `jsonschema` as a dev-dependency of `aurora-engines` (default features off) and a test in `crates/aurora-engines/tests/contract_samples.rs` that validates every sample against `specs/002-dcp-adapter/contracts/dcp-diagnose.schema.json` and catches broken samples; allow MIT-0 in `deny.toml` and `TECH_SPEC.md` (approved by Levi, 2026-10-30) and run `cargo deny check`
 
 **Checkpoint**: the samples are valid against the schema.
 

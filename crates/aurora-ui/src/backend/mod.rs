@@ -145,10 +145,6 @@ impl Backend {
     }
 
     /// A project's development cycle state through `dcp` (FEAT-016).
-    #[allow(
-        dead_code,
-        reason = "the Portfolio, Project and Inbox views (FEAT-014, FEAT-015, FEAT-017) call it"
-    )]
     pub async fn project_cycle_state(&self, id: String) -> Reply<CycleState> {
         match self {
             Backend::Tauri => tauri::invoke("project_cycle_state", &tauri::IdArgs { id }).await,

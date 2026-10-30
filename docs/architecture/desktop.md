@@ -34,7 +34,7 @@ The bin is `aurora`. Without the `custom-protocol` feature it loads the interfac
 
 **Commands.** `list_projects`, `add_project`, `pick_and_add_project` (the system folder dialog, opened from Rust), `rename_project`, `remove_project`, `relocate_project`, `engines_overview`, `refresh_engines`, `get_settings`, `save_settings`, `project_cycle_state` (a project's cycle state through `dcp`, using the last engine probe and probing first when none ran). Each runs on Tauri's blocking pool and returns the core's types or a `CommandError`.
 
-**Engines.** `engines_overview` returns the last overview, probing and waiting the first time. `refresh_engines` returns at once and probes in the background. Each engine is probed on its own thread and emitted as `engine-report` when done; `engines-ready` carries the overview once all three finished, so a hanging engine delays only its own report.
+**Engines.** `engines_overview` returns the last overview, probing and waiting the first time; concurrent first calls (the Portfolio's parallel reads at start-up) wait for a single probe. `refresh_engines` returns at once and probes in the background. Each engine is probed on its own thread and emitted as `engine-report` when done; `engines-ready` carries the overview once all three finished, so a hanging engine delays only its own report.
 
 **Security.** The capability file grants only Aurora's commands and event listening; no file system, shell, HTTP or dialog permission reaches the web view. The content security policy allows only the application's own scripts (plus `wasm-unsafe-eval`), styles and the IPC channel, and no remote origin.
 

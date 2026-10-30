@@ -14,6 +14,8 @@ pub struct AppState {
     pub cycle: Arc<dyn CycleSource>,
     /// The result of the last complete probe of the engines.
     pub engines: Arc<Mutex<Option<EnginesOverview>>>,
+    /// Held during the first probe, so concurrent first calls probe once (spec 003 FR-009).
+    pub first_probe: Arc<Mutex<()>>,
 }
 
 impl AppState {
@@ -25,6 +27,7 @@ impl AppState {
             probe: Arc::new(CliProbe::new()),
             cycle: Arc::new(DcpCycleSource::new()),
             engines: Arc::new(Mutex::new(None)),
+            first_probe: Arc::new(Mutex::new(())),
         }
     }
 

@@ -3,6 +3,7 @@
 mod cycle;
 mod engine;
 mod feature;
+mod portfolio;
 mod project;
 mod settings;
 
@@ -12,6 +13,7 @@ pub use cycle::{
 };
 pub use engine::{Capability, EngineKind, EngineReport, EngineSettings, EngineStatus};
 pub use feature::{AvailabilityState, EnginesOverview, Feature, FeatureAvailability};
+pub use portfolio::{CyclePhase, CycleSummary, WaitingItem, WaitingKind};
 pub use project::{
     AddOutcome, Presence, Project, ProjectError, ProjectId, ProjectList, ProjectName,
     RegistryNotice,

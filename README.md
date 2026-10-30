@@ -50,7 +50,9 @@ The application is `target/release/aurora` (`target\release\aurora.exe` on Windo
 
 ### Portfolio (Alt+1)
 
-The repositories you follow. A folder inside a repository registers the repository's root. A repository already in the list is refused, even through another path. **Rename** changes only the name Aurora shows. **Remove** stops following the repository and never changes it on disk. A project whose folder was moved or deleted is shown as missing; **Locate…** points it to the new path.
+The repositories you follow, each with its development cycle at a glance: the phase (release candidate, implementation, review, planning or idle), the current release and how many things wait for you (a release candidate, pull requests that need action, blocking or untriaged bugs). The states are read through the Dev Cycle Protocol (`dcp`), several projects at a time, and each row fills in as its answer arrives; **Refresh** reads them again. Without a `dcp` that answers its JSON contract, the Portfolio says what to install and the rows say the cycle state is unavailable.
+
+A folder inside a repository registers the repository's root. A repository already in the list is refused, even through another path. **Rename** changes only the name Aurora shows. **Remove** stops following the repository and never changes it on disk. A project whose folder was moved or deleted is shown as missing; **Locate…** points it to the new path.
 
 ### Project (Alt+2) and Inbox (Alt+4)
 

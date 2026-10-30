@@ -215,3 +215,57 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - The engines show ready, installed without contract and missing; after one refresh Gedo is degraded, after the next ready again
 - **Result**: [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
+
+## Portfolio on the dcp contract
+
+### MT-POR-001: The preview shows each project's cycle summary
+
+- **Covers**: Portfolio rows, phase and waiting items (spec 003 US1, SC-001)
+- **Prerequisites**: Trunk 0.22 installed
+- **Steps**:
+  1. Run `trunk serve` in `crates/aurora-ui`, open `http://127.0.0.1:1420` and look at the Portfolio
+- **Expected**:
+  - `gedo`: "Implementation", "v0.4.0 Command line", "3 wait for you: 1 pull request, 1 blocking bug, 1 untriaged bug"
+  - `any-context`: "Idle", "No roadmap", "Nothing waits for you"
+  - `ai-code-agent-skills`: "Release candidate", "v2.9.0 Baseline and zero friction", "1 waits for you: 1 release candidate" and "Part of the project could not be read."
+  - `levix-platform`: "Missing" and "Locate the folder to read its cycle state."
+  - The header says "4 items wait for you"
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-POR-002: Without dcp the Portfolio says what to install once
+
+- **Covers**: unavailable state (spec 003 US3, SC-004)
+- **Prerequisites**: no `dcp` on the search path and no `dcp` location in Settings; at least two projects registered
+- **Steps**:
+  1. Start Aurora and look at the Portfolio
+- **Expected**:
+  - The Portfolio line at the top says to install the Dev Cycle Protocol with its JSON contract
+  - Every present project says "Cycle state unavailable." within a second; missing projects say to locate the folder
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-POR-003: With dcp answering the contract, every project shows its summary
+
+- **Covers**: Portfolio over the dcp adapter (spec 003 US1)
+- **Prerequisites**: the fake engine set as the `dcp` location in Settings (it answers the contract by default); at least two present projects registered
+- **Steps**:
+  1. Refresh the engines, then open the Portfolio and click Refresh
+- **Expected**:
+  - Every present project shows "Implementation", "v0.4.0 Command line" and "3 wait for you"
+  - While reading, the rows say "Reading the cycle state…" or "Refreshing…" and the header counts the reads
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-POR-004: A hanging dcp only delays its own rows
+
+- **Covers**: parallel reads, failures per row, Refresh (spec 003 US2, SC-002)
+- **Prerequisites**: as MT-POR-003, with the `dcp` time limit set to 3 seconds in Settings
+- **Steps**:
+  1. Write `hang` into a file `dcp.mode` next to the fake engine and click Refresh on the Portfolio
+  2. Remove `dcp.mode` and click Refresh again
+- **Expected**:
+  - Step 1: each row keeps its last summary marked "Refreshing…", then says the Dev Cycle Protocol did not answer within 3 s; the window stays responsive and the project actions keep working
+  - Step 2: the summaries come back
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:

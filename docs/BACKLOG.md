@@ -35,9 +35,9 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-016: dcp adapter
 - **Priority**: high
 - **Epic**: EPIC-004
-- **Status**: open
+- **Status**: in_progress
 - **Found**: 2026-10-27
-- **Plan**: -
+- **Plan**: dcp-adapter
 - **Description**: CycleSource over the dcp binary's versioned --json (ADR-0006), built against fixtures that follow the contract.
 
 ### FEAT-017: Inbox view

@@ -1,0 +1,40 @@
+{
+  "schema": "dcp.diagnose",
+  "schema_version": "1.3",
+  "root": "/repos/any-context",
+  "summary": "Project state: no roadmap, no blocking bugs, no plans in progress.",
+  "next": {
+    "ask": false,
+    "recommended": "request",
+    "options": [
+      {
+        "key": "request",
+        "title": "Start the request",
+        "reason": "nothing pending",
+        "icon": "play"
+      }
+    ]
+  },
+  "release": null,
+  "plans": [
+    {
+      "id": "docs",
+      "title": "Docs",
+      "status": "active",
+      "milestones_done": 0,
+      "milestones_total": 2,
+      "owner": "Levi"
+    }
+  ],
+  "release_candidate": null,
+  "pull_requests": [],
+  "bugs": {
+    "blocking": [],
+    "untriaged": []
+  },
+  "findings": [],
+  "generated_by": {
+    "engine": "dcp",
+    "version": "2.13.0"
+  }
+}

@@ -20,11 +20,12 @@ Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust 
 | Module | Holds |
 |---|---|
 | `runner` | process execution without a shell, standard input closed, time limit with kill, standard output capped at 1 MiB, standard error kept up to 64 KiB; output still open 250 ms after the limit (a child of the engine holding the pipes) counts as a timeout |
+| `cycle` | `DcpCycleSource`: runs `dcp diagnose --json --dir <root>` and reads the `dcp.diagnose` reply (MAJOR 1) into the core's `CycleState` |
 | `contract` | the version reply (`<engine>.version`, `schema_version` MAJOR 1, `version`, `capabilities`); unknown fields are ignored |
 | `probe` | `CliProbe`: locate, ask `version --json`, fall back to `--version` |
 | `repo` | repository root discovery (a `.git` directory or file, without running Git), canonical paths without `\\?\` on Windows, case-insensitive comparison on Windows |
 | `registry` | `TomlRegistry` over `projects.toml` and `TomlSettings` over `settings.toml`, atomic writes |
-| `bin/aurora-fake-engine` | feature `fake-engine`: a test double answering as `dcp`, `gedo` or `actx` after its file name |
+| `bin/aurora-fake-engine` | feature `fake-engine`: a test double answering as `dcp`, `gedo` or `actx` after its file name; as `dcp` it also answers `diagnose` |
 
 ## Behavior
 
@@ -35,6 +36,17 @@ Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust 
 3. A timeout, a reply over 1 MiB, a crash or a failing `--version` is `Degraded` with the reason; the standard error is kept in `last_error`.
 
 Nothing else is ever run or read: no scripts, interpreters or engine files (ADR-0006). Each probe logs the command, duration and outcome, never the output.
+
+**Reading a cycle state.** The contract is [`dcp-diagnose.schema.json`](../../specs/002-dcp-adapter/contracts/dcp-diagnose.schema.json), written by Aurora and proposed to the Dev Cycle Protocol; no `dcp` release answers it yet. `DcpCycleSource` runs the `location` of the latest `dcp` report with the `dcp` time limit, passing the project's root as one argument. Then:
+
+| Situation | Result |
+|---|---|
+| Exit 0 and a valid reply about the same root (canonical comparison, case-insensitive on Windows) | the cycle state, stamped with the time it was read; unknown fields ignored; warnings on standard error ignored |
+| Not JSON, not a `dcp.diagnose` envelope, a missing field or a reply about another root | `Invalid`, with the standard error kept |
+| Schema MAJOR other than 1 | `Unsupported`, "update Aurora" when newer, "update the engine" when older |
+| A timeout, a reply over 1 MiB, a failure to start or a non-zero exit | `TimedOut`, `TooLarge` or `Failed`, with the standard error kept |
+
+Each request logs the root, the duration and the outcome, never the reply.
 
 **The project list.** `projects.toml` and `settings.toml` live in the user's configuration directory (`~/.config/aurora` on Linux, `%APPDATA%\Levix\Aurora\config` on Windows), each with `version = 1`. Writes go to a temporary file renamed over the old one. Adding a folder registers its repository root and refuses folders that do not exist, are outside a repository, or are already registered through any path. A project whose root is no longer a repository is `Missing`. On load:
 
@@ -47,7 +59,7 @@ Nothing else is ever run or read: no scripts, interpreters or engine files (ADR-
 
 Unreadable or newer settings fall back to the defaults without touching the file.
 
-**Tests.** `tests/runner.rs` and `tests/probe.rs` run the fake engine (feature `fake-engine`, so `cargo test --all-features`) in every mode: `ready`, `no-contract`, `unsupported`, `invalid`, `huge`, `hang`, `crash`, `echo` and `orphan`. The mode comes from a `<binary>.mode` file next to the binary, or `AURORA_FAKE_MODE`. The tests hard-link the binary into Cargo's target directory to avoid "text file busy" on Linux.
+**Tests.** `tests/runner.rs` and `tests/probe.rs` run the fake engine (feature `fake-engine`, so `cargo test --all-features`) in every mode: `ready`, `no-contract`, `unsupported`, `invalid`, `huge`, `hang`, `crash`, `echo` and `orphan`. `tests/cycle.rs` runs it as `dcp diagnose` in those modes and in `idle`, `warn`, `other-root` and `old`. `tests/contract_samples.rs` checks the sample replies in `tests/fixtures/dcp-diagnose` against the schema with `jsonschema` and that they read into the core's sample cycle states, so the fake engine, the fixtures and the preview follow the same contract. The mode comes from a `<binary>.mode` file next to the binary, or `AURORA_FAKE_MODE`. The tests hard-link the binary into Cargo's target directory to avoid "text file busy" on Linux.
 
 ## Interfaces
 

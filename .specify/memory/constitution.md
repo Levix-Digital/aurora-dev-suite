@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: 1351e66320758ba496abe1b323a62c3f72521958928b89580f3150488e0ac359
-content-sha256: e3382297dfd9562152ebf3e8f62e94aa79db5e915790509ed3dec3b3d9bb806d
+sources-sha256: f77295f76fd6293e429891341c8642a72a71503577678a43e37867c6a7f3f096
+content-sha256: a2a39bbc8678f6cead6fccaec418031b9d5c031af76ea2510f97b1382e7742b6
 -->
 # aurora-dev-suite Constitution
 
@@ -152,7 +152,7 @@ A desktop application without a service. Recovery means: a missing or broken eng
 
 ### Constraints
 
-- Proprietary, binary-only distribution; every crate `publish = false`; dependencies limited to permissive licenses (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode-3.0), checked with `cargo-deny` (ADR-0005). Named exceptions in `deny.toml`, each used unmodified: MPL-2.0 (file-level copyleft) for `cssparser`, `cssparser-macros`, `selectors` and `dtoa-short` of the Tauri tree and `option-ext` of `directories`; CC0-1.0 for `base16` and BSL-1.0 for `xxhash-rust`. Any other crate outside the list needs a new review.
+- Proprietary, binary-only distribution; every crate `publish = false`; dependencies limited to permissive licenses (MIT, MIT-0, Apache-2.0, BSD, ISC, Zlib, Unicode-3.0), checked with `cargo-deny` (ADR-0005). Named exceptions in `deny.toml`, each used unmodified: MPL-2.0 (file-level copyleft) for `cssparser`, `cssparser-macros`, `selectors` and `dtoa-short` of the Tauri tree and `option-ext` of `directories`; CC0-1.0 for `base16` and BSL-1.0 for `xxhash-rust`. Any other crate outside the list needs a new review.
 - No engine crate is linked (ADR-0003); the engines' schedules decide when each feature can ship.
 - One small team (Levi and coding agents): the foundations stay small, and every feature is testable with fixtures before its engine exists.
 - Windows and Linux are both first-class: CI builds and tests on both.
@@ -175,4 +175,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-29
+**Version**: 1.4.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-30

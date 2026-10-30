@@ -6,11 +6,11 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use aurora_core::domain::{
-    AddOutcome, EngineKind, EngineReport, EnginesOverview, Project, ProjectId, ProjectList,
-    Settings,
+    AddOutcome, CycleState, EngineKind, EngineReport, EnginesOverview, Project, ProjectError,
+    ProjectId, ProjectList, Settings,
 };
-use aurora_core::fixtures::{self, MemoryRegistry, MemorySettings};
-use aurora_core::usecases::{engines, projects, settings};
+use aurora_core::fixtures::{self, FixtureCycleSource, MemoryRegistry, MemorySettings};
+use aurora_core::usecases::{cycle, engines, projects, settings};
 
 use super::{CommandError, OnReady, OnReport, Reply};
 
@@ -135,20 +135,32 @@ impl FixtureBackend {
     }
 
     pub fn save_settings(&self, new: Settings) -> Reply<Settings> {
-        settings::save(&self.settings, new).map_err(|error| CommandError {
-            kind: "storage".to_owned(),
-            message: error.to_string(),
-        })
+        settings::save(&self.settings, new).map_err(|error| CommandError::new("storage", error))
+    }
+
+    /// The sample cycle states. The preview takes `dcp` as ready with the contract, so the
+    /// views can be built before it ships (ADR-0006); the Engines view still shows the
+    /// sample engines.
+    pub fn project_cycle_state(&self, id: &str) -> Reply<CycleState> {
+        let project = self
+            .list_projects()
+            .projects
+            .into_iter()
+            .find(|project| project.id.0 == id)
+            .ok_or_else(|| ProjectError::UnknownProject { id: id.to_owned() })?;
+        let dcp = fixtures::ready_report(EngineKind::DevCycle, &["diagnose"]);
+        Ok(cycle::cycle_state(
+            &FixtureCycleSource,
+            Some(&dcp),
+            &self.get_settings(),
+            &project,
+        )?)
     }
 }
 
 impl From<aurora_core::domain::ProjectError> for CommandError {
     fn from(error: aurora_core::domain::ProjectError) -> Self {
-        let kind = serde_json_kind(&error);
-        Self {
-            kind,
-            message: error.to_string(),
-        }
+        Self::new(&serde_json_kind(&error), error)
     }
 }
 
@@ -184,20 +196,45 @@ mod tests {
         "refresh_engines",
         "get_settings",
         "save_settings",
+        "project_cycle_state",
     ];
 
-    const CONTRACT: &str =
-        include_str!("../../../../specs/001-foundations/contracts/desktop-commands.md");
+    const CONTRACTS: [&str; 2] = [
+        include_str!("../../../../specs/001-foundations/contracts/desktop-commands.md"),
+        include_str!("../../../../specs/002-dcp-adapter/contracts/desktop-commands.md"),
+    ];
 
     #[test]
     fn answers_every_command_of_the_contract() {
-        let documented: Vec<&str> = CONTRACT
-            .lines()
+        let documented: Vec<&str> = CONTRACTS
+            .iter()
+            .flat_map(|contract| contract.lines())
             .filter_map(|line| line.strip_prefix("| `"))
             .filter_map(|rest| rest.split('`').next())
             .filter(|name| !name.contains('-'))
             .collect();
         assert_eq!(documented, COMMANDS);
+    }
+
+    #[test]
+    fn every_sample_project_answers_its_cycle_state() {
+        let backend = FixtureBackend::sample();
+        for project in backend.list_projects().projects {
+            let answer = backend.project_cycle_state(&project.id.0);
+            match project.presence {
+                Presence::Present => assert!(answer.is_ok(), "{}: {answer:?}", project.name),
+                Presence::Missing => {
+                    let error = answer.expect_err("missing project");
+                    assert_eq!(error.kind, "cycle");
+                    assert!(matches!(
+                        error.detail,
+                        Some(aurora_core::domain::CycleError::ProjectMissing { .. })
+                    ));
+                }
+            }
+        }
+        let unknown = backend.project_cycle_state("nope").expect_err("unknown");
+        assert_eq!(unknown.kind, "unknownProject");
     }
 
     #[test]

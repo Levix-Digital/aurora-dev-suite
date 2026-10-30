@@ -25,6 +25,7 @@ console_error_panic_hook = "0.1"
 directories = "6.0"
 dunce = "1.0"
 insta = { version = "1.49", features = ["json"] }
+jsonschema = { version = "0.60", default-features = false }
 js-sys = "0.3"
 leptos = { version = "0.8", features = ["csr"] }
 serde = { version = "1.0", features = ["derive"] }

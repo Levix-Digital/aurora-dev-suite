@@ -10,8 +10,8 @@ Domain model of the suite, the use cases and the ports every engine and surface 
 
 ## Responsibilities
 
-- The domain types of projects, engines, settings and features, as plain data with serde (`camelCase` on the wire).
-- The use cases, one per user action: list, add, rename, remove and relocate a project; read and save the settings; probe an engine and build the engines overview.
+- The domain types of projects, engines, settings, features and the development cycle state, as plain data with serde (`camelCase` on the wire).
+- The use cases, one per user action: list, add, rename, remove and relocate a project; read and save the settings; probe an engine and build the engines overview; read a project's cycle state.
 - The ports the use cases need, as traits.
 - The catalog of what each feature needs from each engine.
 - Sample data and in-memory ports behind the `fixtures` feature, for every crate's tests and the interface preview.
@@ -23,12 +23,13 @@ Domain model of the suite, the use cases and the ports every engine and surface 
 |---|---|
 | `domain::project` | `Project`, `ProjectId`, `ProjectName` (trimmed, 1 to 80 characters), `Presence` (present or missing), `ProjectList` with an optional `RegistryNotice` (recovered or read-only), `AddOutcome`, `ProjectError` |
 | `domain::engine` | `EngineKind` (`dcp`, `gedo`, `actx`), `EngineStatus` (ready, installed without contract, degraded with a reason, missing), `EngineReport`, `Capability`, `EngineSettings` (location, time limit) |
+| `domain::cycle` | `CycleState` (summary, `NextStep` with its options, `CurrentRelease` with open items, `PlanProgress`, `CandidateRun`, `PullRequestState`, blocking `ItemRef`s, `UntriagedBug`s, findings, read time) and `CycleError` (unavailable with a hint, project missing, timed out, too large, failed, invalid, unsupported with the side to update) |
 | `domain::settings` | `Settings` (version, `ThemeChoice`, per-engine settings) and `Theme` resolution |
 | `domain::feature` | `Feature`, `AvailabilityState` (available, unavailable with what is missing and a hint, not in this release), `EnginesOverview` |
-| `ports` | `ProjectRegistry`, `SettingsStore`, `EngineProbe` |
-| `usecases` | `projects`, `settings`, `engines` |
-| `capabilities` | the feature catalog and its evaluation |
-| `fixtures` | feature `fixtures`: four sample projects (one missing), sample engine reports, `MemoryRegistry`, `MemorySettings`, `FixtureProbe` |
+| `ports` | `ProjectRegistry`, `SettingsStore`, `EngineProbe`, `CycleSource` |
+| `usecases` | `projects`, `settings`, `engines`, `cycle` |
+| `capabilities` | the feature catalog and its evaluation; `usable_dcp` for the cycle state |
+| `fixtures` | feature `fixtures`: four sample projects (one missing), sample engine reports, `MemoryRegistry`, `MemorySettings`, `FixtureProbe`, three sample cycle states (busy, idle, release candidate) and `FixtureCycleSource` |
 
 ```mermaid
 flowchart LR
@@ -51,7 +52,9 @@ The catalog maps each feature to one engine, the capabilities it needs (schema M
 
 A feature is unavailable, with the hint of its engine, while its engine is not ready or lacks a capability; only a ready engine counts, and only the capabilities of the engine the feature names. When everything is there but the feature ships in a later release, it says "not in this release". Errors are values (`thiserror` enums), never panics.
 
-`CycleSource`, `CollaborationSource` and `KnowledgeSource` are added with the first release that calls them.
+**Cycle state.** `usecases::cycle::cycle_state` asks the `CycleSource` only when the latest `dcp` report is ready with `diagnose` at schema MAJOR 1 and the project's folder is present; otherwise it returns `Unavailable` with the catalog's hint, or `ProjectMissing`, without running anything. The state is read on demand and never stored. It does not depend on the release gate of the catalog: the views of v0.2.0 decide what to show.
+
+`CollaborationSource` and `KnowledgeSource` are added with the first release that calls them.
 
 ## Interfaces
 

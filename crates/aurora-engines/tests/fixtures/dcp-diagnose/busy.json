@@ -1,0 +1,39 @@
+{
+  "schema": "dcp.diagnose",
+  "schema_version": "1.0",
+  "root": "/repos/gedo",
+  "summary": "Project state: current release v0.4.0 Command line, 1 blocking bug, 1 plan in progress.",
+  "next": {
+    "ask": true,
+    "recommended": "bugs",
+    "options": [
+      { "key": "bugs", "title": "Fix the blocking bug first", "reason": "BUG-012 blocks the release" },
+      { "key": "plan:command-line", "title": "Resume plan command-line", "reason": "3 of 5 milestones done" },
+      { "key": "pr:41", "title": "Answer the review of pull request 41" }
+    ]
+  },
+  "release": {
+    "version": "v0.4.0",
+    "name": "Command line",
+    "open_items": [
+      { "id": "FEAT-031", "rank": "high", "title": "gedo radar --json" },
+      { "id": "FEAT-034", "rank": "medium", "title": "gedo doctor --json" }
+    ]
+  },
+  "plans": [
+    { "id": "command-line", "title": "Command line", "status": "in_progress", "milestones_done": 3, "milestones_total": 5 }
+  ],
+  "release_candidate": null,
+  "pull_requests": [
+    { "number": 41, "title": "feat: gedo radar --json", "summary": "2 threads open, CI green", "needs_action": true, "threads_for_user": 1 }
+  ],
+  "bugs": {
+    "blocking": [
+      { "id": "BUG-012", "rank": "high", "title": "Merge falls back to text on renamed files" }
+    ],
+    "untriaged": [
+      { "id": "BUG-015", "rank": null, "title": "Slow radar on large repositories", "reason": "no severity" }
+    ]
+  },
+  "findings": []
+}

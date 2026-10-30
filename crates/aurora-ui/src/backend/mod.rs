@@ -8,7 +8,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aurora_core::domain::{
-    AddOutcome, EngineReport, EnginesOverview, Project, ProjectList, Settings,
+    AddOutcome, CycleError, CycleState, EngineReport, EnginesOverview, Project, ProjectList,
+    Settings,
 };
 use serde::Deserialize;
 
@@ -19,13 +20,30 @@ pub use fixture::FixtureBackend;
 pub struct CommandError {
     pub kind: String,
     pub message: String,
+    /// The cycle error itself, for the `cycle` kind.
+    #[serde(default)]
+    pub detail: Option<CycleError>,
 }
 
 impl CommandError {
-    pub fn internal(message: impl ToString) -> Self {
+    pub fn new(kind: &str, message: impl ToString) -> Self {
         Self {
-            kind: "internal".to_owned(),
+            kind: kind.to_owned(),
             message: message.to_string(),
+            detail: None,
+        }
+    }
+
+    pub fn internal(message: impl ToString) -> Self {
+        Self::new("internal", message)
+    }
+}
+
+impl From<CycleError> for CommandError {
+    fn from(error: CycleError) -> Self {
+        Self {
+            detail: Some(error.clone()),
+            ..Self::new("cycle", error)
         }
     }
 }
@@ -123,6 +141,18 @@ impl Backend {
                 fixture.refresh_engines();
                 Ok(())
             }
+        }
+    }
+
+    /// A project's development cycle state through `dcp` (FEAT-016).
+    #[allow(
+        dead_code,
+        reason = "the Portfolio, Project and Inbox views (FEAT-014, FEAT-015, FEAT-017) call it"
+    )]
+    pub async fn project_cycle_state(&self, id: String) -> Reply<CycleState> {
+        match self {
+            Backend::Tauri => tauri::invoke("project_cycle_state", &tauri::IdArgs { id }).await,
+            Backend::Fixture(fixture) => fixture.project_cycle_state(&id),
         }
     }
 

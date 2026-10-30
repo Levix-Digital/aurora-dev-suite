@@ -15,6 +15,7 @@
     "allow-engines-overview",
     "allow-refresh-engines",
     "allow-get-settings",
-    "allow-save-settings"
+    "allow-save-settings",
+    "allow-project-cycle-state"
   ]
 }

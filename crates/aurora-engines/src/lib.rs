@@ -2,11 +2,13 @@
 //! project registry and settings files (ADR-0003, ADR-0004, ADR-0006).
 
 pub mod contract;
+pub mod cycle;
 pub mod probe;
 pub mod registry;
 pub mod repo;
 pub mod runner;
 
+pub use cycle::DcpCycleSource;
 pub use probe::CliProbe;
 pub use registry::{TomlRegistry, TomlSettings};
 

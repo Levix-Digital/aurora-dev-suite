@@ -1,0 +1,13 @@
+{
+  "schema": "dcp.diagnose",
+  "schema_version": "1.0",
+  "root": "/repos/any-context",
+  "summary": "Project state: no roadmap, no blocking bugs, no plans in progress.",
+  "next": { "ask": false, "recommended": null, "options": [] },
+  "release": null,
+  "plans": [],
+  "release_candidate": null,
+  "pull_requests": [],
+  "bugs": { "blocking": [], "untriaged": [] },
+  "findings": []
+}

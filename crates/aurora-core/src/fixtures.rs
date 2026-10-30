@@ -6,11 +6,12 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use crate::domain::{
-    AddOutcome, Capability, EngineKind, EngineReport, EngineSettings, EngineStatus,
-    EnginesOverview, Presence, Project, ProjectError, ProjectId, ProjectList, ProjectName,
-    RegistryNotice, Settings,
+    AddOutcome, CandidateRun, Capability, CurrentRelease, CycleError, CycleState, EngineKind,
+    EngineReport, EngineSettings, EngineStatus, EnginesOverview, ItemRef, NextOption, NextStep,
+    PlanProgress, Presence, Project, ProjectError, ProjectId, ProjectList, ProjectName,
+    PullRequestState, RegistryNotice, Settings, UntriagedBug, UpdateSide,
 };
-use crate::ports::{EngineProbe, ProjectRegistry, SettingsError, SettingsStore};
+use crate::ports::{CycleSource, EngineProbe, ProjectRegistry, SettingsError, SettingsStore};
 use crate::usecases;
 
 pub const CHECKED_AT: &str = "2026-10-27T18:00:00Z";
@@ -254,6 +255,167 @@ pub fn sample_overview() -> EnginesOverview {
     usecases::engines::overview(sample_reports())
 }
 
+fn item(id: &str, rank: Option<&str>, title: &str) -> ItemRef {
+    ItemRef {
+        id: id.to_owned(),
+        rank: rank.map(str::to_owned),
+        title: title.to_owned(),
+    }
+}
+
+fn option(key: &str, title: &str, reason: Option<&str>) -> NextOption {
+    NextOption {
+        key: key.to_owned(),
+        title: title.to_owned(),
+        reason: reason.map(str::to_owned),
+    }
+}
+
+/// A project with a release under way, a plan, a pull request waiting for the user and
+/// bugs; the same data as `busy.json` of the `dcp.diagnose` samples.
+pub fn busy_cycle_state() -> CycleState {
+    CycleState {
+        summary: "Project state: current release v0.4.0 Command line, 1 blocking bug, 1 plan in progress.".to_owned(),
+        next: NextStep {
+            ask: true,
+            recommended: Some("bugs".to_owned()),
+            options: vec![
+                option("bugs", "Fix the blocking bug first", Some("BUG-012 blocks the release")),
+                option("plan:command-line", "Resume plan command-line", Some("3 of 5 milestones done")),
+                option("pr:41", "Answer the review of pull request 41", None),
+            ],
+        },
+        release: Some(CurrentRelease {
+            version: "v0.4.0".to_owned(),
+            name: "Command line".to_owned(),
+            open_items: vec![
+                item("FEAT-031", Some("high"), "gedo radar --json"),
+                item("FEAT-034", Some("medium"), "gedo doctor --json"),
+            ],
+        }),
+        plans: vec![PlanProgress {
+            id: "command-line".to_owned(),
+            title: "Command line".to_owned(),
+            status: "in_progress".to_owned(),
+            milestones_done: 3,
+            milestones_total: 5,
+        }],
+        release_candidate: None,
+        pull_requests: vec![PullRequestState {
+            number: 41,
+            title: "feat: gedo radar --json".to_owned(),
+            summary: "2 threads open, CI green".to_owned(),
+            needs_action: true,
+            threads_for_user: 1,
+        }],
+        blocking_bugs: vec![item(
+            "BUG-012",
+            Some("high"),
+            "Merge falls back to text on renamed files",
+        )],
+        untriaged_bugs: vec![UntriagedBug {
+            item: item("BUG-015", None, "Slow radar on large repositories"),
+            reason: "no severity".to_owned(),
+        }],
+        findings: Vec::new(),
+        read_at: CHECKED_AT.to_owned(),
+    }
+}
+
+/// A project with nothing in progress; `idle.json` of the samples.
+pub fn idle_cycle_state() -> CycleState {
+    CycleState {
+        summary: "Project state: no roadmap, no blocking bugs, no plans in progress.".to_owned(),
+        next: NextStep {
+            ask: false,
+            recommended: None,
+            options: Vec::new(),
+        },
+        release: None,
+        plans: Vec::new(),
+        release_candidate: None,
+        pull_requests: Vec::new(),
+        blocking_bugs: Vec::new(),
+        untriaged_bugs: Vec::new(),
+        findings: Vec::new(),
+        read_at: CHECKED_AT.to_owned(),
+    }
+}
+
+/// A release candidate waiting for manual tests; `release-candidate.json` of the samples.
+pub fn candidate_cycle_state() -> CycleState {
+    CycleState {
+        summary: "Project state: release candidate v2.9.0-rc.1 waits for manual tests.".to_owned(),
+        next: NextStep {
+            ask: true,
+            recommended: Some("rc:v2.9.0-rc.1".to_owned()),
+            options: vec![option(
+                "rc:v2.9.0-rc.1",
+                "Run the manual tests of v2.9.0-rc.1",
+                Some("4 not run, 1 failed"),
+            )],
+        },
+        release: Some(CurrentRelease {
+            version: "v2.9.0".to_owned(),
+            name: "Baseline and zero friction".to_owned(),
+            open_items: Vec::new(),
+        }),
+        plans: Vec::new(),
+        release_candidate: Some(CandidateRun {
+            run: "v2.9.0-rc.1".to_owned(),
+            version: "v2.9.0".to_owned(),
+            not_run: 4,
+            failed: 1,
+            released: false,
+        }),
+        pull_requests: Vec::new(),
+        blocking_bugs: Vec::new(),
+        untriaged_bugs: Vec::new(),
+        findings: vec![
+            "pull requests: the platform could not be reached, so they were not read".to_owned(),
+        ],
+        read_at: CHECKED_AT.to_owned(),
+    }
+}
+
+/// A `CycleSource` that answers per sample repository root: `gedo` busy, `any-context`
+/// idle, `ai-code-agent-skills` a release candidate, and `slow`, `broken` and `future`
+/// the failures timed out, invalid and unsupported.
+#[derive(Debug, Default)]
+pub struct FixtureCycleSource;
+
+impl CycleSource for FixtureCycleSource {
+    fn cycle_state(
+        &self,
+        _engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<CycleState, CycleError> {
+        let name = root
+            .strip_prefix(REPOS)
+            .ok()
+            .map(|relative| relative.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        match name.as_str() {
+            "gedo" => Ok(busy_cycle_state()),
+            "any-context" => Ok(idle_cycle_state()),
+            "ai-code-agent-skills" => Ok(candidate_cycle_state()),
+            "slow" => Err(CycleError::TimedOut {
+                timeout_ms: settings.timeout_ms,
+                stderr: String::new(),
+            }),
+            "future" => Err(CycleError::Unsupported {
+                found: 2,
+                update: UpdateSide::Aurora,
+            }),
+            _ => Err(CycleError::Invalid {
+                message: "the reply is not a versioned JSON envelope".to_owned(),
+                stderr: "dcp: warning: sample engine without an answer for this project".to_owned(),
+            }),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -284,6 +446,23 @@ mod tests {
         let report = degraded_report(EngineKind::Gedo, "timed out after 10 s");
         assert!(matches!(report.status, EngineStatus::Degraded { .. }));
         assert!(report.last_error.is_some());
+    }
+
+    #[test]
+    fn every_sample_project_has_a_cycle_answer() {
+        let source = FixtureCycleSource;
+        let dcp = ready_report(EngineKind::DevCycle, &["diagnose"]);
+        let settings = EngineSettings::default();
+        let answer = |name: &str| source.cycle_state(&dcp, &settings, &Path::new(REPOS).join(name));
+        assert_eq!(answer("gedo"), Ok(busy_cycle_state()));
+        assert_eq!(answer("any-context"), Ok(idle_cycle_state()));
+        assert_eq!(answer("ai-code-agent-skills"), Ok(candidate_cycle_state()));
+        assert!(matches!(answer("slow"), Err(CycleError::TimedOut { .. })));
+        assert!(matches!(
+            answer("future"),
+            Err(CycleError::Unsupported { .. })
+        ));
+        assert!(matches!(answer("broken"), Err(CycleError::Invalid { .. })));
     }
 
     #[test]

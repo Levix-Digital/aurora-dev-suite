@@ -3,6 +3,11 @@
 //! binary, else from `AURORA_FAKE_MODE`, else `ready`:
 //! ready, no-contract, unsupported, invalid, huge, hang, crash, echo, orphan (answers, but
 //! leaves a child process holding its output open).
+//!
+//! As `dcp` it also answers `diagnose --json --dir <root>` with the `busy.json` sample about
+//! `<root>`, and with these modes: idle (the `idle.json` sample), warn (a warning on
+//! standard error, then the reply), other-root (a reply about another repository), old
+//! (schema version 0.9), and unsupported and invalid as for the version reply.
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -18,6 +23,14 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let contract = args == ["version", "--json"];
     let plain = args == ["--version"];
+    let diagnose_root = match args.as_slice() {
+        [command, json, dir, root]
+            if command == "diagnose" && json == "--json" && dir == "--dir" =>
+        {
+            Some(root.clone())
+        }
+        _ => None,
+    };
 
     if args == ["--sleep-forever"] {
         std::thread::sleep(Duration::from_secs(120));
@@ -47,6 +60,9 @@ fn main() {
                 .spawn();
             println!("{engine} 1.2.3");
         }
+        _ if diagnose_root.is_some() && engine == "dcp" => {
+            diagnose(&mode, diagnose_root.as_deref().unwrap_or_default());
+        }
         "no-contract" if contract => {
             eprintln!("error: unrecognized subcommand 'version'");
             std::process::exit(2);
@@ -67,6 +83,25 @@ fn main() {
             std::process::exit(2);
         }
     }
+}
+
+const BUSY: &str = include_str!("../../tests/fixtures/dcp-diagnose/busy.json");
+const IDLE: &str = include_str!("../../tests/fixtures/dcp-diagnose/idle.json");
+
+fn diagnose(mode: &str, root: &str) {
+    let sample = if mode == "idle" { IDLE } else { BUSY };
+    let mut reply: serde_json::Value = serde_json::from_str(sample).unwrap_or_default();
+    if mode != "other-root" {
+        reply["root"] = root.into();
+    }
+    match mode {
+        "warn" => eprintln!("dcp: warning: the platform CLI is slow to answer"),
+        "unsupported" => reply["schema_version"] = "2.0".into(),
+        "old" => reply["schema_version"] = "0.9".into(),
+        "invalid" => reply["plans"] = "none".into(),
+        _ => {}
+    }
+    println!("{reply}");
 }
 
 fn mode_of(exe: &std::path::Path) -> String {

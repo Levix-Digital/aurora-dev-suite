@@ -1,0 +1,23 @@
+{
+  "schema": "dcp.diagnose",
+  "schema_version": "1.0",
+  "root": "/repos/ai-code-agent-skills",
+  "summary": "Project state: release candidate v2.9.0-rc.1 waits for manual tests.",
+  "next": {
+    "ask": true,
+    "recommended": "rc:v2.9.0-rc.1",
+    "options": [
+      { "key": "rc:v2.9.0-rc.1", "title": "Run the manual tests of v2.9.0-rc.1", "reason": "4 not run, 1 failed" }
+    ]
+  },
+  "release": {
+    "version": "v2.9.0",
+    "name": "Baseline and zero friction",
+    "open_items": []
+  },
+  "plans": [],
+  "release_candidate": { "run": "v2.9.0-rc.1", "version": "v2.9.0", "not_run": 4, "failed": 1, "released": false },
+  "pull_requests": [],
+  "bugs": { "blocking": [], "untriaged": [] },
+  "findings": ["pull requests: the platform could not be reached, so they were not read"]
+}

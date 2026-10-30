@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Inbox
 kind: feature
 version: v0.2.0
-status: draft
+status: in_progress
 author: Levi
 created_at: '2026-10-30T15:16:38'
-updated_at: '2026-10-30T15:16:38'
+updated_at: '2026-10-30T15:34:06'
 session_id: null
 tags: []
 supersedes: null
@@ -18,16 +18,38 @@ backlog_items:
 spec_dir: specs/005-inbox
 milestones:
 - name: M1 Core rules
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M2 Inbox view
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M3 Manual tests and docs
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 status_log:
 - at: '2026-10-30T15:16:38'
   by: Levi
   status: draft
   note: Plan created
+- at: '2026-10-30T15:34:06'
+  by: Levi
+  status: in_progress
+  note: Approved at gate 3; implementation started
+- at: '2026-10-30T15:34:06'
+  by: Levi
+  note: Milestone 'M1 Core rules' completed
+- at: '2026-10-30T15:34:06'
+  by: Levi
+  note: Milestone 'M2 Inbox view' completed
+- at: '2026-10-30T15:34:06'
+  by: Levi
+  note: Milestone 'M3 Manual tests and docs' completed
+- at: '2026-10-30T15:34:06'
+  by: Levi
+  note: All milestones done; waits for the pull request to merge
 ---
 
 # Inbox

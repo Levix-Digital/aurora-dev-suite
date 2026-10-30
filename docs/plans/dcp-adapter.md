@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: dcp adapter
 kind: feature
 version: v0.2.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-10-29T23:37:26'
-updated_at: '2026-10-30T01:37:52'
+updated_at: '2026-10-30T12:42:38'
 session_id: null
 tags: []
 supersedes: null
@@ -42,6 +42,10 @@ status_log:
   by: Levi
   status: in_progress
   note: Approved at gate 3; implementation started
+- at: '2026-10-30T12:42:38'
+  by: Levi
+  status: completed
+  note: 'Pull request #7 merged; FEAT-016 delivered'
 ---
 
 # dcp adapter

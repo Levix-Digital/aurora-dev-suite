@@ -32,14 +32,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: One project's cycle state: plans and milestones, backlog summary, roadmap, release candidate, pull requests, gates and blocking bugs.
 
-### FEAT-016: dcp adapter
-- **Priority**: high
-- **Epic**: EPIC-004
-- **Status**: in_progress
-- **Found**: 2026-10-27
-- **Plan**: dcp-adapter
-- **Description**: CycleSource over the dcp binary's versioned --json (ADR-0006), built against fixtures that follow the contract.
-
 ### FEAT-017: Inbox view
 - **Priority**: medium
 - **Epic**: EPIC-005
@@ -368,3 +360,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-10-29, aurora/inbox branch of aurora-dev-suite, first message sent 2026-10-29
 - **Description**: Until the integrations provider exists, a small provisional tool kept on this repository's aurora/inbox branch (not in the product) sends free messages between Levix projects through each project's aurora/inbox branch, in the message format of ADR-0007, with the same command names and --json output the provider will have.
+
+### FEAT-016: dcp adapter
+- **Priority**: high
+- **Epic**: EPIC-004
+- **Status**: done
+- **Found**: 2026-10-27
+- **Plan**: dcp-adapter
+- **Closed**: 2026-10-30, plan dcp-adapter
+- **Description**: CycleSource over the dcp binary's versioned --json (ADR-0006), built against fixtures that follow the contract.

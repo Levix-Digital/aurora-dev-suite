@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-10-30T12:14:11Z
 subject: "Re: Contract request: dcp diagnose --json"
-status: open
+status: seen
 reply_to: 20261030-012722-aurora-dev-suite-contract-request-dcp-diagnose-json-schem
 deferred: 
 ---

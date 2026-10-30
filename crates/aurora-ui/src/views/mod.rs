@@ -8,10 +8,11 @@ pub mod portfolio;
 pub mod project;
 pub mod settings;
 
-use aurora_core::domain::{AvailabilityState, EngineStatus, Feature};
+use aurora_core::domain::{AvailabilityState, CycleError, EngineStatus, Feature};
 use leptos::prelude::*;
 
 use crate::app::AppContext;
+use crate::backend::CommandError;
 
 /// How a message reads: the colour of its badge or banner.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -130,5 +131,32 @@ pub fn ComingLater(
             <p>{what}</p>
             <FeatureState feature=feature />
         </div>
+    }
+}
+
+/// Why a project's cycle state could not be read, with the engine's error output to open;
+/// the same text in the Portfolio and the Project view (spec 003 FR-007, spec 004 FR-008).
+#[component]
+pub fn CycleFailure(error: CommandError) -> impl IntoView {
+    let text = match &error.detail {
+        Some(CycleError::Unavailable { .. }) => "Cycle state unavailable.".to_owned(),
+        Some(CycleError::ProjectMissing { .. }) => {
+            "Locate the folder to read its cycle state.".to_owned()
+        }
+        _ => sentence(&error.message),
+    };
+    let stderr = error
+        .detail
+        .as_ref()
+        .and_then(CycleError::stderr)
+        .map(str::to_owned);
+    view! {
+        <span class="muted">{text}</span>
+        {stderr.map(|stderr| view! {
+            <details>
+                <summary>"Engine output"</summary>
+                <pre>{stderr}</pre>
+            </details>
+        })}
     }
 }

@@ -5,14 +5,13 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use aurora_core::domain::{
-    AddOutcome, CycleError, CyclePhase, CycleSummary, Feature, Presence, Project, ProjectList,
-    RegistryNotice,
+    AddOutcome, CyclePhase, CycleSummary, Feature, Presence, Project, ProjectList, RegistryNotice,
 };
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use super::loader::{Loader, MAX_PARALLEL_READS, Request};
-use super::{FeatureState, Message, StatusLine, Tone, sentence};
+use super::{CycleFailure, FeatureState, Message, StatusLine, Tone};
 use crate::app::AppContext;
 use crate::backend::{Backend, CommandError, Reply};
 
@@ -388,8 +387,10 @@ fn ProjectRow(
                 RowMode::Idle => {
                     let start_rename = start_rename.clone();
                     let start_locate = start_locate.clone();
+                    let id = id.clone();
                     view! {
                         <div class="actions">
+                            <button class="btn primary" on:click=move |_| ctx.open_project(id.clone())>"Open"</button>
                             <button class="btn" on:click=move |_| start_rename(RowMode::Renaming)>"Rename"</button>
                             {missing.then(|| view! {
                                 <button class="btn" on:click=move |_| start_locate(RowMode::Locating)>"Locate…"</button>
@@ -434,7 +435,30 @@ fn ProjectRow(
     }
 }
 
-const fn phase_tone(phase: CyclePhase) -> Tone {
+/// The current release, as the Portfolio row and the Project view show it.
+pub fn release_text(summary: &CycleSummary) -> String {
+    summary.release.as_ref().map_or_else(
+        || "No roadmap".to_owned(),
+        |release| format!("{} {}", release.version, release.name),
+    )
+}
+
+/// How many things wait for the user, and of which kinds.
+pub fn waiting_text(summary: &CycleSummary) -> String {
+    if summary.waiting.is_empty() {
+        return "Nothing waits for you".to_owned();
+    }
+    let kinds: Vec<String> = summary
+        .waiting_by_kind()
+        .into_iter()
+        .map(|(kind, count)| kind.label(count))
+        .collect();
+    let count = summary.waiting.len();
+    let verb = if count == 1 { "waits" } else { "wait" };
+    format!("{count} {verb} for you: {}", kinds.join(", "))
+}
+
+pub const fn phase_tone(phase: CyclePhase) -> Tone {
     match phase {
         CyclePhase::ReleaseCandidate => Tone::Warn,
         CyclePhase::Idle => Tone::Ok,
@@ -455,22 +479,8 @@ fn CycleLine(state: Option<RowState>) -> impl IntoView {
             refreshing,
         } => {
             let tone = phase_tone(summary.phase);
-            let release = summary.release.as_ref().map_or_else(
-                || "No roadmap".to_owned(),
-                |release| format!("{} {}", release.version, release.name),
-            );
-            let waiting = if summary.waiting.is_empty() {
-                "Nothing waits for you".to_owned()
-            } else {
-                let kinds: Vec<String> = summary
-                    .waiting_by_kind()
-                    .into_iter()
-                    .map(|(kind, count)| kind.label(count))
-                    .collect();
-                let count = summary.waiting.len();
-                let verb = if count == 1 { "waits" } else { "wait" };
-                format!("{count} {verb} for you: {}", kinds.join(", "))
-            };
+            let release = release_text(&summary);
+            let waiting = waiting_text(&summary);
             view! {
                 <div class="cycle">
                     <span class=format!("badge {}", tone.class())>{summary.phase.label()}</span>
@@ -484,32 +494,12 @@ fn CycleLine(state: Option<RowState>) -> impl IntoView {
             }
             .into_any()
         }
-        RowState::Failed { error, refreshing } => {
-            let text = match &error.detail {
-                Some(CycleError::Unavailable { .. }) => "Cycle state unavailable.".to_owned(),
-                Some(CycleError::ProjectMissing { .. }) => {
-                    "Locate the folder to read its cycle state.".to_owned()
-                }
-                _ => sentence(&error.message),
-            };
-            let stderr = error
-                .detail
-                .as_ref()
-                .and_then(CycleError::stderr)
-                .map(str::to_owned);
-            view! {
-                <div class="cycle">
-                    <span class="muted">{text}</span>
-                    <span class="muted">{refreshing_note(refreshing)}</span>
-                    {stderr.map(|stderr| view! {
-                        <details>
-                            <summary>"Engine output"</summary>
-                            <pre>{stderr}</pre>
-                        </details>
-                    })}
-                </div>
-            }
-            .into_any()
+        RowState::Failed { error, refreshing } => view! {
+            <div class="cycle">
+                <CycleFailure error=error />
+                <span class="muted">{refreshing_note(refreshing)}</span>
+            </div>
         }
+        .into_any(),
     }
 }

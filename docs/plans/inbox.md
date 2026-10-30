@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Inbox
 kind: feature
 version: v0.2.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-10-30T15:16:38'
-updated_at: '2026-10-30T15:34:06'
+updated_at: '2026-10-30T15:45:00'
 session_id: null
 tags: []
 supersedes: null
@@ -50,6 +50,10 @@ status_log:
 - at: '2026-10-30T15:34:06'
   by: Levi
   note: All milestones done; waits for the pull request to merge
+- at: '2026-10-30T15:45:00'
+  by: Levi
+  status: completed
+  note: 'Pull request #13 merged; FEAT-017 delivered'
 ---
 
 # Inbox

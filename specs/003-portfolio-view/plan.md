@@ -95,7 +95,7 @@ FEAT-014 Portfolio view, release v0.2.0 "Portfolio on the dcp contract" (`docs/R
 - **Core**: the phase of each sample (busy: Implementation, idle: Idle, candidate: Release candidate) and of hand-built states for every precedence step; waiting items of each sample (busy: 3, idle: 0, candidate: 1) and the three titles of a candidate; a released candidate does not wait; a pull request without `needs_action` does not wait; findings flag.
 - **Interface loader**: never more than the limit in flight; every project answered once; answers applied as they arrive in any order; an answer from an older generation or for a project no longer listed is dropped.
 - **Desktop**: two concurrent first calls probe once.
-- **Manual tests** (`tests/MANUAL_TESTS.md`, new section "Portfolio"): MT-POR-001 the preview shows each sample's phase, release and count; MT-POR-002 without `dcp` the view says what to install once and rows say unavailable; MT-POR-003 with the fake engine as `dcp`, every present project shows the busy sample; MT-POR-004 a hanging `dcp` only delays its own rows and Refresh keeps the last state; MT-WIN-004 edited (only Project and Inbox say what they will show).
+- **Manual tests** (`tests/MANUAL_TESTS.md`, new section "Portfolio"): MT-POR-001 the preview shows each sample's phase, release and count; MT-POR-002 without `dcp` the view says what to install once and rows say unavailable; MT-POR-003 with the fake engine as `dcp`, every present project shows the busy sample; MT-POR-004 a hanging `dcp` only delays its own rows and Refresh keeps the last state.
 - **Acceptance criteria**: the scenarios of US1 to US3 and SC-001 to SC-005.
 
 ### Documentation (architecture-docs, user-docs)

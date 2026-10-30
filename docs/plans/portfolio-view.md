@@ -7,7 +7,7 @@ version: v0.2.0
 status: in_progress
 author: Levi
 created_at: '2026-10-30T12:57:14'
-updated_at: '2026-10-30T12:57:14'
+updated_at: '2026-10-30T13:16:19'
 session_id: null
 tags: []
 supersedes: null
@@ -18,11 +18,17 @@ backlog_items:
 spec_dir: specs/003-portfolio-view
 milestones:
 - name: M1 Core rules
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M2 Portfolio rows and loader
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 - name: M3 Manual tests and docs
-  done: false
+  done: true
+  done_at: '2026-10-30'
+  by: Levi
 status_log:
 - at: '2026-10-30T12:57:14'
   by: Levi
@@ -32,6 +38,23 @@ status_log:
   by: Levi
   status: in_progress
   note: Approved at gate 3; implementation started
+- at: '2026-10-30T13:16:08'
+  by: Levi
+  note: Milestone 'M1 Core rules' completed
+- at: '2026-10-30T13:16:08'
+  by: Levi
+  note: Milestone 'M2 Portfolio rows and loader' completed
+- at: '2026-10-30T13:16:08'
+  by: Levi
+  note: Milestone 'M3 Manual tests and docs' completed
+- at: '2026-10-30T13:16:08'
+  by: Levi
+  status: completed
+  note: All milestones completed
+- at: '2026-10-30T13:16:19'
+  by: Levi
+  status: in_progress
+  note: All milestones done; waits for the pull request to merge
 ---
 
 # Portfolio view

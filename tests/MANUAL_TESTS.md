@@ -55,17 +55,6 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Result**: [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
-### MT-WIN-004: Project and Inbox say what they will show
-
-- **Covers**: Project and Inbox views (FR-004)
-- **Prerequisites**: Aurora open
-- **Steps**:
-  1. Open Project, then Inbox
-- **Expected**:
-  - Each says what it will show, "Coming in v0.2.0", and what the Dev Cycle Protocol must provide
-- **Result**: [ ] Pass [ ] Fail [ ] Blocked
-- **Notes**:
-
 ### MT-WIN-005: Linux without WebKitGTK
 
 - **Covers**: start-up on Linux (edge case)
@@ -330,5 +319,63 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - The Project view line at the top says to install the Dev Cycle Protocol with its JSON contract
   - The view says "Cycle state unavailable." within a second
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+## Inbox
+
+### MT-INB-001: Everything that waits, most urgent first
+
+- **Covers**: Inbox items, urgency, order and details (spec 005 US1, SC-001, SC-002)
+- **Prerequisites**: Trunk 0.22 installed
+- **Steps**:
+  1. Run `trunk serve` in `crates/aurora-ui`, open `http://127.0.0.1:1420` and note the Portfolio header's total
+  2. Open the Inbox with Alt+4
+- **Expected**:
+  - Step 1: "4 items wait for you"
+  - Step 2: "4 items wait for you across 2 projects", then the groups in this order, each with its count:
+    - "Blocks a release (1)": `gedo`, "Blocking bug", "BUG-012 Merge falls back to text on renamed files", "Severity high"
+    - "Waits for your acceptance (1)": `ai-code-agent-skills`, "Release candidate", "Run the manual tests of v2.9.0-rc.1", "4 not run, 1 failed"
+    - "Waits for your review (1)": `gedo`, "Pull request", "#41 feat: gedo radar --json", "2 threads open, CI green. 1 review thread for you"
+    - "To triage (1)": `gedo`, "Untriaged bug", "BUG-015 Slow radar on large repositories", "no severity"
+  - The note that part of a project could not be read is shown (the release candidate sample has a finding)
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-INB-002: Open the project of an item
+
+- **Covers**: "Open" (spec 005 US2)
+- **Prerequisites**: as MT-INB-001
+- **Steps**:
+  1. In the Inbox, press **Open** on "Run the manual tests of v2.9.0-rc.1"
+  2. Go back to the Inbox and press **Open** on `levix-platform` under "Not read"
+- **Expected**:
+  - Step 1: the Project view opens on `ai-code-agent-skills`, with the gate "Release candidate acceptance"
+  - Step 2: the Project view opens on `levix-platform`, which says to locate its folder
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-INB-003: Refresh and the projects not read
+
+- **Covers**: Refresh, "Not read" (spec 005 US3)
+- **Prerequisites**: as MT-INB-001
+- **Steps**:
+  1. Look at the end of the Inbox
+  2. Press **Refresh**
+- **Expected**:
+  - Step 1: "Not read (1)" lists `levix-platform` with "Locate the folder to read its cycle state.", the same text as its Portfolio row, and **Open**
+  - Step 2: the items stay while the header says how many projects are being read, then the same items come back in the same order
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-INB-004: Without dcp the Inbox says what to install once
+
+- **Covers**: unavailable state (spec 005 US3, SC-003)
+- **Prerequisites**: no `dcp` on the search path and no `dcp` location in Settings; at least two present projects registered
+- **Steps**:
+  1. Start Aurora and open the Inbox
+- **Expected**:
+  - The line at the top says to install the Dev Cycle Protocol with its JSON contract
+  - "Nothing waits for you", and "Not read" says "Cycle state unavailable." once, within a second, not once per project
 - **Result**: [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:

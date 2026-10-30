@@ -10,89 +10,11 @@ use aurora_core::domain::{
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 
-use super::loader::{Loader, MAX_PARALLEL_READS, Request};
+use super::loader::{Loader, MAX_PARALLEL_READS};
+use super::reads::{RowState, Rows, read};
 use super::{CycleFailure, FeatureState, Message, StatusLine, Tone};
 use crate::app::AppContext;
-use crate::backend::{Backend, CommandError, Reply};
-
-/// What a row knows of its project's cycle state.
-#[derive(Debug, Clone, PartialEq)]
-enum RowState {
-    Reading,
-    Read {
-        summary: CycleSummary,
-        refreshing: bool,
-    },
-    Failed {
-        error: CommandError,
-        refreshing: bool,
-    },
-}
-
-impl RowState {
-    /// The state while a new read runs: the last answer stays, marked as refreshing.
-    fn refreshing(self) -> Self {
-        match self {
-            RowState::Read { summary, .. } => RowState::Read {
-                summary,
-                refreshing: true,
-            },
-            RowState::Failed { error, .. } => RowState::Failed {
-                error,
-                refreshing: true,
-            },
-            RowState::Reading => RowState::Reading,
-        }
-    }
-}
-
-type Rows = RwSignal<HashMap<String, RowState>>;
-
-/// Asks for `ids` and runs the reads the loader allows now.
-fn read(backend: Backend, loader: StoredValue<Loader>, rows: Rows, ids: Vec<String>) {
-    rows.update(|rows| {
-        for id in &ids {
-            let next = rows
-                .remove(id)
-                .map_or(RowState::Reading, RowState::refreshing);
-            rows.insert(id.clone(), next);
-        }
-    });
-    let started = loader
-        .try_update_value(|l| l.request(ids))
-        .unwrap_or_default();
-    run(backend, loader, rows, started);
-}
-
-/// Runs each read; its answer is applied when the loader still wants it, and every
-/// finished read lets the next ones start.
-fn run(backend: Backend, loader: StoredValue<Loader>, rows: Rows, requests: Vec<Request>) {
-    for request in requests {
-        let backend = backend.clone();
-        spawn_local(async move {
-            let answer = backend.project_cycle_state(request.id.clone()).await;
-            let Some((wanted, next)) = loader.try_update_value(|l| l.finish(&request)) else {
-                return;
-            };
-            if wanted {
-                let state = match answer {
-                    Ok(state) => RowState::Read {
-                        summary: CycleSummary::of(&state),
-                        refreshing: false,
-                    },
-                    Err(error) => RowState::Failed {
-                        error,
-                        refreshing: false,
-                    },
-                };
-                rows.update(|rows| {
-                    rows.insert(request.id.clone(), state);
-                });
-            }
-            run(backend, loader, rows, next);
-        });
-    }
-}
+use crate::backend::Reply;
 
 #[component]
 pub fn Portfolio() -> impl IntoView {
@@ -241,23 +163,7 @@ fn Totals(rows: Rows) -> impl IntoView {
                     _ => None,
                 })
                 .sum();
-            let reading = rows
-                .values()
-                .filter(|row| {
-                    matches!(
-                        row,
-                        RowState::Reading
-                            | RowState::Read {
-                                refreshing: true,
-                                ..
-                            }
-                            | RowState::Failed {
-                                refreshing: true,
-                                ..
-                            }
-                    )
-                })
-                .count();
+            let reading = rows.values().filter(|row| row.is_reading()).count();
             let mut text = match waiting {
                 0 => "Nothing waits for you".to_owned(),
                 1 => "1 item waits for you".to_owned(),

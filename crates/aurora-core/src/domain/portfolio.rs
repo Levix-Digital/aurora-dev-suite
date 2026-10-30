@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::{CandidateRun, CandidateStage, CurrentRelease, CycleState};
+use super::{CandidateRun, CandidateStage, CurrentRelease, CycleState, Urgency};
 
 /// Where a project stands in its development cycle, derived from its cycle state
 /// (research R1).
@@ -71,6 +71,16 @@ impl WaitingKind {
         WaitingKind::UntriagedBug,
     ];
 
+    /// One item of this kind, for example "Blocking bug".
+    pub const fn name(self) -> &'static str {
+        match self {
+            WaitingKind::ReleaseCandidate => "Release candidate",
+            WaitingKind::PullRequest => "Pull request",
+            WaitingKind::BlockingBug => "Blocking bug",
+            WaitingKind::UntriagedBug => "Untriaged bug",
+        }
+    }
+
     /// `count` items of this kind, for example "2 blocking bugs".
     pub fn label(self, count: usize) -> String {
         let (one, many) = match self {
@@ -91,6 +101,10 @@ pub struct WaitingItem {
     /// Stable within the project, for example `rc:<run>`, `pr:<number>`, `bug:<id>`.
     pub key: String,
     pub title: String,
+    /// More about the item, for example a bug's severity or a candidate's test counts.
+    pub detail: Option<String>,
+    /// How soon it needs the user (spec 005 FR-003).
+    pub urgency: Urgency,
 }
 
 impl WaitingItem {
@@ -105,6 +119,11 @@ impl WaitingItem {
                 kind: WaitingKind::ReleaseCandidate,
                 key: format!("rc:{}", rc.run),
                 title: candidate_title(rc),
+                detail: Some(candidate_detail(rc)),
+                urgency: match rc.stage() {
+                    CandidateStage::FailuresToReview => Urgency::BlocksRelease,
+                    _ => Urgency::Acceptance,
+                },
             });
         let pull_requests = state
             .pull_requests
@@ -114,16 +133,22 @@ impl WaitingItem {
                 kind: WaitingKind::PullRequest,
                 key: format!("pr:{}", pr.number),
                 title: format!("#{} {}", pr.number, pr.title),
+                detail: pull_request_detail(&pr.summary, pr.threads_for_user),
+                urgency: Urgency::Review,
             });
         let blocking = state.blocking_bugs.iter().map(|bug| WaitingItem {
             kind: WaitingKind::BlockingBug,
             key: format!("bug:{}", bug.id),
             title: format!("{} {}", bug.id, bug.title),
+            detail: bug.rank.as_ref().map(|rank| format!("Severity {rank}")),
+            urgency: Urgency::BlocksRelease,
         });
         let untriaged = state.untriaged_bugs.iter().map(|bug| WaitingItem {
             kind: WaitingKind::UntriagedBug,
             key: format!("triage:{}", bug.item.id),
             title: format!("{} {}", bug.item.id, bug.item.title),
+            detail: Some(bug.reason.clone()).filter(|reason| !reason.is_empty()),
+            urgency: Urgency::Triage,
         });
         candidate
             .into_iter()
@@ -141,6 +166,29 @@ fn candidate_title(rc: &CandidateRun) -> String {
         CandidateStage::ReadyForRelease | CandidateStage::Released => {
             format!("Approve the release of {}", rc.version)
         }
+    }
+}
+
+fn candidate_detail(rc: &CandidateRun) -> String {
+    match rc.stage() {
+        CandidateStage::ReadyForRelease | CandidateStage::Released => {
+            "Passed its manual tests".to_owned()
+        }
+        _ => format!("{} not run, {} failed", rc.not_run, rc.failed),
+    }
+}
+
+/// The pull request's summary, then the review threads that wait for the user.
+fn pull_request_detail(summary: &str, threads_for_user: u32) -> Option<String> {
+    let threads = match threads_for_user {
+        0 => None,
+        1 => Some("1 review thread for you".to_owned()),
+        n => Some(format!("{n} review threads for you")),
+    };
+    match (summary.is_empty(), threads) {
+        (true, threads) => threads,
+        (false, None) => Some(summary.to_owned()),
+        (false, Some(threads)) => Some(format!("{summary}. {threads}")),
     }
 }
 
@@ -337,9 +385,80 @@ mod tests {
     }
 
     #[test]
+    fn each_item_has_its_urgency_and_detail() {
+        let urgency_and_detail = |state: &CycleState| -> Vec<(Urgency, Option<String>)> {
+            WaitingItem::all(state)
+                .into_iter()
+                .map(|i| (i.urgency, i.detail))
+                .collect()
+        };
+        let mut state = empty();
+        state.release_candidate = Some(candidate(2, 1, false));
+        assert_eq!(
+            urgency_and_detail(&state),
+            [(Urgency::Acceptance, Some("2 not run, 1 failed".to_owned()))]
+        );
+        state.release_candidate = Some(candidate(0, 1, false));
+        assert_eq!(
+            urgency_and_detail(&state),
+            [(
+                Urgency::BlocksRelease,
+                Some("0 not run, 1 failed".to_owned())
+            )]
+        );
+        state.release_candidate = Some(candidate(0, 0, false));
+        assert_eq!(
+            urgency_and_detail(&state),
+            [(
+                Urgency::Acceptance,
+                Some("Passed its manual tests".to_owned())
+            )]
+        );
+
+        let mut state = empty();
+        let mut ranked = item("BUG-1");
+        ranked.rank = Some("high".to_owned());
+        state.blocking_bugs = vec![ranked, item("BUG-2")];
+        state.untriaged_bugs = vec![UntriagedBug {
+            item: item("BUG-3"),
+            reason: "no severity".to_owned(),
+        }];
+        assert_eq!(
+            urgency_and_detail(&state),
+            [
+                (Urgency::BlocksRelease, Some("Severity high".to_owned())),
+                (Urgency::BlocksRelease, None),
+                (Urgency::Triage, Some("no severity".to_owned())),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_pull_request_details_its_summary_and_threads() {
+        let detail = |summary: &str, threads: u32| {
+            let mut state = empty();
+            let mut pr = pull_request(1, true);
+            pr.summary = summary.to_owned();
+            pr.threads_for_user = threads;
+            state.pull_requests = vec![pr];
+            let item = WaitingItem::all(&state).remove(0);
+            assert_eq!(item.urgency, Urgency::Review);
+            item.detail
+        };
+        assert_eq!(detail("", 0), None);
+        assert_eq!(detail("CI green", 0).as_deref(), Some("CI green"));
+        assert_eq!(detail("", 1).as_deref(), Some("1 review thread for you"));
+        assert_eq!(
+            detail("CI green", 2).as_deref(),
+            Some("CI green. 2 review threads for you")
+        );
+    }
+
+    #[test]
     fn kind_labels_count_in_the_plural() {
         assert_eq!(WaitingKind::BlockingBug.label(1), "1 blocking bug");
         assert_eq!(WaitingKind::PullRequest.label(2), "2 pull requests");
+        assert_eq!(WaitingKind::UntriagedBug.name(), "Untriaged bug");
     }
 
     #[test]

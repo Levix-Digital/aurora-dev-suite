@@ -60,7 +60,7 @@ One project's development cycle, opened with **Open** on its Portfolio row or ch
 
 ### Inbox (Alt+4)
 
-The decisions waiting for you across all projects. It needs the Dev Cycle Protocol and is not available yet; until then it says what it will show and which release brings it.
+Everything that waits for you across all projects, the most urgent first: what blocks a release (blocking bugs, release candidates with failed tests), what waits for your acceptance (release candidates to test or to release), what waits for your review (pull requests with review threads for you) and the bugs to triage. Each item shows its project and detail; **Open** shows its project. Projects that could not be read are listed under "Not read" with the reason, and **Refresh** reads them all again. It reads through the Dev Cycle Protocol (`dcp`) and, without a `dcp` that answers its JSON contract, says what to install.
 
 ### Engines (Alt+3)
 

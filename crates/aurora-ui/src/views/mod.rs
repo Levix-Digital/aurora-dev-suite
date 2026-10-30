@@ -6,6 +6,7 @@ pub mod inbox;
 pub mod loader;
 pub mod portfolio;
 pub mod project;
+pub mod reads;
 pub mod settings;
 
 use aurora_core::domain::{AvailabilityState, CycleError, EngineStatus, Feature};
@@ -111,26 +112,6 @@ pub fn FeatureState(feature: Feature) -> impl IntoView {
             }
             None => view! { <p class="muted">"Checking the engines…"</p> }.into_any(),
         }
-    }
-}
-
-/// A view whose data comes in a later release.
-#[component]
-pub fn ComingLater(
-    title: &'static str,
-    what: &'static str,
-    release: &'static str,
-    feature: Feature,
-) -> impl IntoView {
-    view! {
-        <div class="view-header">
-            <h1>{title}</h1>
-        </div>
-        <div class="card empty">
-            <h2>{format!("Coming in {release}")}</h2>
-            <p>{what}</p>
-            <FeatureState feature=feature />
-        </div>
     }
 }
 

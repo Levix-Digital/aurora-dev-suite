@@ -87,7 +87,7 @@ FEAT-005 Desktop packages (EPIC-001), release v0.2.0 "Portfolio on the dcp contr
 
 - **Automated** (`xtask`): the tag rule accepts `v0.2.0` (final) and `v0.2.0-rc.1` (candidate) for version `0.2.0`; refuses a different version, a missing `v`, `-rc` without a number, `-beta.1`, extra parts and an empty tag, each with a message naming the tag and the workspace version.
 - **CI**: the existing CI is unchanged and still runs the tests on both platforms; the release workflow runs them again on the tag's commit before packaging.
-- **Dry run**: the release workflow run by hand on this branch produces the three packages and the checksum file as run artifacts (evidence in the pull request).
+- **Dry run**: the release workflow runs as a dry run on this pull request (it changes the packaging) and produces the three packages as run artifacts (evidence in the pull request).
 - **Manual tests** (`tests/MANUAL_TESTS.md`, new section "Packages", prefix MT-PKG): MT-PKG-001 Windows installer installs per user, opens from the Start menu with the candidate's version, and uninstalls keeping the data; MT-PKG-002 a newer installer updates an older install and keeps the project list; MT-PKG-003 the `.deb` installs with its dependencies, opens from the applications menu and is removed keeping the data; MT-PKG-004 the AppImage runs; MT-PKG-005 checksums match `SHA256SUMS.txt`.
 - **Acceptance criteria**: the scenarios of US1 to US3 and SC-001 to SC-004.
 
@@ -99,7 +99,7 @@ FEAT-005 Desktop packages (EPIC-001), release v0.2.0 "Portfolio on the dcp contr
 
 ### CI, release and observability (devops-release)
 
-- New `release.yml` (tags `v*`, `workflow_call` from promote, `workflow_dispatch` as a dry run) and `promote.yml` (environment `release`). `ci.yml` unchanged.
+- New `release.yml` (tags `v*`, `workflow_call` from promote; a dry run on pull requests that change the packaging and by hand) and `promote.yml` (environment `release`). `ci.yml` unchanged.
 - Version impact: none by itself; the v0.2.0 candidate needs the workspace version bumped to `0.2.0` in a separate pull request (Phase 8).
 - Observability: the workflow writes each package's size and the installed size to the run summary; the published release lists its checksums.
 - Repository settings for Levi (not code): the `release` environment with required reviewers; optionally `RELEASES_REPOSITORY` and `RELEASES_TOKEN` for ADR-0005's public releases repository.

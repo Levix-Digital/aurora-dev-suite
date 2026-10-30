@@ -12,5 +12,5 @@
    cd crates/aurora-desktop && cargo tauri build --bundles deb,appimage
    ```
    The packages are in `target/release/bundle/deb` and `target/release/bundle/appimage`. On Windows, `cargo tauri build --bundles nsis` writes `target/release/bundle/nsis/Aurora_<version>_x64-setup.exe`.
-3. Run the release workflow by hand on the branch (Actions > Release > Run workflow): the run's artifacts hold the three packages and `SHA256SUMS.txt`, and nothing is published.
+3. A pull request that changes the packaging (`release.yml`, `tauri.conf.json`, the icons) runs the release workflow as a dry run; after the merge it can also be run by hand (Actions > Release > Run workflow). The run's artifacts hold the three packages, and nothing is published.
 4. After the merge, a candidate tag on `main` (`v0.2.0-rc.1`, once the version is `0.2.0`) publishes a pre-release with the same files.

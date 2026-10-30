@@ -379,3 +379,78 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - "Nothing waits for you", and "Not read" says "Cycle state unavailable." once, within a second, not once per project
 - **Result**: [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
+
+## Packages
+
+These tests use the packages of a release (or of a dry run of the release workflow, in the run's artifacts), not a build from source.
+
+### MT-PKG-001: Install, open and uninstall on Windows
+
+- **Covers**: Windows installer (spec 006 US1, SC-002, SC-003)
+- **Prerequisites**: Windows 10 22H2 or later, or Windows 11, without Aurora installed; `Aurora_<version>_x64-setup.exe` of the release
+- **Steps**:
+  1. Run the installer as a standard user (choose **More info**, **Run anyway** if SmartScreen asks) and accept the license
+  2. Open Aurora from the Start menu, add a project and close Aurora
+  3. Look at the size of Aurora's installation folder (`%LOCALAPPDATA%\Aurora`)
+  4. Uninstall Aurora from **Settings > Apps > Installed apps**, then install it again and open it
+- **Expected**:
+  - Step 1: no administrator prompt; the installer shows the Levix Digital license and finishes
+  - Step 2: the window opens; the sidebar shows the release's version
+  - Step 3: under 30 MB
+  - Step 4: the Start menu entry is removed by the uninstall; after installing again, the project added in step 2 is still listed
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-PKG-002: A newer installer updates an older installation
+
+- **Covers**: update in place (spec 006 US1 scenario 5)
+- **Prerequisites**: Aurora of an earlier release installed with its installer, with at least one project; the installer of the release under test
+- **Steps**:
+  1. Run the newer installer
+  2. Open Aurora from the Start menu
+- **Expected**:
+  - Step 1: it installs over the earlier version without asking to uninstall it first
+  - Step 2: the sidebar shows the new version and the project list is unchanged; **Settings > Apps** lists one Aurora
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-PKG-003: Install, open and remove the .deb
+
+- **Covers**: `.deb` package (spec 006 US2, SC-002, SC-003)
+- **Prerequisites**: Ubuntu 22.04 or later without WebKitGTK 4.1 runtime installed if possible (a fresh virtual machine); the `.deb` of the release
+- **Steps**:
+  1. `sudo apt install ./<the .deb>`
+  2. Open Aurora from the applications menu, add a project and close it
+  3. `dpkg-query -W -f='${Installed-Size}\n' aurora`
+  4. `sudo apt remove aurora`, then install the package again and open Aurora
+- **Expected**:
+  - Step 1: apt installs WebKitGTK 4.1 and GTK 3 if missing, and Aurora
+  - Step 2: the menu entry has Aurora's icon; the window opens and the sidebar shows the release's version
+  - Step 3: under 30720 (KiB)
+  - Step 4: the remove deletes the menu entry and `/usr/bin/aurora`; after installing again, the project added in step 2 is still listed
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-PKG-004: The AppImage runs
+
+- **Covers**: AppImage package (spec 006 US2 scenario 2)
+- **Prerequisites**: a Linux x86_64 desktop with FUSE 2 (Ubuntu 22.04 or later); the AppImage of the release
+- **Steps**:
+  1. `chmod +x <the AppImage>` and run it
+- **Expected**:
+  - The window opens with the release's version on the sidebar, without installing anything else
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-PKG-005: The release lists the packages and their checksums
+
+- **Covers**: release workflow (spec 006 US3, FR-005, SC-001)
+- **Prerequisites**: the release under test
+- **Steps**:
+  1. Open the release's page and download every asset
+  2. `sha256sum -c SHA256SUMS.txt` in the download folder
+- **Expected**:
+  - Step 1: a release candidate is marked "Pre-release" and not "Latest"; the assets are the Windows installer, the `.deb`, the AppImage and `SHA256SUMS.txt`
+  - Step 2: every package reports `OK`
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:

@@ -30,7 +30,7 @@
 
 **Rationale**: the project uses trunk branching with release candidates on `main` and the promote workflow as the release gate (setup of 2026-10-27), and there is no release workflow yet. Publishing in one job after both builds means a failed platform never leaves a half-published release. `gh` avoids a new third-party action in the supply chain.
 
-**Alternatives considered**: publishing from each build job (a release with only one platform when the other fails); `softprops/action-gh-release` (used by AnyContext; one more third-party dependency); packages on every pull request (several minutes per pull request; the hand-run dry run covers changes to packaging).
+**Alternatives considered**: publishing from each build job (a release with only one platform when the other fails); `softprops/action-gh-release` (used by AnyContext; one more third-party dependency); packages on every pull request (several minutes per pull request; only pull requests that change the packaging run it).
 
 ## R5. The tag must match the workspace version
 

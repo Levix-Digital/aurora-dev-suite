@@ -45,7 +45,7 @@ Decisions (detail in `research.md`; ADR-0008 records R1 to R4 and R6):
 - The Tauri bundler builds the packages from `tauri.conf.json` with the Tauri CLI 2.x as a build tool (no new crate).
 - Windows: NSIS only, per user without administrator rights, with the embedded WebView2 bootstrapper; MSI later if a managed deployment needs it.
 - Linux: `.deb` (declares WebKitGTK 4.1 and GTK 3) and AppImage (carries its libraries; its size is reported, not gated).
-- The Dev Cycle's release and promote workflows (trunk model) are added: the tag is checked against the workspace version by `cargo xtask release-check`, tests and packages run on both platforms, and one publish job creates the release with `SHA256SUMS.txt` only after both succeed; candidates are pre-releases. Publishing uses the GitHub CLI, not a third-party action. A hand-run dry run keeps the packages as run artifacts.
+- The Dev Cycle's release and promote workflows (trunk model) are added: the tag is checked against the workspace version by `cargo xtask release-check`, tests and packages run on both platforms, and one publish job creates the release with `SHA256SUMS.txt` only after both succeed; candidates are pre-releases. Publishing uses the GitHub CLI, not a third-party action. A dry run on pull requests that change the packaging, and by hand, keeps the packages as run artifacts.
 - Releases go to the repository in `RELEASES_REPOSITORY` (with `RELEASES_TOKEN`) when set, the source repository otherwise, until ADR-0005's public releases repository exists.
 - No signing and no updater in v0.2.0; code signing becomes a backlog item.
 

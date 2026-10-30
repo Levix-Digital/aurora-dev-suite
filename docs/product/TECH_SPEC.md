@@ -28,6 +28,7 @@ Aurora Dev Suite is a native desktop application written entirely in Rust: a Tau
 | `tracing` | 0.1 | adapters, desktop | Structured logs |
 | `insta` | 1.49 | tests | Snapshot tests of parsed engine output and views' data |
 | Trunk | 0.22 | build | Builds and bundles the WebAssembly interface |
+| Tauri CLI | 2.12 | build (release workflow) | Builds the Windows installer and the Linux packages (ADR-0008); not linked |
 
 ## Architecture Overview
 
@@ -40,7 +41,7 @@ Four crates (ADR-0001): `aurora-core` (domain, use cases, ports; no I/O; also co
 - Cold start to the first painted window: under 1.5 s on a mid-range laptop (4 cores, SSD).
 - Portfolio with 20 registered projects: every project's summary shown within 3 s of start, each project appearing as soon as it is read.
 - One engine call: timeout 10 s by default (configurable per command); a timeout marks only that section as degraded.
-- Installed size of Aurora itself (without the engines): under 30 MB.
+- Installed size of Aurora itself (without the engines): under 30 MB, from the Windows installer or the `.deb` (the AppImage carries WebKitGTK and GTK and is larger).
 
 ### Security and Privacy
 

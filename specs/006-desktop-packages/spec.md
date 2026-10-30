@@ -23,7 +23,7 @@ A Levix developer on Windows downloads Aurora's installer from a release candida
 1. **Given** a release candidate, **When** the developer runs its Windows installer, **Then** Aurora installs for the current user without asking for administrator rights and adds a Start menu entry.
 2. **Given** a Windows machine without the WebView2 runtime, **When** the installer runs, **Then** it installs the runtime first with the bootstrapper embedded in the installer.
 3. **Given** Aurora installed, **When** the developer opens it, **Then** the sidebar shows the version of the release candidate.
-4. **Given** Aurora installed, **When** the developer uninstalls it, **Then** the program is removed and the project list and settings stay unless the developer asks to delete the application data.
+4. **Given** Aurora installed, **When** the developer uninstalls it, **Then** the program and its Start menu entry are removed and the project list and settings stay (the uninstaller's "Delete the application data" option removes only the web view's cache).
 5. **Given** an older version installed, **When** the installer of a newer version runs, **Then** it replaces the older one and keeps the project list and settings.
 
 ---
@@ -34,7 +34,7 @@ A Levix developer on Ubuntu or Debian installs Aurora's `.deb` with the system's
 
 **Why this priority**: Linux is a first-class platform (TECH_SPEC); both packages are named in FEAT-005.
 
-**Independent Test**: On Ubuntu 22.04 or later, `sudo apt install ./aurora_<version>_amd64.deb`, open Aurora from the applications menu, then `sudo apt remove aurora`; run the AppImage on the same machine.
+**Independent Test**: On Ubuntu 22.04 or later, `sudo apt install ./Aurora_<version>_amd64.deb`, open Aurora from the applications menu, then `sudo apt remove aurora`; run the AppImage on the same machine.
 
 **Acceptance Scenarios**:
 
@@ -50,14 +50,14 @@ When a release candidate tag `vX.Y.Z-rc.N` is pushed, CI builds the Windows inst
 
 **Why this priority**: FEAT-005 asks for packages built in CI for release candidates; the Dev Cycle's gates 9 and 10 need an installable candidate.
 
-**Independent Test**: Run the release workflow by hand on the feature branch (dry run) and check the four files in the run's artifacts; after the merge, the first candidate tag publishes them in a pre-release.
+**Independent Test**: Check the three packages in the artifacts of the release workflow's dry run on the feature's pull request; after the merge, the first candidate tag publishes them in a pre-release.
 
 **Acceptance Scenarios**:
 
 1. **Given** a tag `vX.Y.Z-rc.N` whose version equals the workspace version `X.Y.Z`, **When** it is pushed, **Then** the release workflow builds and tests on Windows and Linux, builds the packages and publishes a pre-release named after the tag with the packages and `SHA256SUMS.txt`, not marked latest.
 2. **Given** a tag whose version differs from the workspace version, or with another form, **When** the workflow starts, **Then** it stops before building with a message naming both versions.
 3. **Given** the user promotes an accepted candidate, **When** the promote workflow runs, **Then** it tags the candidate's commit `vX.Y.Z` and the release workflow publishes the final release with packages built from that commit.
-4. **Given** the workflow is run by hand on a branch, **When** it finishes, **Then** the packages are kept as the run's artifacts and nothing is published.
+4. **Given** a pull request that changes the packaging, or a run by hand on a branch, **When** the workflow finishes, **Then** the packages are kept as the run's artifacts and nothing is published.
 5. **Given** the project sets a releases repository (ADR-0005), **When** a release is published, **Then** it goes to that repository; without it, to the source repository.
 
 ---
@@ -79,7 +79,7 @@ When a release candidate tag `vX.Y.Z-rc.N` is pushed, CI builds the Windows inst
 - **FR-003**: A release workflow MUST run on `v*` tags and be callable by the promote workflow; it MUST check that the tag is `vX.Y.Z` or `vX.Y.Z-rc.N` and matches the workspace version before building, with the check in the repository's own tooling (`cargo xtask`) and covered by tests.
 - **FR-004**: The release workflow MUST run the tests and build the packages on Windows and Linux from the tag's commit, and publish them only after both platforms succeed: candidates as pre-releases not marked latest, final versions as releases marked latest only when newest.
 - **FR-005**: Each release MUST carry `SHA256SUMS.txt` with the checksum of every package.
-- **FR-006**: The release workflow MUST be runnable by hand on any branch as a dry run that keeps the packages as run artifacts and publishes nothing.
+- **FR-006**: The release workflow MUST run as a dry run (packages kept as run artifacts, nothing published) on pull requests that change the packaging and by hand on any branch.
 - **FR-007**: A promote workflow MUST let the user release an accepted candidate (trunk model): it tags the candidate's commit `vX.Y.Z` and calls the release workflow; it runs in the `release` environment so the user can require an approval.
 - **FR-008**: The releases repository MUST be configurable (a repository variable and a token secret); without them, releases go to the source repository.
 - **FR-009**: The README MUST say how to install, update and uninstall from the packages on Windows and Linux, and keep building from source as an option.

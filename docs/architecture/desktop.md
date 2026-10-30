@@ -24,7 +24,7 @@ The Tauri 2 application: composition root, commands exposed to the interface, en
 | `src/commands.rs` | the commands and `CommandError { kind, message, detail }` (`detail` holds the `CycleError` of the `cycle` kind) |
 | `src/events.rs` | `probe_all`: one thread per engine |
 | `src/logging.rs` | the log file |
-| `tauri.conf.json` | window, content security policy, frontend location |
+| `tauri.conf.json` | window, content security policy, frontend location, packages (`bundle`) |
 | `capabilities/default.json` | what the window may call |
 | `build.rs` | generates an `allow-<command>` permission per command |
 
@@ -40,6 +40,8 @@ The bin is `aurora`. Without the `custom-protocol` feature it loads the interfac
 
 **Logging.** `tracing` writes a daily file `aurora.<date>.log` in `logs` under the user's data directory (`~/.local/share/aurora` on Linux, `%LOCALAPPDATA%\Levix\Aurora\data` on Windows), keeping five files. The level comes from `AURORA_LOG` (default `info`). When the window cannot start, the error goes to the log and standard error, with the WebKitGTK package names on Linux. A missing WebKitGTK library stops the binary before `main`, so the loader's message names the library; packages declare the dependency from v0.2.0.
 
+**Packages.** `cargo tauri build` in this crate builds the release interface (`beforeBuildCommand`), the binary with `custom-protocol` and the packages of the `bundle` section in `target/release/bundle`: `nsis/Aurora_<version>_x64-setup.exe` (installed for the current user in `%LOCALAPPDATA%\Aurora`, with a Start menu entry, an uninstaller and the WebView2 bootstrapper embedded), `deb/` (`/usr/bin/aurora`, a desktop entry and icons; depends on WebKitGTK 4.1 and GTK 3) and `appimage/` (the binary with its libraries). The version is the workspace version. Packages leave the user's configuration and data folders alone on uninstall. The release workflow builds and publishes them (ADR-0008).
+
 ## Interfaces
 
 Called by `aurora-ui` through `window.__TAURI__` (`invoke` and `event.listen`). Calls `aurora-core` and builds `aurora-engines`.
@@ -49,3 +51,4 @@ Called by `aurora-ui` through `window.__TAURI__` (`invoke` and `event.listen`). 
 - [ADR-0001](../adr/0001-hexagonal-architecture-with-the-engines-behind-ports.md): the composition root lives here.
 - [ADR-0002](../adr/0002-desktop-application-with-tauri-2-and-a-leptos-interface.md): Tauri 2 shell.
 - [ADR-0005](../adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md): proprietary binaries; licensing through `levix-platform` later.
+- [ADR-0008](../adr/0008-installers-built-by-the-tauri-bundler-and-published-by-the-r.md): packages built by the Tauri bundler and published by the release workflow.

@@ -149,20 +149,32 @@ pub async fn engines_overview(
     if let Some(overview) = state.engines.lock().ok().and_then(|last| last.clone()) {
         return Ok(overview);
     }
-    let (probe, store, last) = (
+    let (probe, store, last, first_probe) = (
         Arc::clone(&state.probe),
         Arc::clone(&state.settings),
         Arc::clone(&state.engines),
+        Arc::clone(&state.first_probe),
     );
     blocking(move || {
-        Ok(probe_and_publish(
-            &app,
-            probe.as_ref(),
-            store.as_ref(),
-            &last,
-        ))
+        Ok(last_or_probe(&last, &first_probe, || {
+            probe_and_publish(&app, probe.as_ref(), store.as_ref(), &last)
+        }))
     })
     .await
+}
+
+/// The last overview, or the result of `probe` run once while the other callers wait for
+/// it (spec 003 FR-009).
+fn last_or_probe(
+    last: &std::sync::Mutex<Option<EnginesOverview>>,
+    first_probe: &std::sync::Mutex<()>,
+    probe: impl FnOnce() -> EnginesOverview,
+) -> EnginesOverview {
+    let cached = || last.lock().ok().and_then(|last| last.clone());
+    let _turn = first_probe
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    cached().unwrap_or_else(probe)
 }
 
 /// Probes again in the background; the interface follows the events.
@@ -259,6 +271,28 @@ mod tests {
         assert_eq!(error.kind, "alreadyRegistered");
         assert!(error.message.contains("gedo"));
         assert_eq!(error.detail, None);
+    }
+
+    #[test]
+    fn concurrent_first_calls_probe_once() {
+        use std::sync::Mutex;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let (last, first_probe, probes) = (Mutex::new(None), Mutex::new(()), AtomicUsize::new(0));
+        std::thread::scope(|scope| {
+            for _ in 0..4 {
+                scope.spawn(|| {
+                    last_or_probe(&last, &first_probe, || {
+                        probes.fetch_add(1, Ordering::SeqCst);
+                        std::thread::sleep(std::time::Duration::from_millis(50));
+                        let overview = aurora_core::fixtures::sample_overview();
+                        *last.lock().expect("lock") = Some(overview.clone());
+                        overview
+                    })
+                });
+            }
+        });
+        assert_eq!(probes.load(Ordering::SeqCst), 1);
     }
 
     #[test]

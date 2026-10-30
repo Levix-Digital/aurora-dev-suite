@@ -8,14 +8,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Features
 
-### FEAT-005: Desktop packages
-- **Priority**: medium
-- **Epic**: EPIC-001
-- **Status**: planned
-- **Found**: 2026-10-27
-- **Plan**: desktop-packages
-- **Description**: Windows installer (NSIS or MSI) and Linux packages (AppImage and deb) built in CI for release candidates.
-
 ### FEAT-018: Inbox actions
 - **Priority**: low
 - **Epic**: EPIC-005
@@ -380,3 +372,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: inbox
 - **Closed**: 2026-10-30, plan inbox
 - **Description**: Gates to approve, release candidates to test, review threads, untriaged and blocking bugs, across projects, ordered by urgency.
+
+### FEAT-005: Desktop packages
+- **Priority**: medium
+- **Epic**: EPIC-001
+- **Status**: done
+- **Found**: 2026-10-27
+- **Plan**: desktop-packages
+- **Closed**: 2026-10-30, plan desktop-packages
+- **Description**: Windows installer (NSIS or MSI) and Linux packages (AppImage and deb) built in CI for release candidates.

@@ -5,8 +5,8 @@ use crate::domain::{
     AvailabilityState, EngineKind, EngineReport, EngineStatus, Feature, FeatureAvailability,
 };
 
-/// The release of Aurora this build is.
-pub const CURRENT_RELEASE: &str = "v0.1.0";
+/// The release of Aurora this build is: the workspace version, so it follows every bump.
+pub const CURRENT_RELEASE: &str = concat!("v", env!("CARGO_PKG_VERSION"));
 
 /// What one feature needs from one engine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -257,16 +257,37 @@ mod tests {
     #[test]
     fn satisfied_feature_of_a_later_release_says_when() {
         let reports = [report(
+            EngineKind::Gedo,
+            EngineStatus::Ready,
+            &["radar", "scope", "stream"],
+        )];
+        assert_eq!(
+            availability(Feature::Agents, &reports).state,
+            AvailabilityState::NotInThisRelease {
+                release: "v0.4.0".into()
+            }
+        );
+    }
+
+    /// BUG-004: the features of a released version are available in its build.
+    #[test]
+    fn released_features_are_available_in_this_build() {
+        assert_eq!(CURRENT_RELEASE, concat!("v", env!("CARGO_PKG_VERSION")));
+        let reports = [report(
             EngineKind::DevCycle,
             EngineStatus::Ready,
             &["diagnose"],
         )];
-        assert_eq!(
-            availability(Feature::Portfolio, &reports).state,
-            AvailabilityState::NotInThisRelease {
-                release: "v0.2.0".into()
-            }
-        );
+        for feature in [Feature::Portfolio, Feature::ProjectView, Feature::Inbox] {
+            assert!(
+                release_number(requirement(feature).release) <= release_number(CURRENT_RELEASE)
+            );
+            assert_eq!(
+                availability(feature, &reports).state,
+                AvailabilityState::Available,
+                "{feature:?}"
+            );
+        }
     }
 
     #[test]

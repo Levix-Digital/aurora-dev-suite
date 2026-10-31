@@ -6,6 +6,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
+### BUG-004: Released features show Coming in v0.2.0
+- **Severity**: low
+- **Epic**: EPIC-001
+- **Status**: open
+- **Found**: 2026-10-31, v0.2.0, code review
+- **Plan**: -
+- **Description**: capabilities::CURRENT_RELEASE stayed at v0.1.0, so with a dcp that has diagnose the Engines view and the availability lines of Portfolio, Project view and Inbox say 'Coming in v0.2.0' in the v0.2.0 build, although the views work. Not visible yet because no dcp release answers diagnose. Fix: take the release from the crate version (CARGO_PKG_VERSION), so it follows every version bump.
+
 ## Features
 
 ### FEAT-018: Inbox actions

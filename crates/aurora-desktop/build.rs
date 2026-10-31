@@ -12,6 +12,9 @@ const COMMANDS: &[&str] = &[
     "get_settings",
     "save_settings",
     "project_cycle_state",
+    "project_config",
+    "preview_project_config",
+    "apply_project_config",
 ];
 
 fn main() {

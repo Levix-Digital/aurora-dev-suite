@@ -7,13 +7,13 @@ use std::time::Duration;
 
 use aurora_core::domain::{
     CandidateRun, CurrentRelease, CycleError, CycleState, EngineReport, EngineSettings, ItemRef,
-    NextOption, NextStep, PlanProgress, PullRequestState, UntriagedBug, UpdateSide,
+    NextOption, NextStep, PlanProgress, PullRequestState, UntriagedBug,
 };
 use aurora_core::ports::CycleSource;
 use serde::Deserialize;
 
-use crate::repo;
-use crate::runner::{self, CommandSpec, MAX_STDOUT_BYTES, RunError};
+use crate::dcp;
+use crate::runner::CommandSpec;
 
 /// The schema of the reply.
 pub const DIAGNOSE_SCHEMA: &str = "dcp.diagnose";
@@ -48,7 +48,7 @@ impl CycleSource for DcpCycleSource {
 
         let started = std::time::Instant::now();
         let result = read(&spec, root);
-        let elapsed_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
+        let elapsed_ms = dcp::elapsed_ms(started);
         match &result {
             Ok(_) => tracing::info!(root = %root.display(), elapsed_ms, "cycle state read"),
             Err(error) => {
@@ -60,35 +60,9 @@ impl CycleSource for DcpCycleSource {
 }
 
 fn read(spec: &CommandSpec, root: &Path) -> Result<CycleState, CycleError> {
-    let output = runner::run(spec).map_err(|error| match error {
-        RunError::TimedOut { timeout, stderr } => CycleError::TimedOut {
-            timeout_ms: u64::try_from(timeout.as_millis()).unwrap_or(u64::MAX),
-            stderr,
-        },
-        RunError::TooLarge { stderr, .. } => CycleError::TooLarge {
-            limit: MAX_STDOUT_BYTES,
-            stderr,
-        },
-        RunError::Spawn { message, .. } | RunError::Wait { message } => CycleError::Failed {
-            exit_code: None,
-            stderr: message,
-        },
-    })?;
-    if !output.succeeded() {
-        return Err(CycleError::Failed {
-            exit_code: output.exit_code,
-            stderr: output.stderr,
-        });
-    }
+    let output = dcp::run(spec)?;
     parse_diagnose_reply(&output.stdout, root, &crate::now_rfc3339())
-        .map_err(|error| with_stderr(error, output.stderr))
-}
-
-fn with_stderr(error: CycleError, stderr: String) -> CycleError {
-    match error {
-        CycleError::Invalid { message, .. } => CycleError::Invalid { message, stderr },
-        other => other,
-    }
+        .map_err(|error| dcp::with_stderr(error, output.stderr))
 }
 
 /// Parses a `dcp.diagnose` reply about `root`, read at `read_at`.
@@ -97,67 +71,11 @@ pub fn parse_diagnose_reply(
     root: &Path,
     read_at: &str,
 ) -> Result<CycleState, CycleError> {
-    let value: serde_json::Value =
-        serde_json::from_slice(bytes).map_err(|_| invalid("the reply is not JSON"))?;
-    let envelope: Envelope = serde_json::from_value(value.clone())
-        .map_err(|_| invalid("the reply is not a versioned JSON envelope"))?;
-    if envelope.schema != DIAGNOSE_SCHEMA {
-        return Err(invalid(format!(
-            "the reply has schema `{}`, expected `{DIAGNOSE_SCHEMA}`",
-            envelope.schema
-        )));
-    }
-    let major = envelope
-        .schema_version
-        .split('.')
-        .next()
-        .and_then(|major| major.parse::<u32>().ok())
-        .ok_or_else(|| {
-            invalid(format!(
-                "schema_version `{}` is not MAJOR.MINOR",
-                envelope.schema_version
-            ))
-        })?;
-    if major != SUPPORTED_MAJOR {
-        let update = if major > SUPPORTED_MAJOR {
-            UpdateSide::Aurora
-        } else {
-            UpdateSide::Engine
-        };
-        return Err(CycleError::Unsupported {
-            found: major,
-            update,
-        });
-    }
+    let value = dcp::envelope(bytes, DIAGNOSE_SCHEMA, SUPPORTED_MAJOR)?;
     let raw: RawDiagnose =
-        serde_json::from_value(value).map_err(|error| invalid(error.to_string()))?;
-    if !same_root(Path::new(&raw.root), root) {
-        return Err(invalid(format!(
-            "the reply is about {}, not {}",
-            raw.root,
-            root.display()
-        )));
-    }
+        serde_json::from_value(value).map_err(|error| dcp::invalid(error.to_string()))?;
+    dcp::check_root(&raw.root, root)?;
     Ok(raw.into_state(read_at))
-}
-
-fn same_root(reply: &Path, asked: &Path) -> bool {
-    let reply = repo::canonicalize(reply).unwrap_or_else(|| reply.to_owned());
-    let asked = repo::canonicalize(asked).unwrap_or_else(|| asked.to_owned());
-    repo::same_path(&reply, &asked)
-}
-
-fn invalid(message: impl Into<String>) -> CycleError {
-    CycleError::Invalid {
-        message: message.into(),
-        stderr: String::new(),
-    }
-}
-
-#[derive(Deserialize)]
-struct Envelope {
-    schema: String,
-    schema_version: String,
 }
 
 #[derive(Deserialize)]
@@ -322,6 +240,7 @@ impl RawDiagnose {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use aurora_core::domain::UpdateSide;
 
     const ROOT: &str = "/repos/gedo";
 

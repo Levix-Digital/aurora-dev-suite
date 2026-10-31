@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://levix.digital/schemas/dcp/config-1.json",
+  "title": "dcp config get reply (schema MAJOR 1)",
+  "description": "What Aurora expects from `dcp config get --json --dir <root>`, offered when `dcp version --json` lists the capability `config` with schema_major 1. Unknown fields are ignored; MINOR versions only add optional fields. Exit code 0 with this reply on standard output; any other exit code is a failure and standard error explains it. Every setting the protocol knows is listed, set or not, with its effective value; no setting carries a secret value.",
+  "type": "object",
+  "required": ["schema", "schema_version", "root", "revision", "source", "settings", "findings"],
+  "properties": {
+    "schema": { "const": "dcp.config" },
+    "schema_version": { "type": "string", "pattern": "^1\\.[0-9]+$" },
+    "root": { "type": "string", "description": "The repository root the reply is about (absolute path)" },
+    "revision": { "type": "string", "minLength": 1, "description": "Opaque token that changes whenever the configuration file changes (for example a hash of its bytes, or `none` when there is no file); `config set --revision` refuses a different one" },
+    "source": { "type": ["string", "null"], "description": "The configuration file read (path relative to root, normally .dev-cycle.json), or null when only defaults apply" },
+    "settings": {
+      "type": "array",
+      "description": "In the order to show them; groups appear in the order of their first setting",
+      "items": { "$ref": "#/$defs/setting" }
+    },
+    "findings": { "type": "array", "items": { "type": "string" }, "description": "Configuration problems found (unknown keys, invalid values, legacy keys), never blocking for the reader" }
+  },
+  "$defs": {
+    "value": {
+      "description": "A setting value: boolean, integer, text, list of text, or null when not set (the protocol falls back to detection)",
+      "type": ["boolean", "integer", "string", "array", "null"],
+      "items": { "type": "string" }
+    },
+    "setting": {
+      "type": "object",
+      "required": ["key", "group", "description", "type", "value", "default", "allowed", "nullable", "read_only"],
+      "properties": {
+        "key": { "type": "string", "description": "Dotted path in the configuration file, for example devops.branching or test_commands" },
+        "group": { "type": "string", "description": "Display group, for example devops, architecture, backlog" },
+        "description": { "type": "string", "description": "One line on what the setting does" },
+        "type": { "enum": ["enum", "boolean", "text", "integer", "list"] },
+        "value": { "$ref": "#/$defs/value" },
+        "default": { "$ref": "#/$defs/value" },
+        "allowed": {
+          "type": ["array", "null"],
+          "items": { "type": "string" },
+          "description": "The accepted values of an enum, or of each item of a list; null when any value is accepted"
+        },
+        "nullable": { "type": "boolean", "description": "Whether null (not set) is accepted" },
+        "read_only": { "type": "boolean", "description": "true for mandatory gates and principles, which are shown but cannot be changed" },
+        "read_only_reason": { "type": "string", "description": "Why it cannot be changed, when read_only is true" }
+      }
+    }
+  }
+}

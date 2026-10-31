@@ -1,0 +1,17 @@
+{
+  "schema": "dcp.config-set",
+  "schema_version": "1.0",
+  "root": "/repos/gedo",
+  "dry_run": false,
+  "applied": false,
+  "revision": "sha256:77aa01",
+  "changes": [],
+  "diff": "",
+  "errors": [
+    {
+      "code": "stale_revision",
+      "key": null,
+      "message": "the configuration changed since it was read"
+    }
+  ]
+}

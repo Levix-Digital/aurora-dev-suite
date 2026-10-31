@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use aurora_core::domain::{EngineReport, EnginesOverview, Settings};
+use aurora_core::domain::{ConfigChange, EngineReport, EnginesOverview, Settings};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -37,6 +37,12 @@ pub struct RenameArgs {
 #[derive(Serialize)]
 pub struct IdArgs {
     pub id: String,
+}
+
+#[derive(Serialize)]
+pub struct ChangeArgs {
+    pub id: String,
+    pub change: ConfigChange,
 }
 
 #[derive(Serialize)]

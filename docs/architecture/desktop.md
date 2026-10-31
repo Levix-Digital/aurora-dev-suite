@@ -20,8 +20,8 @@ The Tauri 2 application: composition root, commands exposed to the interface, en
 | File | Holds |
 |---|---|
 | `src/main.rs` | start-up: logging, plugins, state, commands |
-| `src/state.rs` | `AppState`: `TomlRegistry`, `TomlSettings`, `CliProbe`, `DcpCycleSource` and the last engines overview |
-| `src/commands.rs` | the commands and `CommandError { kind, message, detail }` (`detail` holds the `CycleError` of the `cycle` kind) |
+| `src/state.rs` | `AppState`: `TomlRegistry`, `TomlSettings`, `CliProbe`, `DcpCycleSource`, `DcpConfigSource` and the last engines overview |
+| `src/commands.rs` | the commands and `CommandError { kind, message, detail, config }` (`detail` holds the `CycleError` of the `cycle` kind, `config` the `ConfigError` of the `config` kind) |
 | `src/events.rs` | `probe_all`: one thread per engine |
 | `src/logging.rs` | the log file |
 | `tauri.conf.json` | window, content security policy, frontend location, packages (`bundle`) |
@@ -32,7 +32,7 @@ The bin is `aurora`. Without the `custom-protocol` feature it loads the interfac
 
 ## Behavior
 
-**Commands.** `list_projects`, `add_project`, `pick_and_add_project` (the system folder dialog, opened from Rust), `rename_project`, `remove_project`, `relocate_project`, `engines_overview`, `refresh_engines`, `get_settings`, `save_settings`, `project_cycle_state` (a project's cycle state through `dcp`, using the last engine probe and probing first when none ran). Each runs on Tauri's blocking pool and returns the core's types or a `CommandError`.
+**Commands.** `list_projects`, `add_project`, `pick_and_add_project` (the system folder dialog, opened from Rust), `rename_project`, `remove_project`, `relocate_project`, `engines_overview`, `refresh_engines`, `get_settings`, `save_settings`, `project_cycle_state` (a project's cycle state through `dcp`, using the last engine probe and probing first when none ran), `project_config`, `preview_project_config` and `apply_project_config` (a project's Dev Cycle settings through `dcp config`, the same way). Each runs on Tauri's blocking pool and returns the core's types or a `CommandError`.
 
 **Engines.** `engines_overview` returns the last overview, probing and waiting the first time; concurrent first calls (the Portfolio's parallel reads at start-up) wait for a single probe. `refresh_engines` returns at once and probes in the background. Each engine is probed on its own thread and emitted as `engine-report` when done; `engines-ready` carries the overview once all three finished, so a hanging engine delays only its own report.
 

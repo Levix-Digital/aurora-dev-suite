@@ -323,6 +323,66 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Result** (v0.2.0-rc.4): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
+
+## Project settings
+
+### MT-SET-001: The preview shows a project's settings by group
+
+- **Covers**: Settings tab, rendering from `dcp config get` (spec 007 US1, SC-001)
+- **Prerequisites**: Trunk 0.22 installed
+- **Steps**:
+  1. Run `trunk serve` in `crates/aurora-ui`, open `http://127.0.0.1:1420`, open Project on `gedo` and press the **Settings** tab
+- **Expected**:
+  - The tabs "Cycle" and "Settings" are shown; "Source: .dev-cycle.json"
+  - The groups `devops`, `architecture`, `backlog`, `docs` and `principles`, in this order
+  - "Branching model" is a choice set to `trunk` with "Default: integration"; "Release candidates" is a checked box; "Bug severities that block new work" has `critical`, `high`, `medium` checked and `low` not; "README line limit" is `400`
+  - "Mandatory gates" is disabled, marked "Read-only", with "The user's approval gates are mandatory in the Dev Cycle Protocol"
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-SET-002: Edit, preview and apply a change
+
+- **Covers**: draft, `preview_project_config`, `apply_project_config` (spec 007 US2 scenarios 1 to 4)
+- **Prerequisites**: the preview of MT-SET-001
+- **Steps**:
+  1. Set "Branching model" to `integration` and clear "Release candidates"
+  2. Press **Preview changes**, then **Back to editing**, then **Preview changes** again
+  3. Press **Apply**
+- **Expected**:
+  - Step 1: both fields are marked "Edited" and the toolbar says "2 changes"
+  - Step 2: the preview lists `devops.branching: trunk → integration` and `devops.release_candidates: on → off` and shows the diff of `.dev-cycle.json`; back to editing keeps both edits
+  - Step 3: "Saved to .dev-cycle.json. Commit it to share the change."; the settings are read again with the new values and "No changes"
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-SET-003: Refusals are shown next to the field
+
+- **Covers**: the core's checks and the engine's refusals (spec 007 US2 scenario 5, FR-006, FR-007)
+- **Prerequisites**: the preview of MT-SET-001
+- **Steps**:
+  1. Type `abc` in "README line limit" and leave the field
+  2. Type `400` back; set "Integration branch" to `main` and press **Preview changes**
+  3. Press **Discard**
+- **Expected**:
+  - Step 1: "Expected a whole number" under the field; the toolbar does not count it
+  - Step 2: "The integration branch must differ from the production branch" under "Integration branch" and in the status line; nothing is written
+  - Step 3: the edits and the errors are gone
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-SET-004: Without the config capability nothing runs
+
+- **Covers**: availability (spec 007 US3, SC-003)
+- **Prerequisites**: the desktop build without `dcp` on the search path, then with the fake engine copied as `dcp` and mode `ready` (it lists `diagnose` and `config`)
+- **Steps**:
+  1. Without `dcp`, open Project, choose a project and press **Settings**
+  2. Put the fake `dcp` on the search path, refresh the Engines view and open **Settings** again; change "Branching model" and preview it
+- **Expected**:
+  - Step 1: "Project settings" says what to install (needs config) and "Project settings unavailable."; no process is started
+  - Step 2: the sample settings are shown and the preview lists the sample changes; the project's `.dev-cycle.json` is not touched by Aurora
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
 ## Inbox
 
 ### MT-INB-001: Everything that waits, most urgent first

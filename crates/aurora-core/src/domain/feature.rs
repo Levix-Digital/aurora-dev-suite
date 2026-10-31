@@ -9,15 +9,17 @@ pub enum Feature {
     Portfolio,
     ProjectView,
     Inbox,
+    ProjectSettings,
     Agents,
     Knowledge,
 }
 
 impl Feature {
-    pub const ALL: [Feature; 5] = [
+    pub const ALL: [Feature; 6] = [
         Feature::Portfolio,
         Feature::ProjectView,
         Feature::Inbox,
+        Feature::ProjectSettings,
         Feature::Agents,
         Feature::Knowledge,
     ];
@@ -27,6 +29,7 @@ impl Feature {
             Feature::Portfolio => "Portfolio",
             Feature::ProjectView => "Project view",
             Feature::Inbox => "Decision inbox",
+            Feature::ProjectSettings => "Project settings",
             Feature::Agents => "Agent work",
             Feature::Knowledge => "Knowledge",
         }

@@ -24,7 +24,7 @@ const SCHEMA_MAJOR: u32 = 1;
 
 const DCP_HINT: &str = "Install the Dev Cycle Protocol (dcp) with its JSON contract";
 
-const CATALOG: [Requirement; 5] = [
+const CATALOG: [Requirement; 6] = [
     Requirement {
         feature: Feature::Portfolio,
         engine: EngineKind::DevCycle,
@@ -47,6 +47,13 @@ const CATALOG: [Requirement; 5] = [
         release: "v0.2.0",
     },
     Requirement {
+        feature: Feature::ProjectSettings,
+        engine: EngineKind::DevCycle,
+        capabilities: &[CONFIG_CAPABILITY],
+        hint: DCP_HINT,
+        release: "v0.3.0",
+    },
+    Requirement {
         feature: Feature::Agents,
         engine: EngineKind::Gedo,
         capabilities: &["radar", "scope", "stream"],
@@ -65,17 +72,35 @@ const CATALOG: [Requirement; 5] = [
 /// The capability of `dcp` that answers a project's cycle state (`dcp diagnose --json`).
 pub const CYCLE_CAPABILITY: &str = "diagnose";
 
+/// The capability of `dcp` that reads and changes a project's settings (`dcp config get`
+/// and `dcp config set`, FEAT-027).
+pub const CONFIG_CAPABILITY: &str = "config";
+
 /// The `dcp` report when it is ready with the cycle capability at the supported MAJOR;
 /// otherwise what to install or update.
 pub fn usable_dcp(report: Option<&EngineReport>) -> Result<&EngineReport, String> {
+    usable_dcp_for(Feature::ProjectView, report)
+}
+
+/// The `dcp` report when it is ready with every capability `feature` needs at the
+/// supported MAJOR; otherwise what to install or update.
+pub fn usable_dcp_for(
+    feature: Feature,
+    report: Option<&EngineReport>,
+) -> Result<&EngineReport, String> {
+    let requirement = requirement(feature);
     match report {
         Some(report)
             if report.kind == EngineKind::DevCycle
-                && report.has_capability(CYCLE_CAPABILITY, SCHEMA_MAJOR) =>
+                && requirement.engine == EngineKind::DevCycle
+                && requirement
+                    .capabilities
+                    .iter()
+                    .all(|name| report.has_capability(name, SCHEMA_MAJOR)) =>
         {
             Ok(report)
         }
-        _ => Err(hint_for(requirement(Feature::ProjectView), report)),
+        _ => Err(hint_for(requirement, report)),
     }
 }
 
@@ -302,12 +327,33 @@ mod tests {
     fn features_are_grouped_by_engine() {
         assert_eq!(
             features_of(EngineKind::DevCycle),
-            vec![Feature::Portfolio, Feature::ProjectView, Feature::Inbox]
+            vec![
+                Feature::Portfolio,
+                Feature::ProjectView,
+                Feature::Inbox,
+                Feature::ProjectSettings
+            ]
         );
         assert_eq!(
             features_of(EngineKind::AnyContext),
             vec![Feature::Knowledge]
         );
+    }
+
+    #[test]
+    fn settings_need_the_config_capability() {
+        let cycle_only = report(EngineKind::DevCycle, EngineStatus::Ready, &["diagnose"]);
+        assert!(usable_dcp(Some(&cycle_only)).is_ok());
+        let hint = usable_dcp_for(Feature::ProjectSettings, Some(&cycle_only))
+            .expect_err("no config capability");
+        assert!(hint.contains("lacks a needed capability"), "{hint}");
+        let both = report(
+            EngineKind::DevCycle,
+            EngineStatus::Ready,
+            &["diagnose", "config"],
+        );
+        assert!(usable_dcp_for(Feature::ProjectSettings, Some(&both)).is_ok());
+        assert!(usable_dcp_for(Feature::ProjectSettings, None).is_err());
     }
 
     #[test]

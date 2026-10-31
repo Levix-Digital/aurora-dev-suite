@@ -6,11 +6,13 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use aurora_core::domain::{
-    AddOutcome, CycleState, EngineKind, EngineReport, EnginesOverview, Project, ProjectError,
-    ProjectId, ProjectList, Settings,
+    AddOutcome, ConfigChange, ConfigOutcome, CycleState, EngineKind, EngineReport, EnginesOverview,
+    Project, ProjectConfig, ProjectError, ProjectId, ProjectList, Settings,
 };
-use aurora_core::fixtures::{self, FixtureCycleSource, MemoryRegistry, MemorySettings};
-use aurora_core::usecases::{cycle, engines, projects, settings};
+use aurora_core::fixtures::{
+    self, FixtureConfigSource, FixtureCycleSource, MemoryRegistry, MemorySettings,
+};
+use aurora_core::usecases::{config, cycle, engines, projects, settings};
 
 use super::{CommandError, OnReady, OnReport, Reply};
 
@@ -25,6 +27,7 @@ struct Subscribers {
 pub struct FixtureBackend {
     registry: MemoryRegistry,
     settings: MemorySettings,
+    config: FixtureConfigSource,
     refreshes: Mutex<u32>,
     picks: Mutex<u32>,
     subscribers: Mutex<Subscribers>,
@@ -41,6 +44,7 @@ impl FixtureBackend {
         Self {
             registry: fixtures::sample_registry(),
             settings: MemorySettings::default(),
+            config: FixtureConfigSource::default(),
             refreshes: Mutex::new(0),
             picks: Mutex::new(0),
             subscribers: Mutex::new(Subscribers::default()),
@@ -156,6 +160,48 @@ impl FixtureBackend {
             &project,
         )?)
     }
+
+    fn project(&self, id: &str) -> Reply<Project> {
+        Ok(self
+            .list_projects()
+            .projects
+            .into_iter()
+            .find(|project| project.id.0 == id)
+            .ok_or_else(|| ProjectError::UnknownProject { id: id.to_owned() })?)
+    }
+
+    /// The preview takes `dcp` as ready with the `config` capability, as for the cycle
+    /// state; the sample settings live in memory, so a change applied here stays until the
+    /// page reloads.
+    pub fn project_config(&self, id: &str) -> Reply<ProjectConfig> {
+        let project = self.project(id)?;
+        Ok(config::read(
+            &self.config,
+            Some(&config_dcp()),
+            &self.get_settings(),
+            &project,
+        )?)
+    }
+
+    pub fn set_project_config(
+        &self,
+        id: &str,
+        change: &ConfigChange,
+        dry_run: bool,
+    ) -> Reply<ConfigOutcome> {
+        let project = self.project(id)?;
+        let settings = self.get_settings();
+        let dcp = config_dcp();
+        Ok(if dry_run {
+            config::preview(&self.config, Some(&dcp), &settings, &project, change)?
+        } else {
+            config::apply(&self.config, Some(&dcp), &settings, &project, change)?
+        })
+    }
+}
+
+fn config_dcp() -> EngineReport {
+    fixtures::ready_report(EngineKind::DevCycle, &["diagnose", "config"])
 }
 
 impl From<aurora_core::domain::ProjectError> for CommandError {
@@ -197,11 +243,15 @@ mod tests {
         "get_settings",
         "save_settings",
         "project_cycle_state",
+        "project_config",
+        "preview_project_config",
+        "apply_project_config",
     ];
 
-    const CONTRACTS: [&str; 2] = [
+    const CONTRACTS: [&str; 3] = [
         include_str!("../../../../specs/001-foundations/contracts/desktop-commands.md"),
         include_str!("../../../../specs/002-dcp-adapter/contracts/desktop-commands.md"),
+        include_str!("../../../../specs/007-project-settings/contracts/desktop-commands.md"),
     ];
 
     #[test]
@@ -263,6 +313,48 @@ mod tests {
                 .iter()
                 .any(|s| matches!(s, EngineStatus::Degraded { .. }))
         );
+    }
+
+    #[test]
+    fn settings_preview_refuse_and_apply_on_the_sample() {
+        use aurora_core::domain::{ConfigDraft, ConfigError, ConfigValue};
+
+        let backend = FixtureBackend::sample();
+        let projects = backend.list_projects().projects;
+        let gedo = &projects[0].id.0;
+        let config = backend.project_config(gedo).expect("settings");
+        let mut draft = ConfigDraft::default();
+        draft.set(
+            &config,
+            "devops.branching",
+            Some(ConfigValue::Text("integration".into())),
+        );
+        let change = draft.change(&config).expect("valid");
+        let preview = backend
+            .set_project_config(gedo, &change, true)
+            .expect("preview");
+        assert!(!preview.applied);
+        let applied = backend
+            .set_project_config(gedo, &change, false)
+            .expect("apply");
+        assert!(applied.applied);
+        let stale = backend
+            .set_project_config(gedo, &change, false)
+            .expect_err("stale");
+        assert_eq!(stale.kind, "config");
+        assert_eq!(stale.config.as_deref(), Some(&ConfigError::Stale));
+        let missing = projects
+            .iter()
+            .find(|p| p.presence == Presence::Missing)
+            .expect("a missing sample");
+        assert!(matches!(
+            backend
+                .project_config(&missing.id.0)
+                .expect_err("missing")
+                .config
+                .as_deref(),
+            Some(ConfigError::ProjectMissing { .. })
+        ));
     }
 
     #[test]

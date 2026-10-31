@@ -8,8 +8,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aurora_core::domain::{
-    AddOutcome, CycleError, CycleState, EngineReport, EnginesOverview, Project, ProjectList,
-    Settings,
+    AddOutcome, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState, EngineReport,
+    EnginesOverview, Project, ProjectConfig, ProjectList, Settings,
 };
 use serde::Deserialize;
 
@@ -23,6 +23,9 @@ pub struct CommandError {
     /// The cycle error itself, for the `cycle` kind.
     #[serde(default)]
     pub detail: Option<CycleError>,
+    /// The settings error itself, for the `config` kind.
+    #[serde(default)]
+    pub config: Option<Box<ConfigError>>,
 }
 
 impl CommandError {
@@ -31,6 +34,7 @@ impl CommandError {
             kind: kind.to_owned(),
             message: message.to_string(),
             detail: None,
+            config: None,
         }
     }
 
@@ -44,6 +48,15 @@ impl From<CycleError> for CommandError {
         Self {
             detail: Some(error.clone()),
             ..Self::new("cycle", error)
+        }
+    }
+}
+
+impl From<ConfigError> for CommandError {
+    fn from(error: ConfigError) -> Self {
+        Self {
+            config: Some(Box::new(error.clone())),
+            ..Self::new("config", error)
         }
     }
 }
@@ -149,6 +162,42 @@ impl Backend {
         match self {
             Backend::Tauri => tauri::invoke("project_cycle_state", &tauri::IdArgs { id }).await,
             Backend::Fixture(fixture) => fixture.project_cycle_state(&id),
+        }
+    }
+
+    /// A project's Dev Cycle settings through `dcp config get` (FEAT-027).
+    pub async fn project_config(&self, id: String) -> Reply<ProjectConfig> {
+        match self {
+            Backend::Tauri => tauri::invoke("project_config", &tauri::IdArgs { id }).await,
+            Backend::Fixture(fixture) => fixture.project_config(&id),
+        }
+    }
+
+    /// What `change` would do; nothing is written.
+    pub async fn preview_project_config(
+        &self,
+        id: String,
+        change: ConfigChange,
+    ) -> Reply<ConfigOutcome> {
+        match self {
+            Backend::Tauri => {
+                tauri::invoke("preview_project_config", &tauri::ChangeArgs { id, change }).await
+            }
+            Backend::Fixture(fixture) => fixture.set_project_config(&id, &change, true),
+        }
+    }
+
+    /// Writes `change` through `dcp config set`.
+    pub async fn apply_project_config(
+        &self,
+        id: String,
+        change: ConfigChange,
+    ) -> Reply<ConfigOutcome> {
+        match self {
+            Backend::Tauri => {
+                tauri::invoke("apply_project_config", &tauri::ChangeArgs { id, change }).await
+            }
+            Backend::Fixture(fixture) => fixture.set_project_config(&id, &change, false),
         }
     }
 

@@ -5,10 +5,11 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aurora_core::domain::{
-    AddOutcome, CycleError, CycleState, EngineKind, EnginesOverview, Project, ProjectError,
-    ProjectId, ProjectList, Settings,
+    AddOutcome, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState, EngineKind,
+    EngineReport, EnginesOverview, Project, ProjectConfig, ProjectError, ProjectId, ProjectList,
+    Settings,
 };
-use aurora_core::usecases::{cycle, projects, settings};
+use aurora_core::usecases::{config, cycle, projects, settings};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
@@ -25,6 +26,9 @@ pub struct CommandError {
     /// The cycle error itself, for the `cycle` kind.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub detail: Option<CycleError>,
+    /// The settings error itself, for the `config` kind.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<Box<ConfigError>>,
 }
 
 impl CommandError {
@@ -33,6 +37,16 @@ impl CommandError {
             kind: kind.to_owned(),
             message: message.to_string(),
             detail: None,
+            config: None,
+        }
+    }
+}
+
+impl From<ConfigError> for CommandError {
+    fn from(error: ConfigError) -> Self {
+        Self {
+            config: Some(Box::new(error.clone())),
+            ..Self::new("config", error)
         }
     }
 }
@@ -243,6 +257,82 @@ pub async fn project_cycle_state(
     .await
 }
 
+/// The registered project `id` and the latest `dcp` report, probing first when needed.
+async fn project_and_dcp(
+    app: AppHandle,
+    state: &State<'_, AppState>,
+    id: String,
+) -> Reply<(Project, Option<EngineReport>)> {
+    let overview = engines_overview(app, state.clone()).await?;
+    let registry = Arc::clone(&state.registry);
+    blocking(move || {
+        let id = ProjectId(id);
+        let project = projects::list(registry.as_ref())
+            .projects
+            .into_iter()
+            .find(|project| project.id == id)
+            .ok_or_else(|| ProjectError::UnknownProject { id: id.0.clone() })?;
+        let dcp = overview
+            .reports
+            .into_iter()
+            .find(|report| report.kind == EngineKind::DevCycle);
+        Ok((project, dcp))
+    })
+    .await
+}
+
+/// A project's Dev Cycle settings through `dcp config get` (FEAT-027).
+#[tauri::command]
+pub async fn project_config(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Reply<ProjectConfig> {
+    let (project, dcp) = project_and_dcp(app, &state, id).await?;
+    let (store, source) = (Arc::clone(&state.settings), Arc::clone(&state.config));
+    blocking(move || {
+        let current = settings::get(store.as_ref());
+        config::read(source.as_ref(), dcp.as_ref(), &current, &project).map_err(CommandError::from)
+    })
+    .await
+}
+
+/// What `change` would do to a project's settings; nothing is written.
+#[tauri::command]
+pub async fn preview_project_config(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    change: ConfigChange,
+) -> Reply<ConfigOutcome> {
+    let (project, dcp) = project_and_dcp(app, &state, id).await?;
+    let (store, source) = (Arc::clone(&state.settings), Arc::clone(&state.config));
+    blocking(move || {
+        let current = settings::get(store.as_ref());
+        config::preview(source.as_ref(), dcp.as_ref(), &current, &project, &change)
+            .map_err(CommandError::from)
+    })
+    .await
+}
+
+/// Writes `change` to a project's settings through `dcp config set`.
+#[tauri::command]
+pub async fn apply_project_config(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    change: ConfigChange,
+) -> Reply<ConfigOutcome> {
+    let (project, dcp) = project_and_dcp(app, &state, id).await?;
+    let (store, source) = (Arc::clone(&state.settings), Arc::clone(&state.config));
+    blocking(move || {
+        let current = settings::get(store.as_ref());
+        config::apply(source.as_ref(), dcp.as_ref(), &current, &project, &change)
+            .map_err(CommandError::from)
+    })
+    .await
+}
+
 #[tauri::command]
 pub async fn get_settings(state: State<'_, AppState>) -> Reply<Settings> {
     let store = Arc::clone(&state.settings);
@@ -306,5 +396,14 @@ mod tests {
         assert_eq!(error.message, cause.to_string());
         let json = serde_json::to_value(&error).expect("serializes");
         assert_eq!(json["detail"]["kind"], "timedOut");
+    }
+
+    #[test]
+    fn config_errors_keep_the_error_as_config() {
+        let error = CommandError::from(ConfigError::Stale);
+        assert_eq!(error.kind, "config");
+        assert_eq!(error.detail, None);
+        let json = serde_json::to_value(&error).expect("serializes");
+        assert_eq!(json["config"]["kind"], "stale");
     }
 }

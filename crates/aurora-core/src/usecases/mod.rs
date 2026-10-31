@@ -1,5 +1,6 @@
 //! One function per user action; every surface calls these and nothing else.
 
+pub mod config;
 pub mod cycle;
 pub mod engines;
 pub mod projects;

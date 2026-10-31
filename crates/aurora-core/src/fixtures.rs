@@ -6,12 +6,15 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use crate::domain::{
-    AddOutcome, CandidateRun, Capability, CurrentRelease, CycleError, CycleState, EngineKind,
-    EngineReport, EngineSettings, EngineStatus, EnginesOverview, ItemRef, NextOption, NextStep,
-    PlanProgress, Presence, Project, ProjectError, ProjectId, ProjectList, ProjectName,
-    PullRequestState, RegistryNotice, Settings, UntriagedBug, UpdateSide,
+    AddOutcome, CandidateRun, Capability, ConfigChange, ConfigError, ConfigOutcome, ConfigSetting,
+    ConfigType, ConfigValue, CurrentRelease, CycleError, CycleState, EngineKind, EngineReport,
+    EngineSettings, EngineStatus, EnginesOverview, FieldError, FieldErrorCode, ItemRef, KeyChange,
+    NextOption, NextStep, PlanProgress, Presence, Project, ProjectConfig, ProjectError, ProjectId,
+    ProjectList, ProjectName, PullRequestState, RegistryNotice, Settings, UntriagedBug, UpdateSide,
 };
-use crate::ports::{CycleSource, EngineProbe, ProjectRegistry, SettingsError, SettingsStore};
+use crate::ports::{
+    ConfigSource, CycleSource, EngineProbe, ProjectRegistry, SettingsError, SettingsStore,
+};
 use crate::usecases;
 
 pub const CHECKED_AT: &str = "2026-10-27T18:00:00Z";
@@ -416,6 +419,350 @@ impl CycleSource for FixtureCycleSource {
     }
 }
 
+fn config_setting(
+    key: &str,
+    description: &str,
+    kind: ConfigType,
+    value: Option<ConfigValue>,
+    default: Option<ConfigValue>,
+) -> ConfigSetting {
+    ConfigSetting {
+        key: key.to_owned(),
+        group: key.split('.').next().unwrap_or(key).to_owned(),
+        description: description.to_owned(),
+        kind,
+        value,
+        default,
+        allowed: None,
+        nullable: false,
+        read_only: false,
+        read_only_reason: None,
+    }
+}
+
+fn text(value: &str) -> Option<ConfigValue> {
+    Some(ConfigValue::Text(value.to_owned()))
+}
+
+fn list(values: &[&str]) -> Option<ConfigValue> {
+    Some(ConfigValue::List(
+        values.iter().map(|value| (*value).to_owned()).collect(),
+    ))
+}
+
+fn allowed(values: &[&str]) -> Option<Vec<String>> {
+    Some(values.iter().map(|value| (*value).to_owned()).collect())
+}
+
+/// The sample settings of a project, as `dcp config get` would describe them: every type,
+/// an unset value, a list with allowed values and a read-only setting.
+pub fn sample_project_config() -> ProjectConfig {
+    use ConfigType::{Boolean, Enum, Integer, List, Text};
+    let severities = ["critical", "high", "medium", "low"];
+    ProjectConfig {
+        revision: "sha256:4f1c2a".to_owned(),
+        source: Some(".dev-cycle.json".to_owned()),
+        settings: vec![
+            ConfigSetting {
+                allowed: allowed(&["integration", "trunk", "release-branches"]),
+                ..config_setting(
+                    "devops.branching",
+                    "Branching model: where work merges and how releases are cut",
+                    Enum,
+                    text("trunk"),
+                    text("integration"),
+                )
+            },
+            config_setting(
+                "devops.integration_branch",
+                "Integration branch of the integration model",
+                Text,
+                text("dev"),
+                text("dev"),
+            ),
+            config_setting(
+                "devops.production_branch",
+                "Production branch",
+                Text,
+                text("main"),
+                text("main"),
+            ),
+            config_setting(
+                "devops.release_candidates",
+                "Release candidates (vX.Y.Z-rc.N) for manual acceptance before a release",
+                Boolean,
+                Some(ConfigValue::Boolean(true)),
+                Some(ConfigValue::Boolean(true)),
+            ),
+            config_setting(
+                "devops.version_files",
+                "Files whose version is bumped at a release",
+                List,
+                list(&["Cargo.toml"]),
+                list(&[]),
+            ),
+            ConfigSetting {
+                allowed: allowed(&["cli", "service", "library", "desktop", "none"]),
+                nullable: true,
+                ..config_setting(
+                    "devops.observability",
+                    "Logging and telemetry profile required in plans",
+                    Enum,
+                    None,
+                    None,
+                )
+            },
+            ConfigSetting {
+                allowed: allowed(&[
+                    "hexagonal",
+                    "layered",
+                    "mvc",
+                    "pipeline",
+                    "modular-monolith",
+                    "other",
+                ]),
+                nullable: true,
+                ..config_setting(
+                    "architecture.style",
+                    "Architecture style the design review checks",
+                    Enum,
+                    text("hexagonal"),
+                    None,
+                )
+            },
+            ConfigSetting {
+                nullable: true,
+                ..config_setting(
+                    "architecture.core_path",
+                    "Folder of the core, which must not import adapters",
+                    Text,
+                    text("crates/gedo-core"),
+                    None,
+                )
+            },
+            ConfigSetting {
+                allowed: allowed(&severities),
+                ..config_setting(
+                    "backlog.blocking_severities",
+                    "Bug severities that block new work",
+                    List,
+                    list(&["critical", "high", "medium"]),
+                    list(&["critical", "high", "medium"]),
+                )
+            },
+            ConfigSetting {
+                allowed: allowed(&["next_release", "off"]),
+                ..config_setting(
+                    "backlog.bug_deadline",
+                    "Latest release for a bug that does not block",
+                    Enum,
+                    text("next_release"),
+                    text("next_release"),
+                )
+            },
+            config_setting(
+                "docs.user_doc",
+                "The user documentation file",
+                Text,
+                text("README.md"),
+                text("README.md"),
+            ),
+            config_setting(
+                "docs.readme_max_lines",
+                "README line limit",
+                Integer,
+                Some(ConfigValue::Integer(400)),
+                Some(ConfigValue::Integer(400)),
+            ),
+            ConfigSetting {
+                read_only: true,
+                read_only_reason: Some(
+                    "The user's approval gates are mandatory in the Dev Cycle Protocol".to_owned(),
+                ),
+                ..config_setting(
+                    "principles.gates",
+                    "Mandatory gates",
+                    List,
+                    list(&[
+                        "product baseline",
+                        "plan",
+                        "release candidate acceptance",
+                        "release gate",
+                    ]),
+                    list(&[
+                        "product baseline",
+                        "plan",
+                        "release candidate acceptance",
+                        "release gate",
+                    ]),
+                )
+            },
+        ],
+        findings: Vec::new(),
+        read_at: CHECKED_AT.to_owned(),
+    }
+}
+
+/// A `ConfigSource` that keeps the sample settings of each present sample repository in
+/// memory, checks a change as `dcp` would (including that the integration branch differs
+/// from the production branch), and applies it with a new revision. `slow` times out.
+#[derive(Debug, Default)]
+pub struct FixtureConfigSource {
+    configs: Mutex<BTreeMap<PathBuf, ProjectConfig>>,
+}
+
+impl FixtureConfigSource {
+    fn with_config<T>(
+        &self,
+        root: &Path,
+        settings: &EngineSettings,
+        work: impl FnOnce(&mut ProjectConfig) -> Result<T, ConfigError>,
+    ) -> Result<T, ConfigError> {
+        if root.ends_with("slow") {
+            return Err(ConfigError::TimedOut {
+                timeout_ms: settings.timeout_ms,
+                stderr: String::new(),
+            });
+        }
+        let mut configs = lock(&self.configs);
+        let config = configs
+            .entry(root.to_owned())
+            .or_insert_with(sample_project_config);
+        work(config)
+    }
+}
+
+/// The refusals `dcp` would give: the core's checks, then the rules across keys.
+fn refusals(config: &ProjectConfig, change: &ConfigChange) -> Vec<FieldError> {
+    if change.revision != config.revision {
+        return vec![FieldError {
+            code: FieldErrorCode::StaleRevision,
+            key: None,
+            message: "the configuration changed since it was read".to_owned(),
+            accepted: Vec::new(),
+        }];
+    }
+    let mut errors: Vec<FieldError> = change
+        .values
+        .iter()
+        .filter_map(|kv| match config.setting(&kv.key) {
+            None => Some(FieldError {
+                code: FieldErrorCode::UnknownKey,
+                key: Some(kv.key.clone()),
+                message: "unknown setting".to_owned(),
+                accepted: Vec::new(),
+            }),
+            Some(setting) => setting.check(kv.value.as_ref()).err(),
+        })
+        .collect();
+    let after = |key: &str| {
+        change
+            .values
+            .iter()
+            .find(|kv| kv.key == key)
+            .map(|kv| kv.value.clone())
+            .or_else(|| config.setting(key).map(|s| s.value.clone()))
+            .flatten()
+    };
+    if errors.is_empty() && after("devops.integration_branch") == after("devops.production_branch")
+    {
+        errors.push(FieldError {
+            code: FieldErrorCode::InvalidValue,
+            key: Some("devops.integration_branch".to_owned()),
+            message: "the integration branch must differ from the production branch".to_owned(),
+            accepted: Vec::new(),
+        });
+    }
+    errors
+}
+
+impl ConfigSource for FixtureConfigSource {
+    fn read(
+        &self,
+        _engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<ProjectConfig, ConfigError> {
+        self.with_config(root, settings, |config| Ok(config.clone()))
+    }
+
+    fn set(
+        &self,
+        _engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        change: &ConfigChange,
+        dry_run: bool,
+    ) -> Result<ConfigOutcome, ConfigError> {
+        self.with_config(root, settings, |config| {
+            let errors = refusals(config, change);
+            if !errors.is_empty() {
+                return Err(ConfigError::from_field_errors(errors));
+            }
+            let changes: Vec<KeyChange> = change
+                .values
+                .iter()
+                .filter_map(|kv| {
+                    let before = config.setting(&kv.key)?.value.clone();
+                    (before != kv.value).then(|| KeyChange {
+                        key: kv.key.clone(),
+                        before,
+                        after: kv.value.clone(),
+                    })
+                })
+                .collect();
+            let diff = sample_diff(&changes);
+            let applied = !dry_run && !changes.is_empty();
+            if applied {
+                for kv in &change.values {
+                    if let Some(setting) = config.settings.iter_mut().find(|s| s.key == kv.key) {
+                        setting.value = kv.value.clone();
+                    }
+                }
+                config.revision = format!("{}+", config.revision);
+            }
+            Ok(ConfigOutcome {
+                applied,
+                revision: config.revision.clone(),
+                changes,
+                diff,
+            })
+        })
+    }
+}
+
+/// A diff shaped like the one `dcp` returns, for the preview.
+fn sample_diff(changes: &[KeyChange]) -> String {
+    if changes.is_empty() {
+        return String::new();
+    }
+    let mut diff = String::from("--- a/.dev-cycle.json\n+++ b/.dev-cycle.json\n");
+    for change in changes {
+        let leaf = change.key.rsplit('.').next().unwrap_or(&change.key);
+        let json = |value: &Option<ConfigValue>| match value {
+            None => "null".to_owned(),
+            Some(ConfigValue::Text(text)) => format!("\"{text}\""),
+            Some(ConfigValue::List(items)) => format!(
+                "[{}]",
+                items
+                    .iter()
+                    .map(|item| format!("\"{item}\""))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            Some(ConfigValue::Boolean(flag)) => flag.to_string(),
+            Some(ConfigValue::Integer(number)) => number.to_string(),
+        };
+        diff.push_str(&format!(
+            "@@ {} @@\n-    \"{leaf}\": {},\n+    \"{leaf}\": {},\n",
+            change.key,
+            json(&change.before),
+            json(&change.after)
+        ));
+    }
+    diff
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -463,6 +810,73 @@ mod tests {
             Err(CycleError::Unsupported { .. })
         ));
         assert!(matches!(answer("broken"), Err(CycleError::Invalid { .. })));
+    }
+
+    #[test]
+    fn the_sample_settings_preview_refuse_and_apply_like_dcp() {
+        use crate::domain::{ConfigDraft, KeyValue};
+
+        let source = FixtureConfigSource::default();
+        let dcp = ready_report(EngineKind::DevCycle, &["diagnose", "config"]);
+        let settings = EngineSettings::default();
+        let root = Path::new(REPOS).join("gedo");
+        let config = source.read(&dcp, &settings, &root).expect("read");
+        let mut draft = ConfigDraft::default();
+        draft.set(&config, "devops.branching", text("integration"));
+        draft.set(
+            &config,
+            "devops.release_candidates",
+            Some(ConfigValue::Boolean(false)),
+        );
+        let change = draft.change(&config).expect("valid");
+
+        let preview = source
+            .set(&dcp, &settings, &root, &change, true)
+            .expect("preview");
+        assert!(!preview.applied);
+        assert_eq!(preview.changes.len(), 2);
+        assert!(
+            preview
+                .diff
+                .contains("+    \"branching\": \"integration\",")
+        );
+        assert!(preview.diff.contains("+    \"release_candidates\": false,"));
+        assert_eq!(source.read(&dcp, &settings, &root).expect("read"), config);
+
+        let applied = source
+            .set(&dcp, &settings, &root, &change, false)
+            .expect("apply");
+        assert!(applied.applied);
+        let after = source.read(&dcp, &settings, &root).expect("read");
+        assert_eq!(after.revision, applied.revision);
+        assert_eq!(
+            after
+                .setting("devops.branching")
+                .and_then(|s| s.value.clone()),
+            text("integration")
+        );
+
+        assert_eq!(
+            source.set(&dcp, &settings, &root, &change, true),
+            Err(ConfigError::Stale)
+        );
+        let same_branch = ConfigChange {
+            revision: after.revision.clone(),
+            values: vec![KeyValue {
+                key: "devops.integration_branch".into(),
+                value: text("main"),
+            }],
+        };
+        let Err(ConfigError::Rejected { errors }) =
+            source.set(&dcp, &settings, &root, &same_branch, true)
+        else {
+            panic!("expected a refusal");
+        };
+        assert_eq!(errors[0].key.as_deref(), Some("devops.integration_branch"));
+        assert!(matches!(
+            source.read(&dcp, &settings, Path::new("/repos/slow")),
+            Err(ConfigError::TimedOut { .. })
+        ));
     }
 
     #[test]

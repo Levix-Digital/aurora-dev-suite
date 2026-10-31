@@ -6,14 +6,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
-### BUG-004: Released features show Coming in v0.2.0
-- **Severity**: low
-- **Epic**: EPIC-001
-- **Status**: open
-- **Found**: 2026-10-31, v0.2.0, code review
-- **Plan**: -
-- **Description**: capabilities::CURRENT_RELEASE stayed at v0.1.0, so with a dcp that has diagnose the Engines view and the availability lines of Portfolio, Project view and Inbox say 'Coming in v0.2.0' in the v0.2.0 build, although the views work. Not visible yet because no dcp release answers diagnose. Fix: take the release from the crate version (CARGO_PKG_VERSION), so it follows every version bump.
-
 ## Features
 
 ### FEAT-018: Inbox actions
@@ -87,14 +79,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Found**: 2026-10-27
 - **Plan**: -
 - **Description**: Show the user's plan, what it includes and how to upgrade.
-
-### FEAT-027: Project settings
-- **Priority**: medium
-- **Epic**: EPIC-004
-- **Status**: planned
-- **Found**: 2026-10-28, Dev Cycle Protocol suggestion 2026-10-28
-- **Plan**: project-settings
-- **Description**: A Settings tab per project rendered from dcp config get --json (schema dcp.config: value, allowed values, default, type, read-only, group); changes previewed with dcp config set --dry-run --json and applied with dcp config set, errors shown next to the field. Aurora never reads or writes .dev-cycle.json and does not commit: the user commits the change. Needs the dcp capability config (ADR-0003, ADR-0006).
 
 ### FEAT-028: Cycle metrics
 - **Priority**: medium
@@ -416,3 +400,21 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-10-31, PR #20
 - **Description**: The first Tab shows the "Skip to content" link on top of the sidebar's title, with the sidebar's own background and an underline, so it looks like a rendering error. Fix: remove the skip link; the `<aside>` and `<main>` landmarks and the Alt+1 to Alt+5 shortcuts already let keyboard and screen reader users skip the navigation (WCAG 2.4.1).
+
+### FEAT-027: Project settings
+- **Priority**: medium
+- **Epic**: EPIC-004
+- **Status**: done
+- **Found**: 2026-10-28, Dev Cycle Protocol suggestion 2026-10-28
+- **Plan**: project-settings
+- **Closed**: 2026-10-31, PR #23
+- **Description**: A Settings tab per project rendered from dcp config get --json (schema dcp.config: value, allowed values, default, type, read-only, group); changes previewed with dcp config set --dry-run --json and applied with dcp config set, errors shown next to the field. Aurora never reads or writes .dev-cycle.json and does not commit: the user commits the change. Needs the dcp capability config (ADR-0003, ADR-0006).
+
+### BUG-004: Released features show Coming in v0.2.0
+- **Severity**: low
+- **Epic**: EPIC-001
+- **Status**: done
+- **Found**: 2026-10-31, v0.2.0, code review
+- **Plan**: -
+- **Closed**: 2026-10-31, PR #24
+- **Description**: capabilities::CURRENT_RELEASE stayed at v0.1.0, so with a dcp that has diagnose the Engines view and the availability lines of Portfolio, Project view and Inbox say 'Coming in v0.2.0' in the v0.2.0 build, although the views work. Not visible yet because no dcp release answers diagnose. Fix: take the release from the crate version (CARGO_PKG_VERSION), so it follows every version bump.

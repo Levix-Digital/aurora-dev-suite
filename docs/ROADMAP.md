@@ -19,7 +19,7 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Items**: FEAT-014, FEAT-015, FEAT-017, FEAT-005, FEAT-016
 
 ## v0.3.0: Actions through dcp
-- **Status**: planned
+- **Status**: in_progress
 - **Goal**: Approve a gate, record a manual test result or open a pull request from the inbox, and change a project's Dev Cycle settings, all through dcp commands.
 - **Items**: FEAT-018, FEAT-027, BUG-004
 

@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Project settings
 kind: feature
 version: v0.3.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-10-31T15:09:24'
-updated_at: '2026-10-31T15:30:56'
+updated_at: '2026-10-31T15:38:29'
 session_id: null
 tags: []
 supersedes: null
@@ -57,6 +57,10 @@ status_log:
 - at: '2026-10-31T15:30:56'
   by: Levi
   note: All milestones done; waits for the pull request to merge
+- at: '2026-10-31T15:38:29'
+  by: Levi
+  status: completed
+  note: 'Pull request #23 merged; FEAT-027 delivered'
 ---
 
 # Project settings

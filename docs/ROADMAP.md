@@ -21,7 +21,7 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 ## v0.3.0: Actions through dcp
 - **Status**: planned
 - **Goal**: Approve a gate, record a manual test result or open a pull request from the inbox, and change a project's Dev Cycle settings, all through dcp commands.
-- **Items**: FEAT-018, FEAT-027
+- **Items**: FEAT-018, FEAT-027, BUG-004
 
 ## v0.4.0: Agents
 - **Status**: planned

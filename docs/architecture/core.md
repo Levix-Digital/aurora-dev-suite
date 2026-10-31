@@ -10,8 +10,8 @@ Domain model of the suite, the use cases and the ports every engine and surface 
 
 ## Responsibilities
 
-- The domain types of projects, engines, settings, features and the development cycle state, as plain data with serde (`camelCase` on the wire).
-- The use cases, one per user action: list, add, rename, remove and relocate a project; read and save the settings; probe an engine and build the engines overview; read a project's cycle state.
+- The domain types of projects, engines, settings, features, the development cycle state and a project's Dev Cycle settings, as plain data with serde (`camelCase` on the wire).
+- The use cases, one per user action: list, add, rename, remove and relocate a project; read and save the settings; probe an engine and build the engines overview; read a project's cycle state; read, preview and apply a project's Dev Cycle settings.
 - The ports the use cases need, as traits.
 - The catalog of what each feature needs from each engine.
 - Sample data and in-memory ports behind the `fixtures` feature, for every crate's tests and the interface preview.
@@ -24,15 +24,16 @@ Domain model of the suite, the use cases and the ports every engine and surface 
 | `domain::project` | `Project`, `ProjectId`, `ProjectName` (trimmed, 1 to 80 characters), `Presence` (present or missing), `ProjectList` with an optional `RegistryNotice` (recovered or read-only), `AddOutcome`, `ProjectError` |
 | `domain::engine` | `EngineKind` (`dcp`, `gedo`, `actx`), `EngineStatus` (ready, installed without contract, degraded with a reason, missing), `EngineReport`, `Capability`, `EngineSettings` (location, time limit) |
 | `domain::cycle` | `CycleState` (summary, `NextStep` with its options, `CurrentRelease` with open items, `PlanProgress`, `CandidateRun`, `PullRequestState`, blocking `ItemRef`s, `UntriagedBug`s, findings, read time) and `CycleError` (unavailable with a hint, project missing, timed out, too large, failed, invalid, unsupported with the side to update) |
+| `domain::config` | a project's Dev Cycle settings from `dcp config get`: `ProjectConfig` (revision, source, `ConfigSetting`s, findings, read time) with `groups()`; `ConfigSetting` (key, group, description, `ConfigType`, `ConfigValue` value and default, allowed values, nullable, read-only and its reason) with `check` and `parse_input`; `ConfigDraft` (the user's edits, `rebase`, `change`); `ConfigChange` (revision and `KeyValue`s), `ConfigOutcome` (applied, revision, `KeyChange`s, diff), `FieldError` and `ConfigError` (the engine failures of `CycleError`, plus rejected, stale and nothing to change) |
 | `domain::portfolio` | what the views show of a cycle state: `CyclePhase` (release candidate, implementation, review, planning, idle), `WaitingItem`s by `WaitingKind` (release candidate, pull request, blocking bug, untriaged bug) and `CycleSummary` |
 | `domain::inbox` | the Inbox: the `Urgency` of a waiting item (blocks a release, acceptance, review, triage) and the `Inbox` of every project's `InboxEntry`s in order, with its groups and project count |
 | `domain::project_view` | what the Project view adds: `CandidateStage` of a release candidate (tests to run, failures to look at, ready for release, released), the `Gate`s by `GateKind` (decision, release candidate acceptance, release), `NextStep::ordered` and the progress of a `PlanProgress` |
 | `domain::settings` | `Settings` (version, `ThemeChoice`, per-engine settings) and `Theme` resolution |
 | `domain::feature` | `Feature`, `AvailabilityState` (available, unavailable with what is missing and a hint, not in this release), `EnginesOverview` |
-| `ports` | `ProjectRegistry`, `SettingsStore`, `EngineProbe`, `CycleSource` |
-| `usecases` | `projects`, `settings`, `engines`, `cycle` |
-| `capabilities` | the feature catalog and its evaluation; `usable_dcp` for the cycle state |
-| `fixtures` | feature `fixtures`: four sample projects (one missing), sample engine reports, `MemoryRegistry`, `MemorySettings`, `FixtureProbe`, three sample cycle states (busy, idle, release candidate) and `FixtureCycleSource` |
+| `ports` | `ProjectRegistry`, `SettingsStore`, `EngineProbe`, `CycleSource`, `ConfigSource` |
+| `usecases` | `projects`, `settings`, `engines`, `cycle`, `config` |
+| `capabilities` | the feature catalog and its evaluation; `usable_dcp` for the cycle state and `usable_dcp_for` for any `dcp` feature (Project settings needs `config`) |
+| `fixtures` | feature `fixtures`: four sample projects (one missing), sample engine reports, `MemoryRegistry`, `MemorySettings`, `FixtureProbe`, three sample cycle states (busy, idle, release candidate) and `FixtureCycleSource`, the sample project settings and `FixtureConfigSource` (in memory, refuses like `dcp`) |
 
 ```mermaid
 flowchart LR
@@ -56,6 +57,8 @@ The catalog maps each feature to one engine, the capabilities it needs (schema M
 A feature is unavailable, with the hint of its engine, while its engine is not ready or lacks a capability; only a ready engine counts, and only the capabilities of the engine the feature names. When everything is there but the feature ships in a later release, it says "not in this release". Errors are values (`thiserror` enums), never panics.
 
 **Cycle state.** `usecases::cycle::cycle_state` asks the `CycleSource` only when the latest `dcp` report is ready with `diagnose` at schema MAJOR 1 and the project's folder is present; otherwise it returns `Unavailable` with the catalog's hint, or `ProjectMissing`, without running anything. The state is read on demand and never stored. It does not depend on the release gate of the catalog: the views of v0.2.0 decide what to show.
+
+**Project settings.** `usecases::config::{read, preview, apply}` call the `ConfigSource` only when the latest `dcp` report has `config` at schema MAJOR 1 and the folder is present; an empty change is `NothingToChange` without running anything, and an apply that wrote nothing is `NothingToChange` too. The interface keeps a `ConfigDraft` over one `ProjectConfig`: an edit back to the current value is dropped, `change` checks every edit with `ConfigSetting::check` (read-only, type, allowed values, null) and orders it as the settings, carrying the revision read. `dcp` stays the authority: its refusals come back as `FieldError`s, and a stale revision wins as `ConfigError::Stale`. Aurora never reads or writes the configuration file and never commits.
 
 **Phase and waiting items.** `CyclePhase::of` takes the first that applies: a release candidate not released, a plan in progress, an open pull request, a current release with open items, otherwise idle (the `dcp.diagnose` reply has no phase field). `WaitingItem::all` lists what waits for the user: the unreleased release candidate (tests to run, failures to look at, or the release to approve), each pull request that needs action, each blocking bug and each untriaged bug; the recommended next step is not counted, since its options point at the same items. Each item also carries a detail (a bug's severity, a candidate's test counts, a pull request's summary and review threads for the user, an untriaged bug's reason) and an `Urgency`: blocking bugs and candidates with failed tests block a release, other unreleased candidates wait for the user's acceptance, pull requests wait for review, untriaged bugs wait for triage. The Portfolio, the Project view and the Inbox share these rules.
 

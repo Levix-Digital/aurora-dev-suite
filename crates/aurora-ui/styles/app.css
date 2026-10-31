@@ -100,3 +100,4 @@ select:disabled, textarea:disabled, input:disabled { opacity: 0.6; }
 .field-errors:empty { display: none; }
 .settings-preview pre { max-height: 20rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.setting > input[type="checkbox"] { align-self: flex-start; }

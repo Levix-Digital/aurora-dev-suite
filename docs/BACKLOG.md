@@ -6,30 +6,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
-### BUG-001: Linux packages do not run on Ubuntu 22.04
-- **Severity**: high
-- **Epic**: EPIC-001
-- **Status**: open
-- **Found**: 2026-10-30, v0.2.0-rc.1, MT-PKG-003
-- **Plan**: -
-- **Description**: The .deb and AppImage of v0.2.0-rc.1 were built on ubuntu-latest (24.04), so the binary needs glibc 2.39 and does not run on Ubuntu 22.04 (glibc 2.35), the oldest supported Linux in TECH_SPEC. Fix: build the Linux packages on ubuntu-22.04 and fail the release when the binary needs a newer glibc than 2.35.
-
-### BUG-002: A console window flashes on Windows when Aurora runs an engine
-- **Severity**: medium
-- **Epic**: EPIC-001
-- **Status**: open
-- **Found**: 2026-10-30, v0.2.0-rc.2, manual tests on Windows
-- **Plan**: -
-- **Description**: On Windows each dcp, gedo or actx command that Aurora runs opens its own console window for a few seconds, because the runner starts the engines without CREATE_NO_WINDOW and Aurora has no console. Linux opens no window. Fix: start engine processes with CREATE_NO_WINDOW on Windows.
-
-### BUG-003: The skip link covers the sidebar title when it gets the focus
-- **Severity**: low
-- **Epic**: EPIC-001
-- **Status**: open
-- **Found**: 2026-10-30, v0.2.0-rc.3, manual tests on Windows
-- **Plan**: -
-- **Description**: The first Tab shows the "Skip to content" link on top of the sidebar's title, with the sidebar's own background and an underline, so it looks like a rendering error. Fix: remove the skip link; the `<aside>` and `<main>` landmarks and the Alt+1 to Alt+5 shortcuts already let keyboard and screen reader users skip the navigation (WCAG 2.4.1).
-
 ## Features
 
 ### FEAT-018: Inbox actions
@@ -405,3 +381,30 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: desktop-packages
 - **Closed**: 2026-10-30, plan desktop-packages
 - **Description**: Windows installer (NSIS or MSI) and Linux packages (AppImage and deb) built in CI for release candidates.
+
+### BUG-001: Linux packages do not run on Ubuntu 22.04
+- **Severity**: high
+- **Epic**: EPIC-001
+- **Status**: done
+- **Found**: 2026-10-30, v0.2.0-rc.1, MT-PKG-003
+- **Plan**: -
+- **Closed**: 2026-10-31, PR #18
+- **Description**: The .deb and AppImage of v0.2.0-rc.1 were built on ubuntu-latest (24.04), so the binary needs glibc 2.39 and does not run on Ubuntu 22.04 (glibc 2.35), the oldest supported Linux in TECH_SPEC. Fix: build the Linux packages on ubuntu-22.04 and fail the release when the binary needs a newer glibc than 2.35.
+
+### BUG-002: A console window flashes on Windows when Aurora runs an engine
+- **Severity**: medium
+- **Epic**: EPIC-001
+- **Status**: done
+- **Found**: 2026-10-30, v0.2.0-rc.2, manual tests on Windows
+- **Plan**: -
+- **Closed**: 2026-10-31, PR #19
+- **Description**: On Windows each dcp, gedo or actx command that Aurora runs opens its own console window for a few seconds, because the runner starts the engines without CREATE_NO_WINDOW and Aurora has no console. Linux opens no window. Fix: start engine processes with CREATE_NO_WINDOW on Windows.
+
+### BUG-003: The skip link covers the sidebar title when it gets the focus
+- **Severity**: low
+- **Epic**: EPIC-001
+- **Status**: done
+- **Found**: 2026-10-30, v0.2.0-rc.3, manual tests on Windows
+- **Plan**: -
+- **Closed**: 2026-10-31, PR #20
+- **Description**: The first Tab shows the "Skip to content" link on top of the sidebar's title, with the sidebar's own background and an underline, so it looks like a rendering error. Fix: remove the skip link; the `<aside>` and `<main>` landmarks and the Alt+1 to Alt+5 shortcuts already let keyboard and screen reader users skip the navigation (WCAG 2.4.1).

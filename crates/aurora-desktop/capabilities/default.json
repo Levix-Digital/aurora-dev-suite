@@ -16,6 +16,9 @@
     "allow-refresh-engines",
     "allow-get-settings",
     "allow-save-settings",
-    "allow-project-cycle-state"
+    "allow-project-cycle-state",
+    "allow-project-config",
+    "allow-preview-project-config",
+    "allow-apply-project-config"
   ]
 }

@@ -6,6 +6,7 @@ pub mod inbox;
 pub mod loader;
 pub mod portfolio;
 pub mod project;
+pub mod project_settings;
 pub mod reads;
 pub mod settings;
 

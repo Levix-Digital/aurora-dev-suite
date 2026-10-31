@@ -26,6 +26,9 @@ fn main() {
             commands::get_settings,
             commands::save_settings,
             commands::project_cycle_state,
+            commands::project_config,
+            commands::preview_project_config,
+            commands::apply_project_config,
         ])
         .run(tauri::generate_context!());
 

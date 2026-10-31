@@ -82,6 +82,28 @@ pub struct AppContext {
     pub backend: StoredValue<Backend>,
     /// The project the Project view shows, kept while Aurora runs (spec 004 FR-009).
     pub project: RwSignal<Option<String>>,
+    /// The Project view's tab, kept while Aurora runs (spec 007 FR-001).
+    pub project_tab: RwSignal<ProjectTab>,
+    /// How many settings edits the Settings tab holds that were not applied.
+    pub unsaved_settings: RwSignal<usize>,
+}
+
+/// The tabs of the Project view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProjectTab {
+    Cycle,
+    Settings,
+}
+
+impl ProjectTab {
+    pub const ALL: [ProjectTab; 2] = [ProjectTab::Cycle, ProjectTab::Settings];
+
+    pub const fn label(self) -> &'static str {
+        match self {
+            ProjectTab::Cycle => "Cycle",
+            ProjectTab::Settings => "Settings",
+        }
+    }
 }
 
 impl AppContext {
@@ -102,6 +124,8 @@ pub fn App() -> impl IntoView {
         engines: RwSignal::new(EnginesState::default()),
         backend: StoredValue::new(backend),
         project: RwSignal::new(None),
+        project_tab: RwSignal::new(ProjectTab::Cycle),
+        unsaved_settings: RwSignal::new(0),
     };
     provide_context(ctx);
 

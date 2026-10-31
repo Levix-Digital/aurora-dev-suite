@@ -284,6 +284,16 @@ impl ConfigDraft {
         }
     }
 
+    /// The same edits over a new reading of the settings: edits equal to the new values
+    /// are dropped, the others kept.
+    pub fn rebase(&self, config: &ProjectConfig) -> ConfigDraft {
+        let mut draft = ConfigDraft::default();
+        for (key, value) in &self.edits {
+            draft.set(config, key, value.clone());
+        }
+        draft
+    }
+
     /// The change to send, in the order of the settings, after the core's checks.
     pub fn change(&self, config: &ProjectConfig) -> Result<ConfigChange, Vec<FieldError>> {
         let mut errors: Vec<FieldError> = self
@@ -599,6 +609,25 @@ mod tests {
         draft.set(&config, "devops.branching", text("trunk"));
         assert!(draft.is_empty());
         assert_eq!(draft.value_of(&config, "devops.branching"), text("trunk"));
+    }
+
+    #[test]
+    fn a_rebase_keeps_the_edits_that_still_change_something() {
+        let config = config();
+        let mut draft = ConfigDraft::default();
+        draft.set(&config, "devops.branching", text("integration"));
+        draft.set(
+            &config,
+            "docs.readme_max_lines",
+            Some(ConfigValue::Integer(300)),
+        );
+        let mut newer = config.clone();
+        newer.revision = "r2".into();
+        newer.settings[0].value = text("integration");
+        let rebased = draft.rebase(&newer);
+        assert_eq!(rebased.count(), 1);
+        assert!(rebased.is_edited("docs.readme_max_lines"));
+        assert_eq!(rebased.change(&newer).expect("valid").revision, "r2");
     }
 
     #[test]

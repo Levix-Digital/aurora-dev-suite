@@ -8,8 +8,9 @@ use leptos::prelude::*;
 use leptos::task::spawn_local;
 
 use super::portfolio::{phase_tone, release_text, waiting_text};
+use super::project_settings::{ProjectSettings, confirm_discard};
 use super::{CycleFailure, FeatureState, StatusLine, Tone};
-use crate::app::AppContext;
+use crate::app::{AppContext, ProjectTab};
 use crate::backend::CommandError;
 
 /// What the view knows of the chosen project's cycle state.
@@ -128,18 +129,28 @@ pub fn ProjectView() -> impl IntoView {
                 {move || list.get().filter(|l| !l.projects.is_empty()).map(|l| view! {
                     <label>
                         "Project "
-                        <select on:change=move |ev| ctx.project.set(Some(event_target_value(&ev)))>
+                        <select on:change=move |ev| {
+                            if confirm_discard(ctx) {
+                                ctx.project.set(Some(event_target_value(&ev)));
+                            } else {
+                                // Back to the project shown.
+                                let select = event_target::<web_sys::HtmlSelectElement>(&ev);
+                                select.set_value(ctx.project.get_untracked().as_deref().unwrap_or_default());
+                            }
+                        }>
                             {l.projects.into_iter().map(|p| {
                                 let selected = ctx.project.get_untracked().as_deref() == Some(p.id.0.as_str());
                                 view! { <option value=p.id.0.clone() selected=selected>{p.name.to_string()}</option> }
                             }).collect_view()}
                         </select>
                     </label>
-                    <button class="btn" on:click=refresh>"Refresh"</button>
+                    {move || (ctx.project_tab.get() == ProjectTab::Cycle).then(|| view! {
+                        <button class="btn" on:click=refresh>"Refresh"</button>
+                    })}
                 })}
             </div>
         </div>
-        <FeatureState feature=Feature::ProjectView />
+        <Tabs />
         <StatusLine message=message />
         {move || match list.get() {
             None => view! { <p class="muted">"Loading the projects…"</p> }.into_any(),
@@ -150,7 +161,15 @@ pub fn ProjectView() -> impl IntoView {
                 </div>
             }
             .into_any(),
+            Some(_) if ctx.project_tab.get() == ProjectTab::Settings => view! {
+                {move || chosen().map(|p| view! {
+                    <div class="path muted">{p.root.display().to_string()}</div>
+                })}
+                <ProjectSettings />
+            }
+            .into_any(),
             Some(_) => view! {
+                <FeatureState feature=Feature::ProjectView />
                 {move || chosen().map(|p| view! {
                     <div class="path muted">{p.root.display().to_string()}</div>
                     {(p.presence == Presence::Missing).then(|| view! {
@@ -175,6 +194,30 @@ pub fn ProjectView() -> impl IntoView {
             }
             .into_any(),
         }}
+    }
+}
+
+/// "Cycle" and "Settings"; leaving Settings with edits not applied asks first.
+#[component]
+fn Tabs() -> impl IntoView {
+    let ctx = expect_context::<AppContext>();
+    view! {
+        <div class="tabs" role="tablist" aria-label="Project">
+            {ProjectTab::ALL.into_iter().map(|tab| view! {
+                <button
+                    role="tab"
+                    class="tab"
+                    aria-selected=move || (ctx.project_tab.get() == tab).to_string()
+                    on:click=move |_| {
+                        if ctx.project_tab.get_untracked() != tab && confirm_discard(ctx) {
+                            ctx.project_tab.set(tab);
+                        }
+                    }
+                >
+                    {tab.label()}
+                </button>
+            }).collect_view()}
+        </div>
     }
 }
 

@@ -124,7 +124,6 @@ pub fn App() -> impl IntoView {
     });
 
     view! {
-        <a class="skip-link" href="#main">"Skip to content"</a>
         <div class="shell">
             <aside class="sidebar">
                 <div class="brand">"Aurora" <span>" Dev Suite"</span></div>

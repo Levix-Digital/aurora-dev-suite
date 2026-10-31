@@ -37,7 +37,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   3. In each view, press Tab through every control
 - **Expected**:
   - The focused element always has a visible outline
-  - Alt+1 to Alt+5 open Portfolio, Project, Engines, Inbox and Settings
+  - Alt+1 to Alt+5 open Portfolio, Project, Engines, Inbox and Settings, with the focus in the content of the view
   - Every button and field can be reached and used without the mouse
 - **Result** (v0.2.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:

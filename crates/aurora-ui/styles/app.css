@@ -17,9 +17,6 @@ code, .path { font-family: ui-monospace, "Cascadia Code", "DejaVu Sans Mono", mo
 
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
-.skip-link { position: absolute; left: -999px; top: 0; }
-.skip-link:focus { left: 1rem; top: 1rem; z-index: 10; background: var(--surface); color: var(--text); padding: 0.5rem 1rem; }
-
 .shell { display: grid; grid-template-columns: 220px 1fr; height: 100vh; }
 .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1rem 0.75rem; display: flex; flex-direction: column; gap: 1rem; }
 .brand { color: var(--text); font-weight: 700; font-size: 1.1rem; padding: 0 0.5rem; }

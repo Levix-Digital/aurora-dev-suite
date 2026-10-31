@@ -22,6 +22,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: On Windows each dcp, gedo or actx command that Aurora runs opens its own console window for a few seconds, because the runner starts the engines without CREATE_NO_WINDOW and Aurora has no console. Linux opens no window. Fix: start engine processes with CREATE_NO_WINDOW on Windows.
 
+### BUG-003: The skip link covers the sidebar title when it gets the focus
+- **Severity**: low
+- **Epic**: EPIC-001
+- **Status**: open
+- **Found**: 2026-10-30, v0.2.0-rc.3, manual tests on Windows
+- **Plan**: -
+- **Description**: The first Tab shows the "Skip to content" link on top of the sidebar's title, with the sidebar's own background and an underline, so it looks like a rendering error. Fix: remove the skip link; the `<aside>` and `<main>` landmarks and the Alt+1 to Alt+5 shortcuts already let keyboard and screen reader users skip the navigation (WCAG 2.4.1).
+
 ## Features
 
 ### FEAT-018: Inbox actions

@@ -5,13 +5,16 @@ The releases of the product in delivery order, from the MVP onwards. Each releas
 Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress, released), an optional `Target`, `Released` (the date, once released), `Goal` and `Items` (backlog ids separated by commas, `-` when empty). Edit this file with `plan-memory/roadmap.py` or by hand, and check it with `roadmap.py validate`.
 
 ## v0.1.0: Foundations
-- **Status**: planned
+- **Status**: released
+- **Target**: shipped with v0.2.0, no separate release
+- **Released**: 2026-10-31
 - **Goal**: The Levix team opens Aurora on Windows and Linux, registers its projects and sees which engines are installed and what each feature needs, with every engine behind a port and fixtures in place.
 - **Items**: FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-006, FEAT-007, FEAT-008, FEAT-009, FEAT-010, FEAT-011, FEAT-012
 
 ## v0.2.0: Portfolio on the dcp contract
-- **Status**: in_progress
+- **Status**: released
 - **Target**: lights up with dcp v2.11.0 (DCP FEAT-019)
+- **Released**: 2026-10-31
 - **Goal**: Every registered project's cycle state and what waits for the user, read through the dcp binary's versioned JSON; built and tested against fixtures, it lights up when the first dcp release with the contract is installed. Plus installable packages.
 - **Items**: FEAT-014, FEAT-015, FEAT-017, FEAT-005, FEAT-016
 

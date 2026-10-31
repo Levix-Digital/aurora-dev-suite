@@ -8,6 +8,11 @@
 //! `<root>`, and with these modes: idle (the `idle.json` sample), warn (a warning on
 //! standard error, then the reply), other-root (a reply about another repository), old
 //! (schema version 0.9), and unsupported and invalid as for the version reply.
+//!
+//! As `dcp` it answers `config get --json --dir <root>` with the `get.json` sample and
+//! `config set --json [--dry-run] --dir <root> ...` with `preview.json` or `applied.json`,
+//! writing its arguments to `<file>.args` (one per line); with the modes refused and stale
+//! it answers those samples, and unsupported and invalid as above.
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -31,6 +36,13 @@ fn main() {
         }
         _ => None,
     };
+
+    let config = matches!(
+        args.first()
+            .zip(args.get(1))
+            .map(|(a, b)| (a.as_str(), b.as_str())),
+        Some(("config", "get" | "set"))
+    );
 
     if args == ["--sleep-forever"] {
         std::thread::sleep(Duration::from_secs(120));
@@ -60,6 +72,7 @@ fn main() {
                 .spawn();
             println!("{engine} 1.2.3");
         }
+        _ if config && engine == "dcp" => config_reply(&exe, &mode, &args),
         _ if diagnose_root.is_some() && engine == "dcp" => {
             diagnose(&mode, diagnose_root.as_deref().unwrap_or_default());
         }
@@ -104,6 +117,45 @@ fn diagnose(mode: &str, root: &str) {
     println!("{reply}");
 }
 
+const CONFIG_GET: &str = include_str!("../../tests/fixtures/dcp-config/get.json");
+const CONFIG_PREVIEW: &str = include_str!("../../tests/fixtures/dcp-config/preview.json");
+const CONFIG_APPLIED: &str = include_str!("../../tests/fixtures/dcp-config/applied.json");
+const CONFIG_REFUSED: &str = include_str!("../../tests/fixtures/dcp-config/refused.json");
+const CONFIG_STALE: &str = include_str!("../../tests/fixtures/dcp-config/stale.json");
+
+fn config_reply(exe: &std::path::Path, mode: &str, args: &[String]) {
+    let root = args
+        .iter()
+        .position(|arg| arg == "--dir")
+        .and_then(|at| args.get(at + 1))
+        .cloned()
+        .unwrap_or_default();
+    let sample = if args[1] == "get" {
+        CONFIG_GET
+    } else {
+        let mut args_file = exe.as_os_str().to_owned();
+        args_file.push(".args");
+        let _ = std::fs::write(PathBuf::from(args_file), args.join("\n"));
+        match mode {
+            "refused" => CONFIG_REFUSED,
+            "stale" => CONFIG_STALE,
+            _ if args.iter().any(|arg| arg == "--dry-run") => CONFIG_PREVIEW,
+            _ => CONFIG_APPLIED,
+        }
+    };
+    let mut reply: serde_json::Value = serde_json::from_str(sample).unwrap_or_default();
+    reply["root"] = root.into();
+    match mode {
+        "unsupported" => reply["schema_version"] = "2.0".into(),
+        "invalid" => {
+            reply["settings"] = "none".into();
+            reply["changes"] = "none".into();
+        }
+        _ => {}
+    }
+    println!("{reply}");
+}
+
 fn mode_of(exe: &std::path::Path) -> String {
     let mut mode_file = exe.as_os_str().to_owned();
     mode_file.push(".mode");
@@ -116,7 +168,7 @@ fn mode_of(exe: &std::path::Path) -> String {
 
 fn capabilities(engine: &str) -> String {
     let names: &[&str] = match engine {
-        "dcp" => &["diagnose"],
+        "dcp" => &["diagnose", "config"],
         "gedo" => &["doctor", "radar", "scope", "stream"],
         "actx" => &["ask", "workspaces"],
         _ => &[],

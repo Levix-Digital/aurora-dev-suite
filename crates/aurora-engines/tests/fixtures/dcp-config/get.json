@@ -1,0 +1,199 @@
+{
+  "schema": "dcp.config",
+  "schema_version": "1.0",
+  "root": "/repos/gedo",
+  "revision": "sha256:4f1c2a",
+  "source": ".dev-cycle.json",
+  "settings": [
+    {
+      "key": "devops.branching",
+      "group": "devops",
+      "description": "Branching model: where work merges and how releases are cut",
+      "type": "enum",
+      "value": "trunk",
+      "default": "integration",
+      "allowed": [
+        "integration",
+        "trunk",
+        "release-branches"
+      ],
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "devops.integration_branch",
+      "group": "devops",
+      "description": "Integration branch of the integration model",
+      "type": "text",
+      "value": "dev",
+      "default": "dev",
+      "allowed": null,
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "devops.production_branch",
+      "group": "devops",
+      "description": "Production branch",
+      "type": "text",
+      "value": "main",
+      "default": "main",
+      "allowed": null,
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "devops.release_candidates",
+      "group": "devops",
+      "description": "Release candidates (vX.Y.Z-rc.N) for manual acceptance before a release",
+      "type": "boolean",
+      "value": true,
+      "default": true,
+      "allowed": null,
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "devops.version_files",
+      "group": "devops",
+      "description": "Files whose version is bumped at a release",
+      "type": "list",
+      "value": [
+        "Cargo.toml"
+      ],
+      "default": [],
+      "allowed": null,
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "devops.observability",
+      "group": "devops",
+      "description": "Logging and telemetry profile required in plans",
+      "type": "enum",
+      "value": null,
+      "default": null,
+      "allowed": [
+        "cli",
+        "service",
+        "library",
+        "desktop",
+        "none"
+      ],
+      "nullable": true,
+      "read_only": false
+    },
+    {
+      "key": "architecture.style",
+      "group": "architecture",
+      "description": "Architecture style the design review checks",
+      "type": "enum",
+      "value": "hexagonal",
+      "default": null,
+      "allowed": [
+        "hexagonal",
+        "layered",
+        "mvc",
+        "pipeline",
+        "modular-monolith",
+        "other"
+      ],
+      "nullable": true,
+      "read_only": false
+    },
+    {
+      "key": "architecture.core_path",
+      "group": "architecture",
+      "description": "Folder of the core, which must not import adapters",
+      "type": "text",
+      "value": "crates/gedo-core",
+      "default": null,
+      "allowed": null,
+      "nullable": true,
+      "read_only": false
+    },
+    {
+      "key": "backlog.blocking_severities",
+      "group": "backlog",
+      "description": "Bug severities that block new work",
+      "type": "list",
+      "value": [
+        "critical",
+        "high",
+        "medium"
+      ],
+      "default": [
+        "critical",
+        "high",
+        "medium"
+      ],
+      "allowed": [
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ],
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "backlog.bug_deadline",
+      "group": "backlog",
+      "description": "Latest release for a bug that does not block",
+      "type": "enum",
+      "value": "next_release",
+      "default": "next_release",
+      "allowed": [
+        "next_release",
+        "off"
+      ],
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "docs.user_doc",
+      "group": "docs",
+      "description": "The user documentation file",
+      "type": "text",
+      "value": "README.md",
+      "default": "README.md",
+      "allowed": null,
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "docs.readme_max_lines",
+      "group": "docs",
+      "description": "README line limit",
+      "type": "integer",
+      "value": 400,
+      "default": 400,
+      "allowed": null,
+      "nullable": false,
+      "read_only": false
+    },
+    {
+      "key": "principles.gates",
+      "group": "principles",
+      "description": "Mandatory gates",
+      "type": "list",
+      "value": [
+        "product baseline",
+        "plan",
+        "release candidate acceptance",
+        "release gate"
+      ],
+      "default": [
+        "product baseline",
+        "plan",
+        "release candidate acceptance",
+        "release gate"
+      ],
+      "allowed": null,
+      "nullable": false,
+      "read_only": true,
+      "read_only_reason": "The user's approval gates are mandatory in the Dev Cycle Protocol"
+    }
+  ],
+  "findings": []
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "dcp.config-set",
+  "schema_version": "1.0",
+  "root": "/repos/gedo",
+  "dry_run": true,
+  "applied": false,
+  "revision": "sha256:4f1c2a",
+  "changes": [],
+  "diff": "",
+  "errors": [
+    {
+      "code": "invalid_value",
+      "key": "devops.integration_branch",
+      "message": "the integration branch must differ from the production branch"
+    },
+    {
+      "code": "invalid_value",
+      "key": "devops.branching",
+      "message": "`gitflow` is not one of the accepted values",
+      "accepted": [
+        "integration",
+        "trunk",
+        "release-branches"
+      ]
+    }
+  ]
+}

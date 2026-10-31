@@ -1,0 +1,22 @@
+{
+  "schema": "dcp.config-set",
+  "schema_version": "1.0",
+  "root": "/repos/gedo",
+  "dry_run": false,
+  "applied": true,
+  "revision": "sha256:9b07d3",
+  "changes": [
+    {
+      "key": "devops.branching",
+      "before": "trunk",
+      "after": "integration"
+    },
+    {
+      "key": "devops.release_candidates",
+      "before": true,
+      "after": false
+    }
+  ],
+  "diff": "--- a/.dev-cycle.json\n+++ b/.dev-cycle.json\n@@ -3,7 +3,7 @@\n   \"devops\": {\n-    \"branching\": \"trunk\",\n+    \"branching\": \"integration\",\n     \"production_branch\": \"main\",\n-    \"release_candidates\": true,\n+    \"release_candidates\": false,\n     \"version_files\": [\n",
+  "errors": []
+}

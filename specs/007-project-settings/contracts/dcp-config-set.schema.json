@@ -4,39 +4,120 @@
   "title": "dcp config set reply (schema MAJOR 1)",
   "description": "What Aurora expects from `dcp config set --json [--dry-run] --dir <root> --revision <revision> --value <key>=<JSON value> [--value ...]`, offered with the capability `config` schema_major 1. Each --value names one key of `dcp config get` and its new value as JSON (\"trunk\", false, 400, [\"a\",\"b\"], null). The values are checked with the same validation as the engine, all or nothing: when any check fails nothing is written. With --dry-run nothing is ever written. Exit code 0 with this reply whenever the request was understood, including refused values (errors not empty, applied false); any other exit code is a failure and standard error explains it. The engine never commits.",
   "type": "object",
-  "required": ["schema", "schema_version", "root", "dry_run", "applied", "revision", "changes", "diff", "errors"],
+  "required": [
+    "schema",
+    "schema_version",
+    "root",
+    "dry_run",
+    "applied",
+    "revision",
+    "changes",
+    "diff",
+    "errors"
+  ],
   "properties": {
-    "schema": { "const": "dcp.config-set" },
-    "schema_version": { "type": "string", "pattern": "^1\\.[0-9]+$" },
-    "root": { "type": "string", "description": "The repository root the reply is about (absolute path)" },
-    "dry_run": { "type": "boolean" },
-    "applied": { "type": "boolean", "description": "true only when the file was written (never with --dry-run, never with errors)" },
-    "revision": { "type": "string", "description": "The file's revision after the command: the new one when applied, else the current one" },
+    "schema": {
+      "const": "dcp.config-set"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "root": {
+      "type": "string",
+      "description": "The repository root the reply is about (absolute path)"
+    },
+    "dry_run": {
+      "type": "boolean"
+    },
+    "applied": {
+      "type": "boolean",
+      "description": "true only when the file was written (never with --dry-run, never with errors)"
+    },
+    "revision": {
+      "type": "string",
+      "description": "The file's revision after the command: the new one when applied, else the current one"
+    },
     "changes": {
       "type": "array",
       "description": "One entry per key whose value differs from the file, in the order given; keys whose new value equals the current one are left out",
       "items": {
         "type": "object",
-        "required": ["key", "before", "after"],
+        "required": [
+          "key",
+          "before",
+          "after"
+        ],
         "properties": {
-          "key": { "type": "string" },
-          "before": { "$ref": "https://levix.digital/schemas/dcp/config-1.json#/$defs/value" },
-          "after": { "$ref": "https://levix.digital/schemas/dcp/config-1.json#/$defs/value" }
+          "key": {
+            "type": "string"
+          },
+          "before": {
+            "$ref": "#/$defs/value"
+          },
+          "after": {
+            "$ref": "#/$defs/value"
+          }
         }
       }
     },
-    "diff": { "type": "string", "description": "Unified diff of the configuration file, empty when nothing changes or with errors" },
+    "diff": {
+      "type": "string",
+      "description": "Unified diff of the configuration file, empty when nothing changes or with errors"
+    },
     "errors": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["code", "key", "message"],
+        "required": [
+          "code",
+          "key",
+          "message"
+        ],
         "properties": {
-          "code": { "enum": ["unknown_key", "read_only", "invalid_value", "stale_revision", "invalid_file"], "description": "stale_revision: the file changed since --revision was read; invalid_file: the current file cannot be parsed" },
-          "key": { "type": ["string", "null"], "description": "The key the error is about, or null for the whole request" },
-          "message": { "type": "string" },
-          "accepted": { "type": "array", "items": { "type": "string" }, "description": "The accepted values, when the error is about a value outside them" }
+          "code": {
+            "enum": [
+              "unknown_key",
+              "read_only",
+              "invalid_value",
+              "stale_revision",
+              "invalid_file"
+            ],
+            "description": "stale_revision: the file changed since --revision was read; invalid_file: the current file cannot be parsed"
+          },
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The key the error is about, or null for the whole request"
+          },
+          "message": {
+            "type": "string"
+          },
+          "accepted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The accepted values, when the error is about a value outside them"
+          }
         }
+      }
+    }
+  },
+  "$defs": {
+    "value": {
+      "description": "A setting value, as in dcp.config: boolean, integer, text, list of text, or null when not set",
+      "type": [
+        "boolean",
+        "integer",
+        "string",
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
       }
     }
   }

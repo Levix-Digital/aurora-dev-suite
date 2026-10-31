@@ -1,5 +1,6 @@
 //! Plain data shared by every crate and by the interface.
 
+mod config;
 mod cycle;
 mod engine;
 mod feature;
@@ -9,6 +10,10 @@ mod project;
 mod project_view;
 mod settings;
 
+pub use config::{
+    ConfigChange, ConfigDraft, ConfigError, ConfigOutcome, ConfigSetting, ConfigType, ConfigValue,
+    FieldError, FieldErrorCode, KeyChange, KeyValue, ProjectConfig, value_text,
+};
 pub use cycle::{
     CandidateRun, CurrentRelease, CycleError, CycleState, ItemRef, NextOption, NextStep,
     PlanProgress, PullRequestState, UntriagedBug, UpdateSide,

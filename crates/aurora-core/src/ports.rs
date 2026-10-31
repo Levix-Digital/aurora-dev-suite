@@ -4,8 +4,9 @@
 use std::path::Path;
 
 use crate::domain::{
-    AddOutcome, CycleError, CycleState, EngineKind, EngineReport, EngineSettings, Project,
-    ProjectError, ProjectId, ProjectList, ProjectName, Settings,
+    AddOutcome, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState, EngineKind,
+    EngineReport, EngineSettings, Project, ProjectConfig, ProjectError, ProjectId, ProjectList,
+    ProjectName, Settings,
 };
 
 /// The list of projects the user follows (ADR-0004).
@@ -43,4 +44,26 @@ pub trait CycleSource: Send + Sync {
         settings: &EngineSettings,
         root: &Path,
     ) -> Result<CycleState, CycleError>;
+}
+
+/// Reads and changes a project's Dev Cycle settings through the Dev Cycle Protocol
+/// (FEAT-027, ADR-0006). `engine` is the latest report of `dcp`, which gives its location.
+pub trait ConfigSource: Send + Sync {
+    fn read(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<ProjectConfig, ConfigError>;
+
+    /// Previews (`dry_run`) or applies `change`. A reply with refusals is
+    /// `Err(ConfigError::from_field_errors(..))`.
+    fn set(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        change: &ConfigChange,
+        dry_run: bool,
+    ) -> Result<ConfigOutcome, ConfigError>;
 }

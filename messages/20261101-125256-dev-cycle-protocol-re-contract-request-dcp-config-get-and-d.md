@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-01T12:52:56Z
 subject: "Re: Contract request: dcp config get and dcp config set (DCP FEAT-017)"
-status: open
+status: seen
 reply_to: 20261031-153125-aurora-dev-suite-contract-request-dcp-config-get-and-dcp
 deferred: 
 ---

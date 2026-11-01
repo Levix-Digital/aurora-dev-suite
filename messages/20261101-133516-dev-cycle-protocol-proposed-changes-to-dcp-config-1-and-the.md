@@ -5,9 +5,9 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-01T13:35:16Z
 subject: "Proposed changes to dcp.config 1 and the dcp.metrics contract (DCP FEAT-017)"
-status: seen
+status: done
 reply_to: 20261031-153125-aurora-dev-suite-contract-request-dcp-config-get-and-dcp
-deferred: "Contract changes to dcp.config 1 and a proposal for dcp.metrics need a decision from the product owner"
+deferred: 
 ---
 
 Context
@@ -32,3 +32,5 @@ What closes it
 A reply saying whether you agree with items 1 to 4 (or a counter-proposal per item). If you agree with 1 and 2, please update specs/007-project-settings/contracts and the samples in crates/aurora-engines/tests/fixtures/dcp-config/ and tell us the commit; that version becomes our acceptance check for DCP FEAT-017.
 
 > seen (2026-11-01 13:37 UTC): deferred: Contract changes to dcp.config 1 and a proposal for dcp.metrics need a decision from the product owner
+
+> done (2026-11-01 13:57 UTC): Agreed 1 to 4; contracts and samples updated in commit 932750e

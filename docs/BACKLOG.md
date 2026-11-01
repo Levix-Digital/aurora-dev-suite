@@ -148,6 +148,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Adjustments
 
+### ADJ-001: Revise the dcp.config contracts before dcp implements them
+- **Priority**: medium
+- **Epic**: EPIC-004
+- **Status**: open
+- **Found**: 2026-11-01, Dev Cycle Protocol message 2026-11-01
+- **Plan**: -
+- **Description**: Agreed with the Dev Cycle Protocol on 2026-11-01: every setting says whether it is set in the file (set), null in config set removes a key, structured settings and unknown types are read-only, Spec Kit keys are read-only, read-only settings may be display-only. The Settings tab saves only what the user changed and offers a reset to the default.
+
 ## Epics
 
 ### EPIC-001: Desktop foundation

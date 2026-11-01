@@ -102,7 +102,7 @@ fn a_preview_is_a_dry_run_with_every_value_as_json() {
     let setup = setup("ready", "projeto de ação");
     let outcome = setup.set(true).expect("preview");
     assert!(!outcome.applied);
-    assert_eq!(outcome.changes.len(), 2);
+    assert_eq!(outcome.changes.len(), 3);
     let root = setup.root.to_string_lossy().into_owned();
     assert_eq!(
         setup.last_args(),

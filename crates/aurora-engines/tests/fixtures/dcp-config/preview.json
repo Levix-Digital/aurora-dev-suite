@@ -15,8 +15,13 @@
       "key": "devops.release_candidates",
       "before": true,
       "after": false
+    },
+    {
+      "key": "architecture.core_path",
+      "before": "crates/gedo-core",
+      "after": null
     }
   ],
-  "diff": "--- a/.dev-cycle.json\n+++ b/.dev-cycle.json\n@@ -3,7 +3,7 @@\n   \"devops\": {\n-    \"branching\": \"trunk\",\n+    \"branching\": \"integration\",\n     \"production_branch\": \"main\",\n-    \"release_candidates\": true,\n+    \"release_candidates\": false,\n     \"version_files\": [\n",
+  "diff": "--- a/.dev-cycle.json\n+++ b/.dev-cycle.json\n@@ -3,7 +3,7 @@\n   \"devops\": {\n-    \"branching\": \"trunk\",\n+    \"branching\": \"integration\",\n     \"production_branch\": \"main\",\n-    \"release_candidates\": true,\n+    \"release_candidates\": false,\n     \"version_files\": [\n@@ -12,5 +12,4 @@\n   \"architecture\": {\n-    \"style\": \"hexagonal\",\n-    \"core_path\": \"crates/gedo-core\"\n+    \"style\": \"hexagonal\"\n   },\n",
   "errors": []
 }

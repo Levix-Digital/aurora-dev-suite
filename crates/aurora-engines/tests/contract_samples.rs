@@ -148,13 +148,23 @@ mod config {
     #[test]
     fn the_validator_catches_contract_breaks() {
         let mut broken = config_sample("get.json");
-        broken["settings"][0]["type"] = "map".into();
+        broken["settings"][0]
+            .as_object_mut()
+            .expect("object")
+            .remove("set");
+        // An editable setting must hold a value of its type; a read-only one may not.
+        broken["settings"][2]["value"] = serde_json::json!({ "a": 1 });
         broken["settings"][1]
             .as_object_mut()
             .expect("object")
             .remove("read_only");
         broken.as_object_mut().expect("object").remove("revision");
-        assert_eq!(problems("dcp-config.schema.json", &broken).len(), 3);
+        assert_eq!(problems("dcp-config.schema.json", &broken).len(), 4);
+        let mut fine = config_sample("get.json");
+        fine["settings"][0]["type"] = "map".into();
+        fine["settings"][2]["read_only"] = true.into();
+        fine["settings"][2]["value"] = serde_json::json!({ "a": 1 });
+        assert!(problems("dcp-config.schema.json", &fine).is_empty());
         let mut set = config_sample("refused.json");
         set["errors"][0]["code"] = "nope".into();
         assert_eq!(problems("dcp-config-set.schema.json", &set).len(), 1);
@@ -173,6 +183,7 @@ mod config {
             parse_set_reply(&bytes("preview.json"), Path::new(ROOT), true).expect("preview");
         assert!(!preview.applied && preview.diff.contains("integration"));
         assert_eq!(preview.changes[1].after, Some(ConfigValue::Boolean(false)));
+        assert_eq!(preview.changes[2].after, None, "the key is removed");
         let applied =
             parse_set_reply(&bytes("applied.json"), Path::new(ROOT), false).expect("applied");
         assert!(applied.applied);

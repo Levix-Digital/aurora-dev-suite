@@ -18,9 +18,11 @@ pub enum ConfigType {
     Text,
     Integer,
     List,
+    /// A type this Aurora does not know (contract: shown as it is, read-only).
+    Other,
 }
 
-/// A setting's value; an unset value is `None`.
+/// A setting's value; no value at all is `None`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ConfigValue {
@@ -28,6 +30,8 @@ pub enum ConfigValue {
     Integer(i64),
     Text(String),
     List(Vec<String>),
+    /// Any other JSON value, held by read-only settings (for example a list of objects).
+    Json(serde_json::Value),
 }
 
 impl fmt::Display for ConfigValue {
@@ -39,6 +43,7 @@ impl fmt::Display for ConfigValue {
             ConfigValue::Text(text) => f.write_str(text),
             ConfigValue::List(items) if items.is_empty() => f.write_str("(empty)"),
             ConfigValue::List(items) => f.write_str(&items.join(", ")),
+            ConfigValue::Json(value) => write!(f, "{value}"),
         }
     }
 }
@@ -90,6 +95,9 @@ pub struct ConfigSetting {
     pub group: String,
     pub description: String,
     pub kind: ConfigType,
+    /// Whether the key is written in the file; otherwise `value` is a default or detected.
+    pub set: bool,
+    /// The effective value.
     pub value: Option<ConfigValue>,
     pub default: Option<ConfigValue>,
     /// The accepted values of an enum, or of each item of a list.
@@ -100,10 +108,16 @@ pub struct ConfigSetting {
 }
 
 impl ConfigSetting {
-    /// Whether `value` may be sent for this setting (spec 007 FR-006).
+    /// Whether the form may change it: not read-only and of a type this Aurora knows.
+    pub fn editable(&self) -> bool {
+        !self.read_only && self.kind != ConfigType::Other
+    }
+
+    /// Whether `value` may be sent for this setting (spec 007 FR-006); `None` removes the
+    /// key from the file, which any editable setting accepts.
     pub fn check(&self, value: Option<&ConfigValue>) -> Result<(), FieldError> {
         let key = self.key.as_str();
-        if self.read_only {
+        if !self.editable() {
             return Err(FieldError::about(
                 key,
                 FieldErrorCode::ReadOnly,
@@ -113,15 +127,7 @@ impl ConfigSetting {
             ));
         }
         let Some(value) = value else {
-            return if self.nullable {
-                Ok(())
-            } else {
-                Err(FieldError::about(
-                    key,
-                    FieldErrorCode::InvalidValue,
-                    "a value is required",
-                ))
-            };
+            return Ok(());
         };
         let outside = |item: &str| {
             self.allowed
@@ -174,6 +180,13 @@ impl ConfigSetting {
                     .collect(),
             )),
             _ if trimmed.is_empty() && self.nullable => None,
+            _ if trimmed.is_empty() => {
+                return Err(FieldError::about(
+                    &self.key,
+                    FieldErrorCode::InvalidValue,
+                    "a value is required",
+                ));
+            }
             ConfigType::Integer => Some(ConfigValue::Integer(trimmed.parse().map_err(|_| {
                 FieldError::about(
                     &self.key,
@@ -192,7 +205,9 @@ impl ConfigSetting {
                     ));
                 }
             },
-            ConfigType::Enum | ConfigType::Text => Some(ConfigValue::Text(trimmed.to_owned())),
+            ConfigType::Enum | ConfigType::Text | ConfigType::Other => {
+                Some(ConfigValue::Text(trimmed.to_owned()))
+            }
         };
         self.check(value.as_ref())?;
         Ok(value)
@@ -207,6 +222,7 @@ impl ConfigType {
             ConfigType::Text => "text",
             ConfigType::Integer => "a whole number",
             ConfigType::List => "a list of values",
+            ConfigType::Other => "a value this version of Aurora cannot edit",
         }
     }
 }
@@ -244,22 +260,39 @@ impl ProjectConfig {
     }
 }
 
-/// The user's edits over one reading of the settings.
+/// The user's edits over one reading of the settings. Only what the user changed is kept:
+/// a key not set in the file stays unset until the user picks a different value, so the
+/// form never records a decision the user did not take.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigDraft {
+    /// `None` removes the key from the file (back to the default or detected value).
     edits: BTreeMap<String, Option<ConfigValue>>,
 }
 
 impl ConfigDraft {
-    /// Records `value` for `key`; a value equal to the current one is no edit.
+    /// Records `value` for `key`; a value equal to the current one is no edit, and so is
+    /// removing a key that is not set.
     pub fn set(&mut self, config: &ProjectConfig, key: &str, value: Option<ConfigValue>) {
-        let current = config.setting(key).map(|setting| &setting.value);
-        if current == Some(&value) {
+        let unchanged = config.setting(key).is_some_and(|setting| match &value {
+            None => !setting.set,
+            Some(_) => setting.value == value,
+        });
+        if unchanged {
             self.edits.remove(key);
         } else {
             self.edits.insert(key.to_owned(), value);
         }
+    }
+
+    /// Removes `key` from the file, so the setting goes back to its default.
+    pub fn reset(&mut self, config: &ProjectConfig, key: &str) {
+        self.set(config, key, None);
+    }
+
+    /// Whether the draft removes `key` from the file.
+    pub fn is_reset(&self, key: &str) -> bool {
+        matches!(self.edits.get(key), Some(None))
     }
 
     pub fn count(&self) -> usize {
@@ -274,13 +307,13 @@ impl ConfigDraft {
         self.edits.contains_key(key)
     }
 
-    /// The edited value, else the current one.
+    /// The edited value, else the current one; a removed key shows its default.
     pub fn value_of(&self, config: &ProjectConfig, key: &str) -> Option<ConfigValue> {
+        let setting = config.setting(key);
         match self.edits.get(key) {
-            Some(value) => value.clone(),
-            None => config
-                .setting(key)
-                .and_then(|setting| setting.value.clone()),
+            Some(Some(value)) => Some(value.clone()),
+            Some(None) => setting.and_then(|setting| setting.default.clone()),
+            None => setting.and_then(|setting| setting.value.clone()),
         }
     }
 
@@ -342,7 +375,7 @@ pub struct ConfigChange {
     pub values: Vec<KeyValue>,
 }
 
-/// One key's value before and after.
+/// One key's value in the file before and after; `None` when the key is not in the file.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyChange {
@@ -462,6 +495,7 @@ mod tests {
             group: key.split('.').next().unwrap_or(key).to_owned(),
             description: String::new(),
             kind,
+            set: true,
             value,
             default: None,
             allowed: None,
@@ -543,7 +577,10 @@ mod tests {
             .expect_err("outside");
         assert_eq!(outside.code, FieldErrorCode::InvalidValue);
         assert_eq!(outside.accepted.len(), 3);
-        assert!(get("devops.branching").check(None).is_err());
+        assert!(
+            get("devops.branching").check(None).is_ok(),
+            "removes the key"
+        );
         assert!(get("architecture.style").check(None).is_ok());
         assert!(
             get("devops.release_candidates")
@@ -594,6 +631,60 @@ mod tests {
             ])))
         );
         assert!(get("devops.branching").parse_input("gitflow").is_err());
+        assert_eq!(
+            get("docs.readme_max_lines")
+                .parse_input(" ")
+                .expect_err("required")
+                .message,
+            "a value is required"
+        );
+    }
+
+    #[test]
+    fn unknown_types_and_structured_values_are_read_only() {
+        let rules: ConfigValue =
+            serde_json::from_str(r#"[{"path":"a/**","plan":"required"}]"#).expect("parses");
+        assert!(matches!(rules, ConfigValue::Json(_)));
+        assert_eq!(rules.to_string(), r#"[{"path":"a/**","plan":"required"}]"#);
+        let other = setting("drift_rules", ConfigType::Other, Some(rules));
+        assert!(!other.editable());
+        assert_eq!(
+            other.check(None).expect_err("read-only").code,
+            FieldErrorCode::ReadOnly
+        );
+    }
+
+    #[test]
+    fn only_what_the_user_changed_is_sent() {
+        let mut config = config();
+        // A default value, not written in the file.
+        config.settings[1].set = false;
+        let mut draft = ConfigDraft::default();
+        draft.set(
+            &config,
+            "devops.release_candidates",
+            Some(ConfigValue::Boolean(true)),
+        );
+        draft.reset(&config, "devops.release_candidates");
+        assert!(draft.is_empty(), "nothing to write or remove");
+        draft.set(
+            &config,
+            "devops.release_candidates",
+            Some(ConfigValue::Boolean(false)),
+        );
+        assert_eq!(draft.count(), 1);
+
+        // A set key goes back to its default.
+        config.settings[0].default = text("integration");
+        draft.reset(&config, "devops.branching");
+        assert!(draft.is_reset("devops.branching"));
+        assert_eq!(
+            draft.value_of(&config, "devops.branching"),
+            text("integration")
+        );
+        let change = draft.change(&config).expect("valid");
+        assert_eq!(change.values[0].key, "devops.branching");
+        assert_eq!(change.values[0].value, None);
     }
 
     #[test]

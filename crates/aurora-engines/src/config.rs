@@ -226,22 +226,13 @@ struct RawConfig {
 }
 
 #[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
-enum RawType {
-    Enum,
-    Boolean,
-    Text,
-    Integer,
-    List,
-}
-
-#[derive(Deserialize)]
 struct RawSetting {
     key: String,
     group: String,
     description: String,
     #[serde(rename = "type")]
-    kind: RawType,
+    kind: String,
+    set: bool,
     value: Option<ConfigValue>,
     default: Option<ConfigValue>,
     allowed: Option<Vec<String>>,
@@ -253,18 +244,21 @@ struct RawSetting {
 
 impl RawSetting {
     fn into_setting(self) -> Result<ConfigSetting, String> {
-        let kind = match self.kind {
-            RawType::Enum => ConfigType::Enum,
-            RawType::Boolean => ConfigType::Boolean,
-            RawType::Text => ConfigType::Text,
-            RawType::Integer => ConfigType::Integer,
-            RawType::List => ConfigType::List,
+        // An unknown type is shown as it is and never edited (contract dcp.config 1).
+        let kind = match self.kind.as_str() {
+            "enum" => ConfigType::Enum,
+            "boolean" => ConfigType::Boolean,
+            "text" => ConfigType::Text,
+            "integer" => ConfigType::Integer,
+            "list" => ConfigType::List,
+            _ => ConfigType::Other,
         };
         let setting = ConfigSetting {
             key: self.key,
             group: self.group,
             description: self.description,
             kind,
+            set: self.set,
             value: self.value,
             default: self.default,
             allowed: self.allowed,
@@ -272,8 +266,11 @@ impl RawSetting {
             read_only: false,
             read_only_reason: self.read_only_reason,
         };
-        // The value must fit its own description, or the form cannot show it.
-        if let Some(value) = &setting.value
+        // The value of an editable setting must fit its own description, or the form
+        // cannot show it; a read-only one may hold any value.
+        if !self.read_only
+            && kind != ConfigType::Other
+            && let Some(value) = &setting.value
             && let Err(error) = setting.check(Some(value))
         {
             return Err(format!(
@@ -357,7 +354,7 @@ mod tests {
     }
 
     const BRANCHING: &str = r#"{"key":"devops.branching","group":"devops","description":"d",
-        "type":"enum","value":"trunk","default":"integration",
+        "type":"enum","set":true,"value":"trunk","default":"integration",
         "allowed":["integration","trunk"],"nullable":false,"read_only":false}"#;
 
     fn parse_get(text: &str) -> Result<ProjectConfig, CycleError> {
@@ -389,8 +386,22 @@ mod tests {
             parse_get(&get_reply(&wrong)),
             Err(CycleError::Invalid { .. })
         ));
-        let unknown_type = BRANCHING.replace(r#""type":"enum""#, r#""type":"map""#);
-        assert!(parse_get(&get_reply(&unknown_type)).is_err());
+        let not_set = BRANCHING.replace(r#""set":true,"#, "");
+        assert!(parse_get(&get_reply(&not_set)).is_err());
+        let read_only_wrong = wrong.replace(r#""read_only":false"#, r#""read_only":true"#);
+        assert!(parse_get(&get_reply(&read_only_wrong)).is_ok());
+    }
+
+    #[test]
+    fn an_unknown_type_reads_as_read_only() {
+        let map = BRANCHING
+            .replace(r#""type":"enum""#, r#""type":"map""#)
+            .replace(r#""value":"trunk""#, r#""value":{"a":1}"#);
+        let config = parse_get(&get_reply(&map)).expect("valid");
+        let setting = &config.settings[0];
+        assert_eq!(setting.kind, ConfigType::Other);
+        assert!(!setting.editable());
+        assert!(setting.set);
     }
 
     #[test]

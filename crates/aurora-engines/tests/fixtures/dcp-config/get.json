@@ -10,6 +10,7 @@
       "group": "devops",
       "description": "Branching model: where work merges and how releases are cut",
       "type": "enum",
+      "set": true,
       "value": "trunk",
       "default": "integration",
       "allowed": [
@@ -25,6 +26,7 @@
       "group": "devops",
       "description": "Integration branch of the integration model",
       "type": "text",
+      "set": false,
       "value": "dev",
       "default": "dev",
       "allowed": null,
@@ -36,6 +38,7 @@
       "group": "devops",
       "description": "Production branch",
       "type": "text",
+      "set": false,
       "value": "main",
       "default": "main",
       "allowed": null,
@@ -47,6 +50,7 @@
       "group": "devops",
       "description": "Release candidates (vX.Y.Z-rc.N) for manual acceptance before a release",
       "type": "boolean",
+      "set": false,
       "value": true,
       "default": true,
       "allowed": null,
@@ -58,6 +62,7 @@
       "group": "devops",
       "description": "Files whose version is bumped at a release",
       "type": "list",
+      "set": true,
       "value": [
         "Cargo.toml"
       ],
@@ -71,6 +76,7 @@
       "group": "devops",
       "description": "Logging and telemetry profile required in plans",
       "type": "enum",
+      "set": false,
       "value": null,
       "default": null,
       "allowed": [
@@ -88,6 +94,7 @@
       "group": "architecture",
       "description": "Architecture style the design review checks",
       "type": "enum",
+      "set": true,
       "value": "hexagonal",
       "default": null,
       "allowed": [
@@ -106,6 +113,7 @@
       "group": "architecture",
       "description": "Folder of the core, which must not import adapters",
       "type": "text",
+      "set": true,
       "value": "crates/gedo-core",
       "default": null,
       "allowed": null,
@@ -117,6 +125,7 @@
       "group": "backlog",
       "description": "Bug severities that block new work",
       "type": "list",
+      "set": false,
       "value": [
         "critical",
         "high",
@@ -141,6 +150,7 @@
       "group": "backlog",
       "description": "Latest release for a bug that does not block",
       "type": "enum",
+      "set": true,
       "value": "next_release",
       "default": "next_release",
       "allowed": [
@@ -155,6 +165,7 @@
       "group": "docs",
       "description": "The user documentation file",
       "type": "text",
+      "set": false,
       "value": "README.md",
       "default": "README.md",
       "allowed": null,
@@ -166,6 +177,7 @@
       "group": "docs",
       "description": "README line limit",
       "type": "integer",
+      "set": false,
       "value": 400,
       "default": 400,
       "allowed": null,
@@ -173,10 +185,55 @@
       "read_only": false
     },
     {
+      "key": "speckit.enabled",
+      "group": "speckit",
+      "description": "Spec Kit runs specification, planning and implementation",
+      "type": "boolean",
+      "set": true,
+      "value": false,
+      "default": null,
+      "allowed": null,
+      "nullable": true,
+      "read_only": true,
+      "read_only_reason": "Turned on by dcp speckit init, which installs Spec Kit and records its version"
+    },
+    {
+      "key": "speckit.version",
+      "group": "speckit",
+      "description": "Spec Kit version pinned for the project",
+      "type": "text",
+      "set": false,
+      "value": null,
+      "default": null,
+      "allowed": null,
+      "nullable": true,
+      "read_only": true,
+      "read_only_reason": "Changed only by dcp speckit init and dcp speckit upgrade"
+    },
+    {
+      "key": "drift_rules",
+      "group": "plans",
+      "description": "Rules that flag a change drifting from the active plan",
+      "type": "rules",
+      "set": true,
+      "value": [
+        {
+          "path": "crates/gedo-core/**",
+          "plan": "required"
+        }
+      ],
+      "default": [],
+      "allowed": null,
+      "nullable": false,
+      "read_only": true,
+      "read_only_reason": "Structured setting: edit it in .dev-cycle.json"
+    },
+    {
       "key": "principles.gates",
       "group": "principles",
       "description": "Mandatory gates",
       "type": "list",
+      "set": false,
       "value": [
         "product baseline",
         "plan",
@@ -192,7 +249,7 @@
       "allowed": null,
       "nullable": false,
       "read_only": true,
-      "read_only_reason": "The user's approval gates are mandatory in the Dev Cycle Protocol"
+      "read_only_reason": "The user's approval gates are mandatory in the Dev Cycle Protocol; shown for information, not stored in .dev-cycle.json"
     }
   ],
   "findings": []

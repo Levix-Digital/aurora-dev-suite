@@ -21,7 +21,7 @@ A Levix developer opens a project in the Project view, switches to its Settings 
 **Acceptance Scenarios**:
 
 1. **Given** a project and a `dcp` with the `config` capability, **When** the Settings tab opens, **Then** Aurora runs `dcp config get --json --dir <root>` once and shows the settings grouped in the order of the reply.
-2. **Given** a setting, **When** it is shown, **Then** it shows its key, description, current value (or "Not set" for an unset value), its default when it differs from the value, and a control that matches its type: a choice list for an enum, a switch for a boolean, a text field for text, a number field for an integer, and a list of values for a list (checkboxes when the list has allowed values).
+2. **Given** a setting, **When** it is shown, **Then** it shows its key, description, current value (or "Not set" when there is none), whether it is written in .dev-cycle.json or is a default or detected value, its default when the key is set, and a control that matches its type: a choice list for an enum, a switch for a boolean, a text field for text, a number field for an integer, and a list of values for a list (checkboxes when the list has allowed values).
 3. **Given** a read-only setting, **When** it is shown, **Then** its control is disabled and the reason the protocol gives is shown next to it.
 4. **Given** a reply with findings, **When** the tab is shown, **Then** the findings are listed above the groups.
 
@@ -66,7 +66,9 @@ When `dcp` is missing, has no `config` capability, or the project's folder is go
 
 - A setting the reply marks as secret is never in the reply (the contract forbids it); Aurora shows only what `dcp` returns.
 - A value edited back to its original value is not a pending change.
-- Setting a nullable value back to "Not set" sends `null`.
+- Setting a nullable value back to "Not set", or "Reset to default" on a key written in the file, sends `null`, which removes the key; the setting goes back to its default or detected value.
+- A setting not written in the file stays out of it until the user picks a different value: the form never records a default as a decision.
+- A read-only setting, a setting of a type Aurora does not know and a structured value are shown as they are, without a control; a read-only setting may be display-only and not stored in the file.
 - A list with allowed values only offers those values; a free list accepts one value per line, with empty lines dropped.
 - An integer field with text that is not a whole number is refused next to the field before any command runs.
 - Switching project or tab with pending edits drops them after a confirmation.
@@ -80,10 +82,10 @@ When `dcp` is missing, has no `config` capability, or the project's folder is go
 
 - **FR-001**: The Project view MUST have two tabs, "Cycle" (today's sections) and "Settings"; the chosen tab stays while Aurora runs.
 - **FR-002**: The Settings tab MUST read the project's settings only through `dcp config get --json --dir <root>` (schema `dcp.config` MAJOR 1, `contracts/dcp-config.schema.json`), and only when `dcp` reports the capability `config` with schema MAJOR 1 (ADR-0003, ADR-0006). Aurora MUST NOT read or write `.dev-cycle.json` itself.
-- **FR-003**: Each setting MUST be rendered from the reply alone: key, group, description, type, value, default, allowed values, nullable, read-only and its reason.
+- **FR-003**: Each setting MUST be rendered from the reply alone: key, group, description, type, whether it is set in the file, value, default, allowed values, nullable, read-only and its reason.
 - **FR-004**: A change MUST be previewed before it is applied: the preview runs `dcp config set --json --dry-run --dir <root> --revision <revision>` with one `--value <key>=<JSON value>` per edited key (schema `dcp.config-set` MAJOR 1, `contracts/dcp-config-set.schema.json`).
 - **FR-005**: Apply MUST send exactly the keys, values and revision of the preview the user saw, without `--dry-run`; any edit after the preview requires a new preview.
-- **FR-006**: The core MUST refuse, before running anything, a change to a read-only or unknown key, an enum or list value outside its allowed values, an integer that is not a whole number, and `null` for a setting that is not nullable; `dcp` stays the authority and its errors are shown as returned.
+- **FR-006**: The core MUST refuse, before running anything, a change to a read-only or unknown key, an enum or list value outside its allowed values, and an integer that is not a whole number (`null` removes a key and is accepted for any editable setting); `dcp` stays the authority and its errors are shown as returned.
 - **FR-007**: Errors returned by `dcp` MUST be shown next to their field with the accepted values; a stale revision MUST be shown as "changed on disk" with an action to read again.
 - **FR-008**: The adapter MUST run `dcp` without a shell, with the user's time limit and the existing output size limits, and log each command's key count, duration and outcome without values.
 - **FR-009**: Aurora MUST NOT run Git or commit; after an apply it MUST remind the user to commit `.dev-cycle.json`.
@@ -93,7 +95,7 @@ When `dcp` is missing, has no `config` capability, or the project's folder is go
 ### Key Entities
 
 - **Project settings**: the reply of `dcp config get`: the revision, the source file, the settings and findings.
-- **Setting**: one key with its group, description, type, value, default, allowed values, nullable and read-only flags.
+- **Setting**: one key with its group, description, type, whether it is set in the file, value, default, allowed values, nullable and read-only flags.
 - **Settings change**: the keys and new values the user edited.
 - **Settings preview**: the before and after of each key and the file diff, applied or not.
 - **Field error**: a key (or none), a message, the accepted values.

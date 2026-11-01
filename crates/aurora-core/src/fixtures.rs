@@ -431,6 +431,7 @@ fn config_setting(
         group: key.split('.').next().unwrap_or(key).to_owned(),
         description: description.to_owned(),
         kind,
+        set: false,
         value,
         default,
         allowed: None,
@@ -455,9 +456,10 @@ fn allowed(values: &[&str]) -> Option<Vec<String>> {
 }
 
 /// The sample settings of a project, as `dcp config get` would describe them: every type,
-/// an unset value, a list with allowed values and a read-only setting.
+/// keys set in the file and defaults, an empty value, a list with allowed values, read-only
+/// settings (a display-only one, keys owned by `dcp speckit`) and an unknown structured type.
 pub fn sample_project_config() -> ProjectConfig {
-    use ConfigType::{Boolean, Enum, Integer, List, Text};
+    use ConfigType::{Boolean, Enum, Integer, List, Other, Text};
     let severities = ["critical", "high", "medium", "low"];
     ProjectConfig {
         revision: "sha256:4f1c2a".to_owned(),
@@ -465,6 +467,7 @@ pub fn sample_project_config() -> ProjectConfig {
         settings: vec![
             ConfigSetting {
                 allowed: allowed(&["integration", "trunk", "release-branches"]),
+                set: true,
                 ..config_setting(
                     "devops.branching",
                     "Branching model: where work merges and how releases are cut",
@@ -494,13 +497,16 @@ pub fn sample_project_config() -> ProjectConfig {
                 Some(ConfigValue::Boolean(true)),
                 Some(ConfigValue::Boolean(true)),
             ),
-            config_setting(
-                "devops.version_files",
-                "Files whose version is bumped at a release",
-                List,
-                list(&["Cargo.toml"]),
-                list(&[]),
-            ),
+            ConfigSetting {
+                set: true,
+                ..config_setting(
+                    "devops.version_files",
+                    "Files whose version is bumped at a release",
+                    List,
+                    list(&["Cargo.toml"]),
+                    list(&[]),
+                )
+            },
             ConfigSetting {
                 allowed: allowed(&["cli", "service", "library", "desktop", "none"]),
                 nullable: true,
@@ -522,6 +528,7 @@ pub fn sample_project_config() -> ProjectConfig {
                     "other",
                 ]),
                 nullable: true,
+                set: true,
                 ..config_setting(
                     "architecture.style",
                     "Architecture style the design review checks",
@@ -532,6 +539,7 @@ pub fn sample_project_config() -> ProjectConfig {
             },
             ConfigSetting {
                 nullable: true,
+                set: true,
                 ..config_setting(
                     "architecture.core_path",
                     "Folder of the core, which must not import adapters",
@@ -552,6 +560,8 @@ pub fn sample_project_config() -> ProjectConfig {
             },
             ConfigSetting {
                 allowed: allowed(&["next_release", "off"]),
+                // Set in the file with the default value: a decision taken.
+                set: true,
                 ..config_setting(
                     "backlog.bug_deadline",
                     "Latest release for a bug that does not block",
@@ -575,9 +585,56 @@ pub fn sample_project_config() -> ProjectConfig {
                 Some(ConfigValue::Integer(400)),
             ),
             ConfigSetting {
+                nullable: true,
+                set: true,
                 read_only: true,
                 read_only_reason: Some(
-                    "The user's approval gates are mandatory in the Dev Cycle Protocol".to_owned(),
+                    "Turned on by dcp speckit init, which installs Spec Kit and records its version"
+                        .to_owned(),
+                ),
+                ..config_setting(
+                    "speckit.enabled",
+                    "Spec Kit runs specification, planning and implementation",
+                    Boolean,
+                    Some(ConfigValue::Boolean(false)),
+                    None,
+                )
+            },
+            ConfigSetting {
+                nullable: true,
+                read_only: true,
+                read_only_reason: Some(
+                    "Changed only by dcp speckit init and dcp speckit upgrade".to_owned(),
+                ),
+                ..config_setting(
+                    "speckit.version",
+                    "Spec Kit version pinned for the project",
+                    Text,
+                    None,
+                    None,
+                )
+            },
+            ConfigSetting {
+                group: "plans".to_owned(),
+                set: true,
+                read_only: true,
+                read_only_reason: Some(
+                    "Structured setting: edit it in .dev-cycle.json".to_owned(),
+                ),
+                ..config_setting(
+                    "drift_rules",
+                    "Rules that flag a change drifting from the active plan",
+                    Other,
+                    Some(ConfigValue::Json(serde_json::json!([
+                        { "path": "crates/gedo-core/**", "plan": "required" }
+                    ]))),
+                    Some(ConfigValue::List(Vec::new())),
+                )
+            },
+            ConfigSetting {
+                read_only: true,
+                read_only_reason: Some(
+                    "The user's approval gates are mandatory in the Dev Cycle Protocol; shown for information, not stored in .dev-cycle.json".to_owned(),
                 ),
                 ..config_setting(
                     "principles.gates",
@@ -703,8 +760,14 @@ impl ConfigSource for FixtureConfigSource {
                 .values
                 .iter()
                 .filter_map(|kv| {
-                    let before = config.setting(&kv.key)?.value.clone();
-                    (before != kv.value).then(|| KeyChange {
+                    // Values in the file: `None` when the key is not written there.
+                    let setting = config.setting(&kv.key)?;
+                    let before = setting.set.then(|| setting.value.clone()).flatten();
+                    let unchanged = match &kv.value {
+                        None => !setting.set,
+                        Some(_) => setting.set && before == kv.value,
+                    };
+                    (!unchanged).then(|| KeyChange {
                         key: kv.key.clone(),
                         before,
                         after: kv.value.clone(),
@@ -716,7 +779,8 @@ impl ConfigSource for FixtureConfigSource {
             if applied {
                 for kv in &change.values {
                     if let Some(setting) = config.settings.iter_mut().find(|s| s.key == kv.key) {
-                        setting.value = kv.value.clone();
+                        setting.set = kv.value.is_some();
+                        setting.value = kv.value.clone().or_else(|| setting.default.clone());
                     }
                 }
                 config.revision = format!("{}+", config.revision);
@@ -739,26 +803,30 @@ fn sample_diff(changes: &[KeyChange]) -> String {
     let mut diff = String::from("--- a/.dev-cycle.json\n+++ b/.dev-cycle.json\n");
     for change in changes {
         let leaf = change.key.rsplit('.').next().unwrap_or(&change.key);
-        let json = |value: &Option<ConfigValue>| match value {
-            None => "null".to_owned(),
-            Some(ConfigValue::Text(text)) => format!("\"{text}\""),
-            Some(ConfigValue::List(items)) => format!(
-                "[{}]",
-                items
-                    .iter()
-                    .map(|item| format!("\"{item}\""))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-            Some(ConfigValue::Boolean(flag)) => flag.to_string(),
-            Some(ConfigValue::Integer(number)) => number.to_string(),
+        // A key not in the file has no line.
+        let json = |value: &Option<ConfigValue>| {
+            value.as_ref().map(|value| match value {
+                ConfigValue::Text(text) => format!("\"{text}\""),
+                ConfigValue::List(items) => format!(
+                    "[{}]",
+                    items
+                        .iter()
+                        .map(|item| format!("\"{item}\""))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ),
+                ConfigValue::Boolean(flag) => flag.to_string(),
+                ConfigValue::Integer(number) => number.to_string(),
+                ConfigValue::Json(value) => value.to_string(),
+            })
         };
-        diff.push_str(&format!(
-            "@@ {} @@\n-    \"{leaf}\": {},\n+    \"{leaf}\": {},\n",
-            change.key,
-            json(&change.before),
-            json(&change.after)
-        ));
+        diff.push_str(&format!("@@ {} @@\n", change.key));
+        if let Some(before) = json(&change.before) {
+            diff.push_str(&format!("-    \"{leaf}\": {before},\n"));
+        }
+        if let Some(after) = json(&change.after) {
+            diff.push_str(&format!("+    \"{leaf}\": {after},\n"));
+        }
     }
     diff
 }
@@ -860,6 +928,22 @@ mod tests {
             source.set(&dcp, &settings, &root, &change, true),
             Err(ConfigError::Stale)
         );
+
+        // Removing a key writes null and the setting goes back to its default.
+        let mut reset = ConfigDraft::default();
+        reset.reset(&after, "architecture.core_path");
+        reset.reset(&after, "docs.readme_max_lines");
+        let reset_change = reset.change(&after).expect("valid");
+        assert_eq!(reset_change.values.len(), 1, "an unset key is no change");
+        let removed = source
+            .set(&dcp, &settings, &root, &reset_change, false)
+            .expect("apply");
+        assert_eq!(removed.changes[0].after, None);
+        assert!(!removed.diff.contains("+    \"core_path\""));
+        let after = source.read(&dcp, &settings, &root).expect("read");
+        let core_path = after.setting("architecture.core_path").expect("known");
+        assert!(!core_path.set);
+        assert_eq!(core_path.value, None);
         let same_branch = ConfigChange {
             revision: after.revision.clone(),
             values: vec![KeyValue {

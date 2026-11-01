@@ -278,7 +278,7 @@ fn Toolbar(
                     {outcome.changes.iter().map(|c| view! {
                         <li>
                             <code>{c.key.clone()}</code>": "
-                            {value_text(c.before.as_ref())}" → "<strong>{value_text(c.after.as_ref())}</strong>
+                            {file_value_text(c.before.as_ref())}" → "<strong>{file_value_text(c.after.as_ref())}</strong>
                         </li>
                     }).collect_view()}
                 </ul>
@@ -358,6 +358,11 @@ fn SettingField(
     let disabled = move || setting_locked(&stored_setting.get_value(), locked.get());
 
     let control = match (setting.kind, setting.allowed.clone()) {
+        // Read-only and unknown types: the value as it is, no control.
+        _ if !setting.editable() => view! {
+            <p id=id.clone() class="setting-value"><code>{value_text(setting.value.as_ref())}</code></p>
+        }
+        .into_any(),
         (ConfigType::Boolean, _) => view! {
             <input
                 id=id.clone()
@@ -467,8 +472,20 @@ fn SettingField(
         .into_any(),
     };
 
-    let default_text = (setting.default != setting.value)
+    let default_text = (setting.set && setting.editable())
         .then(|| format!("Default: {}", value_text(setting.default.as_ref())));
+    let is_reset = move || stored_key.with_value(|key| draft.with(|d| d.is_reset(key)));
+    // A key not in the file shows its default or detected value; it stays out of the file
+    // until the user picks a different value.
+    let from_file = setting.set;
+    let can_reset = setting.set && setting.editable();
+    let reset = move |_| {
+        let key = stored_key.get_value();
+        stored_config.with_value(|config| draft.update(|d| d.reset(config, &key)));
+        input_errors.update(|errors| {
+            errors.remove(&key);
+        });
+    };
     let errors = {
         let key = key.clone();
         move || {
@@ -486,9 +503,27 @@ fn SettingField(
             <label for=id.clone()>
                 <strong>{setting.description.clone()}</strong>
                 " "<code class="muted">{setting.key.clone()}</code>
-                {move || edited().then(|| view! { " "<span class="badge info">"Edited"</span> })}
+                {move || match (is_reset(), edited()) {
+                    (true, _) => Some(view! { " "<span class="badge info">"Back to default"</span> }.into_any()),
+                    (false, true) => Some(view! { " "<span class="badge info">"Edited"</span> }.into_any()),
+                    (false, false) if !from_file => Some(view! {
+                        " "<span class="badge muted" title="Not in .dev-cycle.json: the default or detected value applies">"Default"</span>
+                    }.into_any()),
+                    _ => None,
+                }}
             </label>
             {control}
+            {can_reset.then(|| view! {
+                <p>
+                    <button
+                        class="btn"
+                        disabled=move || locked.get() || is_reset()
+                        on:click=reset
+                    >
+                        "Reset to default"
+                    </button>
+                </p>
+            })}
             {setting.read_only.then(|| view! {
                 <p class="muted">
                     <span class="badge muted">"Read-only"</span>" "
@@ -509,7 +544,15 @@ fn SettingField(
 }
 
 fn setting_locked(setting: &ConfigSetting, locked: bool) -> bool {
-    setting.read_only || locked
+    !setting.editable() || locked
+}
+
+/// A value in the file, as shown in the preview: a missing key is "Not in the file".
+fn file_value_text(value: Option<&ConfigValue>) -> String {
+    value.map_or_else(
+        || "Not in the file (default)".to_owned(),
+        ToString::to_string,
+    )
 }
 
 /// Why a project's settings could not be read, with the engine's error output to open

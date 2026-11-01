@@ -5,9 +5,9 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-01T20:32:51Z
 subject: "Independent verification and living context: dcp decisions across the suite (DCP FEAT-023 to FEAT-027, IMP-009)"
-status: seen
+status: done
 reply_to: 
-deferred: "Asks for Aurora's position on a suite-level design (DCP FEAT-023 to FEAT-027, IMP-009); waiting for the user's decision"
+deferred: 
 ---
 
 # Independent verification and living context: decisions of the Dev Cycle Protocol

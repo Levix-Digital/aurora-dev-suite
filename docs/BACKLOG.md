@@ -86,7 +86,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-28, Dev Cycle Protocol suggestion 2026-10-28
 - **Plan**: -
-- **Description**: A Metrics tab per project and release (first-pass gate rate, rework, time per phase, escaped bugs, tokens when reported, trends across releases) and a combined view across the portfolio with totals and the protocol's baseline marker, read only from dcp metrics --json (schema dcp.metrics, capability metrics). No stand-in: without the capability the views say to update dcp (ADR-0006). Release assigned when dcp metrics has a date.
+- **Description**: A Metrics tab per project and release (first-pass gate rate, rework, time per phase, escaped bugs, tokens when reported, trends across releases) and a combined view across the portfolio with totals and the protocol's baseline marker, read only from dcp metrics --json (schema dcp.metrics, capability metrics; DCP FEAT-022, dcp v2.12.0, which also sends the dcp.metrics MAJOR 1 draft for review). No stand-in: without the capability the views say to update dcp (ADR-0006). Release assigned when dcp metrics has a date.
 
 ### FEAT-029: Integration subscriptions
 - **Priority**: medium

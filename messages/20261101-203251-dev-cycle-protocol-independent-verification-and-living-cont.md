@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-01T20:32:51Z
 subject: "Independent verification and living context: dcp decisions across the suite (DCP FEAT-023 to FEAT-027, IMP-009)"
-status: open
+status: seen
 reply_to: 
 deferred: 
 ---

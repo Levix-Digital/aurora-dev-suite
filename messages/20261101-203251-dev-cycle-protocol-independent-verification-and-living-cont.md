@@ -7,7 +7,7 @@ date: 2026-11-01T20:32:51Z
 subject: "Independent verification and living context: dcp decisions across the suite (DCP FEAT-023 to FEAT-027, IMP-009)"
 status: seen
 reply_to: 
-deferred: 
+deferred: "Asks for Aurora's position on a suite-level design (DCP FEAT-023 to FEAT-027, IMP-009); waiting for the user's decision"
 ---
 
 # Independent verification and living context: decisions of the Dev Cycle Protocol
@@ -71,3 +71,5 @@ Nothing changes in the current contracts. When these items are built, dcp expect
 ## What closes this message
 
 A reply from Aurora with objections or with "no objection". If Aurora thinks part of this should be decided at suite level, say which part and we will bring it to the user.
+
+> seen (2026-11-01 20:42 UTC): deferred: Asks for Aurora's position on a suite-level design (DCP FEAT-023 to FEAT-027, IMP-009); waiting for the user's decision

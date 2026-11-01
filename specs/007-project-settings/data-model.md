@@ -9,10 +9,10 @@ The core types live in `aurora-core` (`domain/config.rs`) and come only from `dc
 
 ## Setting and project settings
 
-`ConfigSetting { key, group, description, kind, value: Option<ConfigValue>, default: Option<ConfigValue>, allowed: Option<Vec<String>>, nullable, read_only, read_only_reason: Option<String> }`
+`ConfigSetting { key, group, description, kind, set, value: Option<ConfigValue>, default: Option<ConfigValue>, allowed: Option<Vec<String>>, nullable, read_only, read_only_reason: Option<String> }`. `set` says whether the key is written in the file; otherwise `value` is a default or detected value. `ConfigType` has `Other` for a type this Aurora does not know, and `ConfigValue` has `Json` for any other JSON value (structured read-only settings); both are shown as they are and never edited (`editable()` is false, as for `read_only`).
 
-- `check(&Option<ConfigValue>) -> Result<(), FieldError>`: read-only, type, allowed values, null when not nullable (FR-006).
-- `parse_input(&str) -> Result<Option<ConfigValue>, FieldError>`: the text of a text, integer or free list field (one value per line, empty lines dropped; empty text is `None` when nullable).
+- `check(&Option<ConfigValue>) -> Result<(), FieldError>`: not editable, type, allowed values (FR-006). `None` removes the key from the file and is accepted for any editable setting.
+- `parse_input(&str) -> Result<Option<ConfigValue>, FieldError>`: the text of a text, integer or free list field (one value per line, empty lines dropped; empty text is `None` when nullable, refused otherwise).
 
 `ProjectConfig { revision, source: Option<String>, settings: Vec<ConfigSetting>, findings: Vec<String>, read_at }`
 
@@ -21,7 +21,7 @@ The core types live in `aurora-core` (`domain/config.rs`) and come only from `dc
 
 ## Draft, change and outcome
 
-`ConfigDraft { edits: BTreeMap<String, Option<ConfigValue>> }`: the user's edits over one `ProjectConfig`.
+`ConfigDraft { edits: BTreeMap<String, Option<ConfigValue>> }`: the user's edits over one `ProjectConfig`; `None` removes the key. Only what the user changed is kept: a value equal to the effective one is no edit, and removing a key that is not set is no edit, so the form never writes a default the user did not choose. `reset(config, key)` removes a set key; `is_reset(key)` says so, and `value_of` then shows the default.
 
 - `set(config, key, value)`: records the edit, or drops it when the value equals the current one.
 - `count()`, `is_edited(key)`, `value_of(config, key)` (the edit, else the current value).

@@ -334,9 +334,10 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   1. Run `trunk serve` in `crates/aurora-ui`, open `http://127.0.0.1:1420`, open Project on `gedo` and press the **Settings** tab
 - **Expected**:
   - The tabs "Cycle" and "Settings" are shown; "Source: .dev-cycle.json"
-  - The groups `devops`, `architecture`, `backlog`, `docs` and `principles`, in this order
+  - The groups `devops`, `architecture`, `backlog`, `docs`, `speckit`, `plans` and `principles`, in this order
   - "Branching model" is a choice set to `trunk` with "Default: integration"; "Release candidates" is a checked box; "Bug severities that block new work" has `critical`, `high`, `medium` checked and `low` not; "README line limit" is `400`
-  - "Mandatory gates" is disabled, marked "Read-only", with "The user's approval gates are mandatory in the Dev Cycle Protocol"
+  - "Integration branch", "Production branch" and "Release candidates" are marked "Default"; "Branching model" and "Latest release for a bug that does not block" are not, and have a **Reset to default** button
+  - "Mandatory gates", the two `speckit` settings and "Rules that flag a change drifting from the active plan" show their value as text with no control, marked "Read-only" with their reason (for example "Changed only by dcp speckit init and dcp speckit upgrade"); the drift rules show `[{"path":"crates/gedo-core/**","plan":"required"}]`
 - **Result**: [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
@@ -380,6 +381,21 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - Step 1: "Project settings" says what to install (needs config) and "Project settings unavailable."; no process is started
   - Step 2: the sample settings are shown and the preview lists the sample changes; the project's `.dev-cycle.json` is not touched by Aurora
+- **Result**: [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-SET-005: Only what the user changed is written
+
+- **Covers**: keys set in the file versus defaults, reset to default (spec 007 FR-003, FR-006, ADJ-001)
+- **Prerequisites**: the preview of MT-SET-001
+- **Steps**:
+  1. Clear "Release candidates" and check it again
+  2. Press **Reset to default** on "Folder of the core, which must not import adapters", then **Preview changes**
+  3. Press **Apply**
+- **Expected**:
+  - Step 1: "Release candidates" is not marked "Edited" and the toolbar says "No changes" (its default is not written as a decision)
+  - Step 2: the field is marked "Back to default" and shows "Not set"; the preview lists `architecture.core_path: crates/gedo-core → Not in the file (default)` and the diff removes the line
+  - Step 3: after reading again, the field is marked "Default" and has no **Reset to default** button
 - **Result**: [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 

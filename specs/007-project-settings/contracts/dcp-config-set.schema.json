@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://levix.digital/schemas/dcp/config-set-1.json",
   "title": "dcp config set reply (schema MAJOR 1)",
-  "description": "What Aurora expects from `dcp config set --json [--dry-run] --dir <root> --revision <revision> --value <key>=<JSON value> [--value ...]`, offered with the capability `config` schema_major 1. Each --value names one key of `dcp config get` and its new value as JSON (\"trunk\", false, 400, [\"a\",\"b\"], null). The values are checked with the same validation as the engine, all or nothing: when any check fails nothing is written. With --dry-run nothing is ever written. Exit code 0 with this reply whenever the request was understood, including refused values (errors not empty, applied false); any other exit code is a failure and standard error explains it. The engine never commits.",
+  "description": "What Aurora expects from `dcp config set --json [--dry-run] --dir <root> --revision <revision> --value <key>=<JSON value> [--value ...]`, offered with the capability `config` schema_major 1. Each --value names one key of `dcp config get` and its new value as JSON (\"trunk\", false, 400, [\"a\",\"b\"]); `null` removes the key from the file, so the setting goes back to its default or detected value (removing a key that is not set changes nothing). Writing a value equal to the default still sets the key. Keys that `dcp config get` reports as read_only are refused with `read_only`. The values are checked with the same validation as the engine, all or nothing: when any check fails nothing is written. With --dry-run nothing is ever written. Exit code 0 with this reply whenever the request was understood, including refused values (errors not empty, applied false); any other exit code is a failure and standard error explains it. The engine never commits.",
   "type": "object",
   "required": [
     "schema",
@@ -40,7 +40,7 @@
     },
     "changes": {
       "type": "array",
-      "description": "One entry per key whose value differs from the file, in the order given; keys whose new value equals the current one are left out",
+      "description": "One entry per key whose presence or value in the file changes, in the order given; keys the request leaves as they are in the file are left out",
       "items": {
         "type": "object",
         "required": [
@@ -53,10 +53,12 @@
             "type": "string"
           },
           "before": {
-            "$ref": "#/$defs/value"
+            "$ref": "#/$defs/value",
+            "description": "The value in the file before, null when the key was not set"
           },
           "after": {
-            "$ref": "#/$defs/value"
+            "$ref": "#/$defs/value",
+            "description": "The value in the file after, null when the key was removed"
           }
         }
       }
@@ -108,7 +110,7 @@
   },
   "$defs": {
     "value": {
-      "description": "A setting value, as in dcp.config: boolean, integer, text, list of text, or null when not set",
+      "description": "A value in the file, as in dcp.config: boolean, integer, text, list of text, or null when the key is not in the file",
       "type": [
         "boolean",
         "integer",

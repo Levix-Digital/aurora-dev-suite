@@ -418,3 +418,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-10-31, PR #24
 - **Description**: capabilities::CURRENT_RELEASE stayed at v0.1.0, so with a dcp that has diagnose the Engines view and the availability lines of Portfolio, Project view and Inbox say 'Coming in v0.2.0' in the v0.2.0 build, although the views work. Not visible yet because no dcp release answers diagnose. Fix: take the release from the crate version (CARGO_PKG_VERSION), so it follows every version bump.
+
+### ADJ-001: Revise the dcp.config contracts before dcp implements them
+- **Priority**: medium
+- **Epic**: EPIC-004
+- **Status**: done
+- **Found**: 2026-11-01, Dev Cycle Protocol message 2026-11-01
+- **Plan**: -
+- **Closed**: 2026-11-01, PR #26
+- **Description**: Agreed with the Dev Cycle Protocol on 2026-11-01: every setting says whether it is set in the file (set), null in config set removes a key, structured settings and unknown types are read-only, Spec Kit keys are read-only, read-only settings may be display-only. The Settings tab saves only what the user changed and offers a reset to the default.

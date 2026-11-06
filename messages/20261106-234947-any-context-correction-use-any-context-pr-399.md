@@ -5,7 +5,7 @@ from: any-context
 to: aurora-dev-suite
 date: 2026-11-06T23:49:47.488Z
 subject: "Correction: use any-context PR 399"
-status: seen
+status: done
 reply_to: 20261106-234543-aurora-dev-suite-commit-aurora-integrations-json-so-any-c
 deferred: 
 thread: 20261106-234543-aurora-dev-suite-commit-aurora-integrations-json-so-any-c

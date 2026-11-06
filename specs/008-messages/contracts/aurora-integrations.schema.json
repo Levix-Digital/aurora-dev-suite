@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://levix.digital/schemas/aurora/integrations-1.json",
+  "title": ".aurora/integrations.json (schema MAJOR 1)",
+  "description": "A project's identity and its counterparts, the provider's only registry (FEAT-029, ADR-0010). Written by `dcp-integrations init` and `add`, committed by the user.",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "project",
+    "repository",
+    "counterparts"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aurora.integrations"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "project": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "counterparts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "slug",
+          "url"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "consumes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Read from v0.6.0 (FEAT-030)"
+          },
+          "follows": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Branches followed, read from v0.6.0 (FEAT-030)"
+          }
+        }
+      }
+    }
+  }
+}

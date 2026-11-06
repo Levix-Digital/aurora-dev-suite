@@ -1,5 +1,10 @@
 {
   "bundle": {
-    "externalBin": ["binaries/dcp-integrations"]
+    "externalBin": ["binaries/dcp-integrations"],
+    "windows": {
+      "nsis": {
+        "installerHooks": "windows/path-hooks.nsh"
+      }
+    }
   }
 }

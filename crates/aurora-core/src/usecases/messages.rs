@@ -14,6 +14,35 @@ use crate::ports::MessagesSource;
 /// The command that sets up a project for messages.
 pub const SETUP_COMMAND: &str = "dcp-integrations init --project <slug>";
 
+/// A slug suggested from the project's name: lowercase letters, digits and dashes.
+pub fn suggested_slug(name: &str) -> String {
+    let mut slug = String::new();
+    for c in name.chars() {
+        if c.is_ascii_alphanumeric() {
+            slug.push(c.to_ascii_lowercase());
+        } else if !slug.ends_with('-') && !slug.is_empty() {
+            slug.push('-');
+        }
+    }
+    let slug = slug.trim_end_matches('-');
+    if slug.is_empty() {
+        "project".to_owned()
+    } else {
+        slug.to_owned()
+    }
+}
+
+/// The setup command for one project, runnable from any folder: the provider Aurora
+/// found, the project's folder and a slug suggested from its name.
+pub fn setup_command(provider: &std::path::Path, project: &Project) -> String {
+    format!(
+        "\"{}\" --dir \"{}\" init --project {}",
+        provider.display(),
+        project.root.display(),
+        suggested_slug(project.name.as_str())
+    )
+}
+
 fn usable<'a>(
     provider: Option<&'a EngineReport>,
     project: &Project,
@@ -51,7 +80,13 @@ pub fn project_inbox(
             inbox.conversations = read.conversations;
             order_conversations(&mut inbox.conversations);
         }
-        Err(MessagesError::NotSetUp { command }) => inbox.setup = InboxSetup::NotSetUp { command },
+        Err(MessagesError::NotSetUp { command }) => {
+            inbox.setup = InboxSetup::NotSetUp {
+                command: provider
+                    .and_then(|p| p.location.as_deref())
+                    .map_or(command, |location| setup_command(location, project)),
+            }
+        }
         Err(error) => {
             inbox.setup = InboxSetup::Unavailable {
                 reason: error.to_string(),
@@ -209,12 +244,35 @@ mod tests {
         assert_eq!(list[0].setup, InboxSetup::Ready);
         assert!(list[0].conversations[0].waiting_for_user);
         assert_eq!(list[0].waiting_count(), 1);
-        assert!(matches!(list[1].setup, InboxSetup::NotSetUp { .. }));
+        assert_eq!(
+            list[1].setup,
+            InboxSetup::NotSetUp {
+                // The folder is joined with the platform's separator.
+                command: format!(
+                    "\"/usr/local/bin/dcp-integrations\" --dir \"{}\" init --project gedo",
+                    Path::new("/repos").join("gedo").display()
+                )
+            }
+        );
         assert!(matches!(list[2].setup, InboxSetup::Unavailable { .. }));
         let none = overview(&source, None, &Settings::default(), &projects[..1]);
         assert!(
             matches!(none[0].setup, InboxSetup::Unavailable { ref reason } if reason.contains("dcp-integrations"))
         );
+    }
+
+    #[test]
+    fn the_suggested_slug_comes_from_the_name() {
+        assert_eq!(suggested_slug("DocMapper"), "docmapper");
+        assert_eq!(
+            suggested_slug("Levix Digital  Website!"),
+            "levix-digital-website"
+        );
+        assert_eq!(
+            suggested_slug("ai-code-agent-skills"),
+            "ai-code-agent-skills"
+        );
+        assert_eq!(suggested_slug("..."), "project");
     }
 
     #[test]

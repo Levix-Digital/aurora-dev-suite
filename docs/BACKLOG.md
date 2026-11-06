@@ -102,7 +102,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: When a change is merged into a followed branch, the provider writes a notice (title, description, branch, version or tag, changed files and contracts, taken from Git) to the aurora/inbox branch of every project that declared a dependency. Written by the provider at the Dev Cycle's merge or release step, so it works on any Git host (GitHub, Azure DevOps, GitLab, Bitbucket, a local server) without host automation.
+- **Description**: When a change is merged into a followed branch, the provider writes a notice (title, description, branch, version or tag, changed files and contracts, taken from Git) to the aurora/inbox branch of every project that declared a dependency. Written by the provider at the Dev Cycle's merge or release step, so it works on any Git host (GitHub, Azure DevOps, GitLab, Bitbucket, a local server) without host automation. The notice is a message of kind notice (ADR-0009), outside rounds; the after-merge point may need a longer time limit than the default, declared by the provider in describe.
 
 ### FEAT-031: Integration negotiation
 - **Priority**: medium
@@ -110,7 +110,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: At the integration step the receiving project checks each notice against what it consumes; when affected it opens an integration (numbered by its own counter, so projects never collide) with a proposal in the other project's aurora/inbox, which answers with an agreement or a counter-proposal. At most three rounds, then the user decides. Messages unrelated to the current work are deferred with a reason and shown to the user. Commands with --json: check, show, propose, counter, agree, defer.
+- **Description**: At the integration step the receiving project checks each notice against what it consumes; when affected it opens a conversation (a thread numbered by its own counter, so projects never collide) with a proposal in the other project's aurora/inbox. Conversations follow ADR-0009: kinds question, proposal, notice, answer, counter, agreement, impasse, ack and decision; a round is one message from each side; at most three rounds, then only an agreement or an impasse; ack, notice and decision outside rounds; each side answers from its project's records without asking the user mid-conversation; fixed templates per kind with required sections checked on send and reply. Messages unrelated to the current work are deferred with a reason and shown to the user. Commands with --json: poll, check, show, template, send, reply, record, decide, defer, status, watch, the same as the provisional tool 0.2.0 (IMP-002), so no message already written changes.
 
 ### FEAT-032: Integration gate
 - **Priority**: medium
@@ -118,7 +118,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: An agreed integration is shown to the user, who approves or rejects it; both projects receive the decision and each records its own backlog item. The gate is registered by the integrations provider through the Dev Cycle's extension point, not built into the protocol.
+- **Description**: Every conversation closes with an agreement or an impasse carrying the closing record for the user (ADR-0009): the projects and rounds, the subject, the outcome, conclusion, justification, positions for an impasse, the decision needed with one option recommended, and what each project does after approval. Only the project that opened it presents the record, once, in the user's language; the user's decision goes to every side as a decision message and each project records its own backlog item; no project acts before it. For integrations this is the integration gate, declared by the integrations provider through dcp-integrations describe --json and the Dev Cycle's extension point (DCP FEAT-018), not built into the protocol.
 
 ### FEAT-033: Integrations view
 - **Priority**: medium
@@ -126,7 +126,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: A tab with notices, open integrations and their conversations, and the integration gate, read from local clones through the provider's --json. Aurora stays air-gapped: it never fetches or pushes; the provider does through Git.
+- **Description**: A tab with conversations waiting for the user first (their closing record shown as fields: conclusion, justification, positions, decision needed, after approval, with the decision recorded from there), then notices, open conversations with their rounds, and sent messages still unread after a set time, read from local clones through the provider's --json (show --json returns the sections as fields). Aurora stays air-gapped: it never fetches or pushes; the provider does through Git.
 
 ### FEAT-034: Integrations provider
 - **Priority**: high
@@ -134,7 +134,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the integrations commands and plugs into dcp through its extension point: external subcommand, registered provider, cycle points discovery, after-merge and before-release-gate, and the integration gate (DCP FEAT-018, dcp v2.11.0; draft contract dcp.extension 1.0 in Levix-Digital/ai-code-agent-skills pull request #86). Registered at user level by Aurora's installer, it only adds items, warnings and its own gate, never weakens the protocol's gates. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing.
+- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the integrations commands and plugs into dcp through its extension point: external subcommand, registered provider, cycle points discovery, after-merge and before-release-gate, and the integration gate (DCP FEAT-018, dcp v2.11.0; draft contract dcp.extension 1.0 in Levix-Digital/ai-code-agent-skills pull request #86). Registered at user level by Aurora's installer, it only adds items, warnings and its own gate, never weakens the protocol's gates. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing. It declares its cycle points and the integration gate through dcp-integrations describe --json (draft dcp.extension 1.0), and offers poll (one git ls-remote, no fetch) for every touchpoint and an optional watch that runs the user's local command in a project's folder when news arrives (ADR-0009).
 
 ### FEAT-035: Signed packages
 - **Priority**: medium
@@ -208,7 +208,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Priority**: medium
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
-- **Description**: Projects that depend on each other learn about each other's merges and agree on integrations before changing code: notices and messages travel through plain Git on an orphan aurora/inbox branch of each project's repository, the Dev Cycle's integration step runs through dcp with any agent or a person, and the user approves each agreed integration at an integration gate. Agnostic to coding agents and Git hosts; available only with Aurora (ADR-0007).
+- **Description**: Projects that depend on each other learn about each other's merges and agree on integrations before changing code: notices and messages travel through plain Git on an orphan aurora/inbox branch of each project's repository, the Dev Cycle's integration step runs through dcp with any agent or a person, and the user approves each agreed integration at an integration gate. Agnostic to coding agents and Git hosts; available only with Aurora (ADR-0007, ADR-0009).
 
 ## Closed
 

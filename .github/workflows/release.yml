@@ -134,6 +134,26 @@ jobs:
         working-directory: crates/aurora-desktop
         run: cargo tauri build --bundles ${{ matrix.bundles }} --config tauri.release.conf.json --ci
 
+      - name: The Windows installer puts dcp-integrations on the user's PATH and takes it off (BUG-005)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          $dir = Join-Path $env:LOCALAPPDATA 'Aurora'
+          $env:Path -split ';' | Where-Object { $_ -ieq $dir } | ForEach-Object { throw "$dir is already on PATH before the install" }
+          Start-Process $setup.FullName -ArgumentList '/S' -Wait
+          $path = [Environment]::GetEnvironmentVariable('Path', 'User')
+          if (-not (($path -split ';') -contains $dir)) { throw "after the install, the user PATH lacks $dir : $path" }
+          & (Join-Path $dir 'dcp-integrations.exe') version
+          if ($LASTEXITCODE -ne 0) { throw "dcp-integrations.exe did not run" }
+          Start-Process (Join-Path $dir 'uninstall.exe') -ArgumentList '/S' -Wait
+          # The uninstaller runs again from a temporary copy: wait for it to finish.
+          for ($i = 0; $i -lt 30 -and (Test-Path (Join-Path $dir 'aurora.exe')); $i++) { Start-Sleep -Seconds 1 }
+          Start-Sleep -Seconds 2
+          $after = [Environment]::GetEnvironmentVariable('Path', 'User')
+          if (($after -split ';') -contains $dir) { throw "after the uninstall, the user PATH still has $dir : $after" }
+          Write-Output "PATH added and removed: $dir"
+
       - name: The Linux binary runs on Ubuntu 22.04 (glibc 2.35)
         if: runner.os == 'Linux'
         run: |

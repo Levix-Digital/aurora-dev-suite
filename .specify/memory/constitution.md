@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: e6cccae2eda4192754a095a860fe002d30e1030b963697779663370a178d246d
-content-sha256: c14145ce3fb17fddd3834b6049836b3f48b463ee9790d852af6f1183cd47759b
+sources-sha256: 2262338c4b45201ffd91cb5958d39004fb1d62503c5af525b0b29712d172f4d4
+content-sha256: df38fbf0f1fb10159a151f59d25a8a87c974dc6f691d0a7e13059e37b8b23a61
 -->
 # aurora-dev-suite Constitution
 
@@ -169,6 +169,8 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0006: No stand-in adapters: engines plugged in only through their Rust binaries (`docs/adr/0006-no-stand-in-adapters-engines-plugged-in-only-through-their-r.md`)
 - ADR-0007: Cross-project integrations through Git on an orphan inbox branch (`docs/adr/0007-cross-project-integrations-through-git-on-an-orphan-inbox-br.md`)
 - ADR-0008: Installers built by the Tauri bundler and published by the release workflow (`docs/adr/0008-installers-built-by-the-tauri-bundler-and-published-by-the-r.md`)
+- ADR-0009: Conversations between projects in rounds that close with a record for the user (`docs/adr/0009-conversations-between-projects-in-rounds-that-close-with-a-r.md`)
+- ADR-0010: The integrations provider ships with Aurora and the inbox branch holds only data (`docs/adr/0010-the-integrations-provider-ships-with-aurora-and-the-inbox-br.md`)
 
 ## Governance
 
@@ -176,4 +178,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.6.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-10-30
+**Version**: 1.7.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-06

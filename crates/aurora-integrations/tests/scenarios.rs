@@ -531,14 +531,21 @@ fn init_add_validate_and_watch_once() {
         "no origin remote"
     );
     git(&fresh, &["remote", "add", "origin", &url(&w.root, "fresh")]);
-    ok(commands::init(&fresh, "fresh", "Fresh"));
+    // ADJ-005: init says the file is still empty and the next commands.
+    let init = ok(commands::init(&fresh, "fresh", "Fresh")).text;
+    assert!(init.contains("lists no other project yet"), "{init}");
+    assert!(init.contains("dcp-integrations add <slug> --url"), "{init}");
+    assert!(init.contains("dcp-integrations validate"), "{init}");
+    assert!(init.contains("reach this one as 'fresh'"), "{init}");
     assert_eq!(refused(commands::init(&fresh, "fresh", "")).exit, 2);
-    ok(commands::add(
+    let added = ok(commands::add(
         &fresh,
         "alpha",
         "Alpha",
         &url(&w.root, "alpha"),
-    ));
+    ))
+    .text;
+    assert!(added.contains("1 project(s) listed"), "{added}");
     assert_eq!(refused(commands::add(&fresh, "alpha", "", "u")).exit, 2);
     assert!(
         ok(commands::validate(&fresh))

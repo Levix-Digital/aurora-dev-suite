@@ -6,14 +6,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
-### BUG-008: Messages gives up on a project's first read after 10 s
-- **Severity**: medium
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.2
-- **Plan**: -
-- **Description**: The provider's first read of a project fetches the inbox branch of every counterpart into its caches, and Aurora runs one check per project (four at once), so a read of the view fetched each inbox up to six times, several at once on the same cache; on Windows each fetch also asks Git's credential helper, so it took more than the engines' general 10 s limit: AnyContext and levix-admin-hub showed 'not reachable: dcp-integrations did not answer within 10 s' (Levi, 2026-11-06). Fix: a 60 s default for the provider, and read-only commands reuse a fetch younger than 30 s with one fetch per cache at a time.
-
 ### BUG-009: The setup command suggests a slug the other projects do not use
 - **Severity**: medium
 - **Epic**: EPIC-010
@@ -146,14 +138,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: A project whose file is only on its integration branch (AnyContext: on dev, not main) shows as not set up with the init command, and running init creates a second, empty file. The provider could look for the file on the other local branches and Aurora would say which branch to check out instead (Levi, 2026-11-06).
 
-### IMP-004: Messages notices when a project's setup changes without reopening the view
-- **Priority**: medium
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.2
-- **Plan**: -
-- **Description**: Messages reads .aurora/integrations.json only when the view opens, so a file added by a pull or a checkout keeps showing 'not set up'. Re-check each project's setup on every background poll and when Aurora's window gets the focus (a file check per project, no Git), instead of an operating system file watcher per platform (Levi, 2026-11-06).
-
 ## Adjustments
 
 ### ADJ-004: Messages separates projects to set up from projects outside the network
@@ -163,14 +147,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Found**: 2026-11-06, v0.3.0-rc.2
 - **Plan**: -
 - **Description**: Under 'Not taking part', DocMapper and the website get the same init command as projects that are counterparts but lack the file. List the counterparts of the other projects' registries as 'to set up' with the command, and the rest as 'not in the network' with the command folded (Levi, 2026-11-06).
-
-### ADJ-005: init says the next commands instead of 'add counterparts with add'
-- **Priority**: low
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.2
-- **Plan**: -
-- **Description**: After 'init', 'add counterparts with add, then commit it' was not clear (Levi, 2026-11-06): print the add command with its arguments, then validate and the file to commit; the Messages hint can offer the counterparts the other projects already list.
 
 ## Epics
 
@@ -550,3 +526,30 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-11-06, PR #33
 - **Description**: The hint already fills the slug, so '(change the slug if the project already has one)' only adds noise; it now says the project is not set up on the branch checked out (Levi, 2026-11-06).
+
+### ADJ-005: init says the next commands instead of 'add counterparts with add'
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #35
+- **Description**: After 'init', 'add counterparts with add, then commit it' was not clear (Levi, 2026-11-06): init now says the file lists no other project yet, the add command with its arguments, validate and the file to commit, and the slug the other projects use for this one; add says how many projects are listed and what comes next.
+
+### BUG-008: Messages gives up on a project's first read after 10 s
+- **Severity**: medium
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #35
+- **Description**: The provider's first read of a project fetches the inbox branch of every counterpart into its caches, and Aurora runs one check per project (four at once), so a read of the view fetched each inbox up to six times, several at once on the same cache; on Windows each fetch also asks Git's credential helper, so it took more than the engines' general 10 s limit: AnyContext and levix-admin-hub showed 'not reachable: dcp-integrations did not answer within 10 s' (Levi, 2026-11-06). Fix: a 60 s default for the provider, and read-only commands reuse a fetch younger than 30 s with one fetch per cache at a time.
+
+### IMP-004: Messages notices when a project's setup changes without reopening the view
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #35
+- **Description**: Messages reads .aurora/integrations.json only when the view opens, so a file added by a pull or a checkout keeps showing 'not set up'. Re-check each project's setup on every background poll and when Aurora's window gets the focus (a file check per project, no Git), instead of an operating system file watcher per platform (Levi, 2026-11-06).

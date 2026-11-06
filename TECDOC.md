@@ -43,6 +43,8 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
+| [ADR-0010](docs/adr/0010-the-integrations-provider-ships-with-aurora-and-the-inbox-br.md) | The integrations provider ships with Aurora and the inbox branch holds only data | accepted |  | 2026-11-06 |
+| [ADR-0009](docs/adr/0009-conversations-between-projects-in-rounds-that-close-with-a-r.md) | Conversations between projects in rounds that close with a record for the user | accepted |  | 2026-11-06 |
 | [ADR-0008](docs/adr/0008-installers-built-by-the-tauri-bundler-and-published-by-the-r.md) | Installers built by the Tauri bundler and published by the release workflow | accepted | v0.2.0 | 2026-10-30 |
 | [ADR-0007](docs/adr/0007-cross-project-integrations-through-git-on-an-orphan-inbox-br.md) | Cross-project integrations through Git on an orphan inbox branch | accepted |  | 2026-10-29 |
 | [ADR-0006](docs/adr/0006-no-stand-in-adapters-engines-plugged-in-only-through-their-r.md) | No stand-in adapters: engines plugged in only through their Rust binaries | accepted |  | 2026-10-27 |

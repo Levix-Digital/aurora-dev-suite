@@ -21,8 +21,8 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 ## v0.3.0: Actions through dcp
 - **Status**: in_progress
 - **Target**: project settings light up with dcp v2.11.0 (DCP FEAT-017)
-- **Goal**: Approve a gate, record a manual test result or open a pull request from the inbox, and change a project's Dev Cycle settings, all through dcp commands.
-- **Items**: FEAT-018, FEAT-027, BUG-004, ADJ-001
+- **Goal**: Approve a gate, record a manual test result or open a pull request from the inbox, and change a project's Dev Cycle settings, all through dcp commands; and talk to the other projects from Aurora's Messages tab, through the integrations provider shipped with Aurora, deciding on each conversation's closing record or stepping into it (Levi, 2026-11-06).
+- **Items**: FEAT-018, FEAT-027, BUG-004, ADJ-001, FEAT-029, FEAT-031, FEAT-032, FEAT-033, FEAT-034
 
 ## v0.4.0: Agents
 - **Status**: planned
@@ -36,9 +36,9 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 
 ## v0.6.0: Integrations
 - **Status**: planned
-- **Target**: after dcp v2.12.0 (DCP FEAT-018)
-- **Goal**: Projects that depend on each other learn about each other's merges and agree on integrations, approved by the user at the integration gate, through the integrations provider plugged into dcp; waits for dcp v2.12.0 with the extension point (DCP FEAT-018).
-- **Items**: FEAT-029, FEAT-030, FEAT-031, FEAT-032, FEAT-033, FEAT-034
+- **Target**: after dcp v2.11.0 (DCP FEAT-018)
+- **Goal**: Projects that depend on each other learn about each other's merges automatically and their conversations and decisions (delivered in v0.3.0) become the integration step and the integration gate of the Dev Cycle, through the integrations provider plugged into dcp; waits for dcp v2.11.0 with the extension point (DCP FEAT-018).
+- **Items**: FEAT-030, FEAT-036, FEAT-037
 
 ## v1.0.0: The suite
 - **Status**: planned

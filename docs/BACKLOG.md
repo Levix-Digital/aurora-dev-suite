@@ -94,7 +94,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: A project declares in .aurora/integrations.json, committed once on its work branch, the projects it depends on, their repositories, what it consumes from each (a command line and its JSON, a schema, an API) and the branches it follows. Created and validated through the integrations provider, never edited by Aurora's interface directly.
+- **Description**: A project declares in .aurora/integrations.json, committed once on its work branch, the projects it depends on, their repositories, what it consumes from each (a command line and its JSON, a schema, an API) and the branches it follows. Created and validated through the integrations provider, never edited by Aurora's interface directly. This file is the provider's only registry of counterparts (ADR-0010): no central list and no dependency on Aurora's repository.
 
 ### FEAT-030: Merge notices
 - **Priority**: medium
@@ -102,7 +102,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: When a change is merged into a followed branch, the provider writes a notice (title, description, branch, version or tag, changed files and contracts, taken from Git) to the aurora/inbox branch of every project that declared a dependency. Written by the provider at the Dev Cycle's merge or release step, so it works on any Git host (GitHub, Azure DevOps, GitLab, Bitbucket, a local server) without host automation.
+- **Description**: When a change is merged into a followed branch, the provider writes a notice (title, description, branch, version or tag, changed files and contracts, taken from Git) to the aurora/inbox branch of every project that declared a dependency. Written by the provider at the Dev Cycle's merge or release step, so it works on any Git host (GitHub, Azure DevOps, GitLab, Bitbucket, a local server) without host automation. The notice is a message of kind notice (ADR-0009), outside rounds; the after-merge point may need a longer time limit than the default, declared by the provider in describe.
 
 ### FEAT-031: Integration negotiation
 - **Priority**: medium
@@ -110,7 +110,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: At the integration step the receiving project checks each notice against what it consumes; when affected it opens an integration (numbered by its own counter, so projects never collide) with a proposal in the other project's aurora/inbox, which answers with an agreement or a counter-proposal. At most three rounds, then the user decides. Messages unrelated to the current work are deferred with a reason and shown to the user. Commands with --json: check, show, propose, counter, agree, defer.
+- **Description**: At the integration step the receiving project checks each notice against what it consumes; when affected it opens a conversation (a thread numbered by its own counter, so projects never collide) with a proposal in the other project's aurora/inbox. Conversations follow ADR-0009: kinds question, proposal, notice, answer, counter, agreement, impasse, ack, decision and guidance; a round is one message from each side; at most three rounds per cycle, then only an agreement or an impasse; ack, notice, decision and guidance outside rounds; each side answers from its project's records without asking the user mid-conversation; the user may step in at any time with a request (guidance), which restarts the rounds in a new cycle; fixed templates per kind with required sections checked on send and reply. Messages unrelated to the current work are deferred with a reason and shown to the user. Commands with --json: poll, check, show, template, send, reply, record, decide, guide, defer, status, watch, the same as the provisional tool 0.3.0 (IMP-002), so no message already written changes.
 
 ### FEAT-032: Integration gate
 - **Priority**: medium
@@ -118,7 +118,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: An agreed integration is shown to the user, who approves or rejects it; both projects receive the decision and each records its own backlog item. The gate is registered by the integrations provider through the Dev Cycle's extension point, not built into the protocol.
+- **Description**: Every conversation closes with an agreement or an impasse carrying the closing record for the user (ADR-0009): the projects and rounds, the subject, the outcome, conclusion, justification, positions for an impasse, the decision needed with one option recommended, and what each project does after approval. Only the project that opened it presents the record, once, in the user's language; the user's decision goes to every side as a decision message and each project records its own backlog item; no project acts before it. When the conclusion does not satisfy, the user asks for changes instead (decide --revise), which goes to every side and starts a new cycle of up to three rounds ending in a new closing record, until the user decides. Recorded in Aurora's Messages tab or with the provider's decide command; the same decision becomes the integration gate in the Dev Cycle with FEAT-036.
 
 ### FEAT-033: Integrations view
 - **Priority**: medium
@@ -126,7 +126,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: A tab with notices, open integrations and their conversations, and the integration gate, read from local clones through the provider's --json. Aurora stays air-gapped: it never fetches or pushes; the provider does through Git.
+- **Description**: A tab with conversations waiting for the user first (their closing record shown as fields: conclusion, justification, positions, decision needed, after approval, with the decision recorded from there, or a request for changes written right there), a field to write to a conversation at any time (the user's request goes to every side and restarts the rounds), then notices, open conversations with their rounds, and sent messages still unread after a set time, read from local clones through the provider's --json (show --json returns the sections as fields). Aurora stays air-gapped: it never fetches or pushes; the provider does through Git.
 
 ### FEAT-034: Integrations provider
 - **Priority**: high
@@ -134,7 +134,23 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the integrations commands and plugs into dcp through its extension point: external subcommand, registered provider, cycle points discovery, after-merge and before-release-gate, and the integration gate (DCP FEAT-018, dcp v2.12.0). Registered at user level by Aurora's installer, it only adds items, warnings and its own gate, never weakens the protocol's gates. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing.
+- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the messages and integrations commands as a standalone command line, usable from a terminal and from Aurora's Messages tab without dcp; plugging it into the Dev Cycle is FEAT-037. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing. It offers poll (one git ls-remote, no fetch) for every touchpoint and an optional watch that runs the user's local command in a project's folder when news arrives (ADR-0009). Shipped with Aurora's installer (signed once FEAT-035 lands) and updated with it, and published per platform as a separate download for machines without Aurora; nothing executable is stored on an aurora/inbox branch, which holds only messages and inbox.json with the format version (ADR-0010). It replaces the provisional Python tool, which is then removed.
+
+### FEAT-036: Integration gate in the Dev Cycle
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, split from FEAT-032 when messages moved to v0.3.0 (Levi)
+- **Plan**: -
+- **Description**: The closing record and the user's decision of FEAT-032 become the integration gate of the Dev Cycle: declared by the integrations provider through dcp-integrations describe --json and the Dev Cycle's extension point (DCP FEAT-018, dcp v2.11.0, draft contract dcp.extension 1.0), decided before gate 8, recorded through dcp-integrations gate <id> approve|reject --json, presented like the protocol's own gates and never built into the protocol.
+
+### FEAT-037: Integrations provider in the Dev Cycle
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, split from FEAT-034 when messages moved to v0.3.0 (Levi)
+- **Plan**: -
+- **Description**: dcp-integrations plugs into dcp through its extension point (DCP FEAT-018, dcp v2.11.0; draft contract dcp.extension 1.0 in Levix-Digital/ai-code-agent-skills pull request #86): external subcommand, provider registered at user level by Aurora's installer, describe --json declaring the cycle points discovery, after-merge and before-release-gate and the integration gate (FEAT-036), and the hook commands that run poll and the merge notices (FEAT-030) at those points. It only adds items, warnings and its own gate, never weakens the protocol's gates; a provider that fails or times out is a warning. Without Aurora there is no provider and the step does nothing.
 
 ### FEAT-035: Signed packages
 - **Priority**: medium
@@ -208,7 +224,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Priority**: medium
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
-- **Description**: Projects that depend on each other learn about each other's merges and agree on integrations before changing code: notices and messages travel through plain Git on an orphan aurora/inbox branch of each project's repository, the Dev Cycle's integration step runs through dcp with any agent or a person, and the user approves each agreed integration at an integration gate. Agnostic to coding agents and Git hosts; available only with Aurora (ADR-0007).
+- **Description**: Projects that depend on each other learn about each other's merges and agree on integrations before changing code: notices and messages travel through plain Git on an orphan aurora/inbox branch of each project's repository, the Dev Cycle's integration step runs through dcp with any agent or a person, and the user approves each agreed integration at an integration gate. Agnostic to coding agents and Git hosts; available only with Aurora (ADR-0007, ADR-0009).
 
 ## Closed
 
@@ -328,6 +344,15 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-10-29, aurora/inbox branch of aurora-dev-suite, first message sent 2026-10-29
 - **Description**: Until the integrations provider exists, a small provisional tool kept on this repository's aurora/inbox branch (not in the product) sends free messages between Levix projects through each project's aurora/inbox branch, in the message format of ADR-0007, with the same command names and --json output the provider will have.
+
+### IMP-002: Automatic checks, rounds and templates in the provisional messages
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, Dev Cycle Protocol proposals 1/3 to 3/3 (2026-11-06), accepted with adjustments by Levi
+- **Plan**: -
+- **Closed**: 2026-11-06, inbox tool 0.2.0 on the aurora/inbox branch (837f072)
+- **Description**: Brings forward, for the provisional tool, rules of ADR-0007 without waiting for v0.6.0. (1) poll: one git ls-remote per inbox, no fetch, silent and exit 0 when nothing changed, exit 10 and one line on news, run at every touchpoint (start of work, before every gate, before opening a pull request, after a merge); an optional watch command wakes an idle project by running the user's local command in its folder; check also lists sent messages still unread after a set time. (2) Threads of at most three rounds, each side answering from its project's records without asking the user; a thread closes with an agreement or an impasse, which always needs the user, presented once by the project that opened it (record) and decided with decide, sent to every side. (3) A fixed template per kind, required sections checked on send and reply, show --json returning the sections as fields. Adjustments: watch is optional; ack, notice and decision are outside rounds and templates; the kind field takes the new values (legacy kind message is read as its own thread); and a fixed closing report for the user (projects and rounds, subject, outcome, conclusion, justification, positions, decision needed, after approval).
 
 ### FEAT-016: dcp adapter
 - **Priority**: high

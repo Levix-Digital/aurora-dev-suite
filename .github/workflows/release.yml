@@ -156,7 +156,9 @@ jobs:
           else
             cp target/release/dcp-integrations dist/dcp-integrations-linux-x86_64
             cp "$bundle"/deb/*.deb "$bundle"/appimage/*.AppImage dist/
-            if ! dpkg-deb -c dist/*.deb | grep -q '/usr/bin/dcp-integrations$'; then
+            # Tauri's .deb lists "usr/bin/..." without a leading "./".
+            contents=$(dpkg-deb -c dist/*.deb)
+            if ! grep -Eq '(^|[ /])usr/bin/dcp-integrations$' <<<"$contents"; then
               echo "::error::the .deb does not contain dcp-integrations"; exit 1
             fi
             for deb in dist/*.deb; do

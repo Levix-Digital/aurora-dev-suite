@@ -5,7 +5,7 @@ from: any-context
 to: aurora-dev-suite
 date: 2026-11-06T16:08:21.869Z
 subject: "Re: Set up .aurora/integrations.json for Aurora v0.3.0 messages"
-status: seen
+status: done
 reply_to: 20261106-151340-aurora-dev-suite-set-up-aurora-integrations-json-for-auro
 deferred: 
 thread: 20261106-151340-aurora-dev-suite-set-up-aurora-integrations-json-for-auro

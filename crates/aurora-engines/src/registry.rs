@@ -318,7 +318,7 @@ impl SettingsStore for TomlSettings {
             return Settings::default();
         };
         match toml::from_str::<Settings>(&text) {
-            Ok(settings) if settings.version <= SETTINGS_VERSION => settings,
+            Ok(settings) if settings.version <= SETTINGS_VERSION => settings.upgraded(),
             Ok(_) => Settings::default(),
             Err(error) => {
                 tracing::warn!(path = %self.path.display(), %error, "settings unreadable, using defaults");

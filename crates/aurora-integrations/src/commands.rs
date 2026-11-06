@@ -167,6 +167,7 @@ impl Context {
             cache,
             identity: Identity::of_project(root),
             tool: tool.to_owned(),
+            reuse_fetch: None,
         };
         Ok(Context {
             root: root.to_path_buf(),
@@ -436,14 +437,22 @@ pub fn init(root: &Path, project: &str, name: &str) -> Result<Reply> {
         ));
     }
     let r = registry::init(root, project, name, &repository)?;
-    status_doc(
-        format!(
-            "wrote {} for {} ({}); add counterparts with 'add', then commit it",
-            registry::FILE,
-            r.project,
-            r.repository
-        ),
-        None,
+    status_doc(init_text(&r.project, &r.repository), None)
+}
+
+/// What `init` did and the next steps, plainly (ADJ-005).
+fn init_text(project: &str, repository: &str) -> String {
+    let file = registry::FILE;
+    format!(
+        "Created {file} for {project} ({repository}).\n\
+         It lists no other project yet, so this project cannot exchange messages.\n\
+         Next:\n\
+         \x20 1. Add each project it talks to, one command per project, with the slug the\n\
+         \x20    other projects already use for it:\n\
+         \x20      dcp-integrations add <slug> --url <repository URL> --name \"<name>\"\n\
+         \x20 2. Check the file: dcp-integrations validate\n\
+         \x20 3. Commit {file}.\n\
+         The other projects reach this one as '{project}'."
     )
 }
 
@@ -451,7 +460,15 @@ pub fn add(root: &Path, slug: &str, name: &str, url: &str) -> Result<Reply> {
     let mut r = registry::load(root)?;
     r.add(slug, name, url)?;
     registry::save(root, &r)?;
-    status_doc(format!("added {slug} ({url}) to {}", registry::FILE), None)
+    status_doc(
+        format!(
+            "Added {slug} ({url}) to {file}: {count} project(s) listed. Add the next one, or run \
+             'dcp-integrations validate' and commit {file}.",
+            file = registry::FILE,
+            count = r.counterparts.len()
+        ),
+        None,
+    )
 }
 
 pub fn validate(root: &Path) -> Result<Reply> {

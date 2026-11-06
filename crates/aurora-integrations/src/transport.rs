@@ -84,6 +84,68 @@ pub struct Transport {
     pub cache: PathBuf,
     pub identity: Identity,
     pub tool: String,
+    /// Reads skip the fetch of an inbox fetched less than this long ago, so a reader
+    /// that runs one command per project (Aurora) fetches each inbox once (BUG-008).
+    /// `None`, the default for writes and checks before writing, always fetches.
+    pub reuse_fetch: Option<Duration>,
+}
+
+/// How long the read-only commands reuse a fetch.
+pub const REUSE_FETCH: Duration = Duration::from_secs(30);
+
+/// Written in a cache after each fetch; its modification time is the fetch's.
+const FETCHED_STAMP: &str = "aurora-fetched";
+/// How long to wait for another process fetching the same cache.
+const LOCK_WAIT: Duration = Duration::from_secs(60);
+/// A lock older than this was left by a process that died.
+const LOCK_STALE: Duration = Duration::from_secs(120);
+
+/// One process at a time fetches into a cache; the lock file goes away on drop.
+struct CacheLock {
+    path: Option<PathBuf>,
+}
+
+impl CacheLock {
+    /// Waits for the lock of `repo`; after `LOCK_WAIT`, or when the lock cannot be
+    /// created at all, it goes on without it (Git's own ref locks still apply).
+    fn acquire(repo: &Path) -> CacheLock {
+        let path = repo.with_extension("git.lock");
+        let started = std::time::Instant::now();
+        loop {
+            match std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+            {
+                Ok(_) => return CacheLock { path: Some(path) },
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                    if age(&path).is_some_and(|a| a > LOCK_STALE) {
+                        let _ = std::fs::remove_file(&path);
+                        continue;
+                    }
+                    if started.elapsed() > LOCK_WAIT {
+                        return CacheLock { path: None };
+                    }
+                    thread::sleep(Duration::from_millis(100));
+                }
+                Err(_) => return CacheLock { path: None },
+            }
+        }
+    }
+}
+
+impl Drop for CacheLock {
+    fn drop(&mut self) {
+        if let Some(path) = &self.path {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+}
+
+/// How long ago `path` was modified.
+fn age(path: &Path) -> Option<Duration> {
+    let modified = std::fs::metadata(path).ok()?.modified().ok()?;
+    std::time::SystemTime::now().duration_since(modified).ok()
 }
 
 /// The default cache directory: `AURORA_INBOX_CACHE`, else the user's cache directory.
@@ -201,13 +263,43 @@ impl Transport {
         Ok(out.stdout.split_whitespace().next().map(str::to_owned))
     }
 
-    /// Fetches the project's inbox branch into its cache; the cache and the tip.
+    /// Fetches the project's inbox branch into its cache, or reuses a fetch younger than
+    /// `reuse_fetch`; the cache and the tip. One process fetches a cache at a time.
     pub fn fetch(
         &self,
         project: &str,
         url: &str,
     ) -> Result<(PathBuf, Option<String>), TransportError> {
+        self.fetch_with(project, url, self.reuse_fetch)
+    }
+
+    fn fetch_with(
+        &self,
+        project: &str,
+        url: &str,
+        reuse: Option<Duration>,
+    ) -> Result<(PathBuf, Option<String>), TransportError> {
         let repo = self.cache_for(project)?;
+        let _lock = CacheLock::acquire(&repo);
+        let stamp = repo.join(FETCHED_STAMP);
+        if let Some(max) = reuse
+            && age(&stamp).is_some_and(|a| a < max)
+        {
+            let tip = std::fs::read_to_string(&stamp).unwrap_or_default();
+            let tip = tip.trim();
+            return Ok((repo, (!tip.is_empty()).then(|| tip.to_owned())));
+        }
+        let (repo, tip) = self.fetch_now(project, url, repo)?;
+        let _ = std::fs::write(&stamp, tip.as_deref().unwrap_or_default());
+        Ok((repo, tip))
+    }
+
+    fn fetch_now(
+        &self,
+        project: &str,
+        url: &str,
+        repo: PathBuf,
+    ) -> Result<(PathBuf, Option<String>), TransportError> {
         let refspec = format!("+{REF}:{REF}");
         let out = self.run(
             Some(&repo),
@@ -298,7 +390,8 @@ impl Transport {
             if attempt > 0 {
                 thread::sleep(backoff(attempt));
             }
-            let (repo, tip) = self.fetch(project, url)?;
+            // A write always starts from the remote tip.
+            let (repo, tip) = self.fetch_with(project, url, None)?;
             if let Some(tip) = &tip {
                 self.check_format(project, &repo, tip)?;
             }
@@ -352,6 +445,8 @@ impl Transport {
             let out = self.run(Some(&repo), &["push", "--quiet", url, &refspec], None, None)?;
             if out.ok {
                 self.git(&repo, &["update-ref", REF, &commit], None, None)?;
+                // The cache now holds the new tip: a read may reuse it.
+                let _ = std::fs::write(repo.join(FETCHED_STAMP), &commit);
                 return Ok(());
             }
             last = out.stderr;

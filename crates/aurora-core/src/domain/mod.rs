@@ -25,8 +25,8 @@ pub use inbox::{Inbox, InboxEntry, Urgency};
 pub use messages::{
     ClosingRecord, Conversation, ConversationState, Draft, InboxSetup, MAX_BODY_BYTES, MAX_ROUNDS,
     Message, MessageHeader, MessageKind, MessageStatus, MessagesError, PollResult, ProjectInbox,
-    Section, TemplateSection, UserAction, allowed_replies, body as message_body, check_action,
-    missing_sections, options as record_options, order_conversations,
+    Section, SetupMemory, TemplateSection, UserAction, allowed_replies, body as message_body,
+    check_action, missing_sections, options as record_options, order_conversations,
 };
 pub use portfolio::{CyclePhase, CycleSummary, WaitingItem, WaitingKind};
 pub use project::{

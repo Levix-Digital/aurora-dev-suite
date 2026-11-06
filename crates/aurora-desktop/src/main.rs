@@ -19,6 +19,11 @@ fn main() {
             messages::start_poll(app.handle().clone());
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::Focused(true) = event {
+                messages::on_focus(tauri::Manager::app_handle(window));
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             commands::list_projects,
             commands::add_project,

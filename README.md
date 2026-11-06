@@ -99,7 +99,7 @@ dcp-integrations add <other-slug> --url <other repository URL> --name "<other na
 dcp-integrations validate
 ```
 
-then commit `.aurora/integrations.json`. Projects that are not set up are listed under "Not taking part" with this command. Aurora reads the branch checked out in your clone: if the file is only on another branch (for example `dev` before a release), check out that branch instead of running `init` again.
+then commit `.aurora/integrations.json`. Projects that are not set up are listed under "Not taking part" with this command. Aurora reads the branch checked out in your clone: if the file is only on another branch (for example `dev` before a release), check out that branch instead of running `init` again. Aurora notices the file within seconds when you come back to its window, or at the next background check.
 
 The same commands work in a terminal, for you or your tools: `dcp-integrations check`, `show <id>`, `template <kind>`, `send`, `reply`, `record <thread>`, `decide <thread> --choice ...`, `guide <thread> --text ...`, `poll`; add `--json` for machine-readable answers. `dcp-integrations --help` lists them all. It is installed next to Aurora by the packages (in `/usr/bin` by the `.deb`; in `%LOCALAPPDATA%\Aurora` by the Windows installer, which adds that folder to your `PATH`; open a new terminal after installing) and is also published alone with each release. Messages shows, for each project not set up yet, the exact command to run with the full path of the provider Aurora found.
 
@@ -131,7 +131,7 @@ Tab moves between controls, and the focused one is always outlined. In the navig
 | Theme | Settings view, `settings.toml` | Follow the system | Light, dark or the system's appearance |
 | Engine location | Settings view, `settings.toml` | Search path (`dcp-integrations`: next to Aurora first) | The `dcp`, `gedo`, `actx` or `dcp-integrations` binary to use |
 | Messages check | `messagesPollMinutes` in `settings.toml` | 5 minutes | How often Aurora checks the inboxes in the background; 0 turns it off |
-| Engine time limit | Settings view, `settings.toml` | 10 seconds | How long Aurora waits for an engine's answer |
+| Engine time limit | Settings view, `settings.toml` | 10 seconds; 60 for `dcp-integrations` | How long Aurora waits for an engine's answer; the provider's first read of a project fetches every counterpart's inbox |
 | Log level | `AURORA_LOG` environment variable | `info` | `debug` adds each engine command and its duration |
 
 Aurora's files are in your configuration folder: `~/.config/aurora` on Linux, `%APPDATA%\Levix\Aurora\config` on Windows. `projects.toml` is the project list and `settings.toml` the settings. Both are plain TOML you can read, back up or delete.
@@ -154,6 +154,7 @@ To uninstall, use **Settings > Apps > Installed apps > Aurora > Uninstall** on W
 | "Changes to the project list will not be kept" | Aurora cannot write its configuration folder, or the list was written by a newer Aurora; check the folder's permissions, or update Aurora |
 | An engine is Missing although it is installed | Make sure its folder is on the search path of the session that starts Aurora, or set its location in Settings, then **Refresh** |
 | A project is "not reachable" in Messages | `dcp-integrations` could not read an inbox: check that `git ls-remote <url>` works in a terminal with your credentials, and the URLs in `.aurora/integrations.json` |
+| "did not answer within N s" in Messages | The first read of a project fetches every counterpart's inbox; run `dcp-integrations --dir <project folder> check` in a terminal once (it also shows a sign-in prompt, if any), or raise the `dcp-integrations` time limit in Settings |
 | `dcp-integrations: command not found` in a terminal | Open a new terminal after installing. With the AppImage, or if `PATH` was not changed, call it by its full path (Windows: `%LOCALAPPDATA%\Aurora\dcp-integrations.exe`, in Git Bash or MSYS2 `"$LOCALAPPDATA/Aurora/dcp-integrations.exe"`) or add its folder to `PATH`. In PowerShell, put `& ` before a command that starts with a quoted path, such as the one Messages shows |
 | Messages says `dcp-integrations` is not available | Reinstall Aurora, or put `dcp-integrations` on the search path or set its location in Settings |
 | An engine is Degraded with "no answer" | Raise its time limit in Settings, or run `<engine> version --json` in a terminal to see what it does |

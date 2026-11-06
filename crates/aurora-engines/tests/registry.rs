@@ -226,3 +226,19 @@ fn settings_are_kept_and_unreadable_settings_fall_back_to_defaults() {
         Settings::default()
     );
 }
+
+#[test]
+fn version_1_settings_raise_the_provider_limit() {
+    // BUG-008: a v0.3.0 settings file kept the provider at 10 s.
+    let config = tempfile::tempdir().unwrap();
+    fs::write(
+        config.path().join("settings.toml"),
+        "version = 1\ntheme = \"dark\"\n\n[engines.integrations]\ntimeoutMs = 10000\n\n[engines.gedo]\ntimeoutMs = 10000\n",
+    )
+    .unwrap();
+    let loaded = TomlSettings::open(config.path()).load();
+    assert_eq!(loaded.version, aurora_core::domain::SETTINGS_VERSION);
+    assert_eq!(loaded.theme, ThemeChoice::Dark);
+    assert_eq!(loaded.engines.integrations.timeout_ms, 60_000);
+    assert_eq!(loaded.engines.gedo.timeout_ms, 10_000);
+}

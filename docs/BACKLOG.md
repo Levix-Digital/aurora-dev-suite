@@ -6,29 +6,13 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
-### BUG-005: dcp-integrations is not on the PATH after the Windows install
+### BUG-009: The setup command suggests a slug the other projects do not use
 - **Severity**: medium
 - **Epic**: EPIC-010
 - **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Found**: 2026-11-06, v0.3.0-rc.2
 - **Plan**: -
-- **Description**: The Windows installer puts dcp-integrations.exe next to aurora.exe in %LOCALAPPDATA%\Aurora, which is not on the PATH, so 'dcp-integrations' is not found in a terminal (Levi, MSYS2 UCRT64, 2026-11-06). The .deb puts it in /usr/bin.
-
-### BUG-006: The setup hint in Messages shows a literal <slug> and a bare command
-- **Severity**: low
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.1
-- **Plan**: -
-- **Description**: For a project not set up, Messages shows 'dcp-integrations init --project <slug>' to run in its folder: the slug is a placeholder and the command fails when the provider is not on the PATH (Levi, 2026-11-06).
-
-### BUG-007: Messages shows No answer yet on conversations that ended with my reply
-- **Severity**: low
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.1
-- **Plan**: -
-- **Description**: A conversation of the provisional tool 0.1 format (kind 'message') whose last message is the project's own reply, marked done by the other side, shows 'No answer yet' and matches that filter, although it is Closed (Levi, 2026-11-06).
+- **Description**: For ai-code-agent-skills Messages suggested 'init --project ai-code-agent-skills', but every other project knows it as dev-cycle-protocol, so its inbox would never be found. Suggest the slug that the other projects' .aurora/integrations.json give to the project's repository URL, and fall back to the folder name only when none does (Levi, 2026-11-06).
 
 ## Features
 
@@ -144,6 +128,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: Sign the Windows installer (Authenticode) and the Linux packages once Levix has a certificate, in the release workflow, so SmartScreen and package managers trust them (ADR-0005, ADR-0008).
 
+### FEAT-038: Set up a project for messages from Aurora in one click
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: Adding a project becomes 'register the folder, click Set up, commit' (Levi, 2026-11-06). Set up asks dcp-integrations for init with the slug the network already uses for the repository (closes BUG-009) and add for every counterpart; each project that does not list the new one yet offers 'add X to Y' in one click. Aurora still runs no Git: it lists the changed files, and when Gedo is ready the commit goes through Gedo on a branch that follows each project's branching model (pull request through the cycle), otherwise by hand. Depends on Gedo's command line for the commit part.
+
 ## Improvements
 
 ### IMP-003: Messages tells when .aurora/integrations.json is on another branch
@@ -154,23 +146,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: A project whose file is only on its integration branch (AnyContext: on dev, not main) shows as not set up with the init command, and running init creates a second, empty file. The provider could look for the file on the other local branches and Aurora would say which branch to check out instead (Levi, 2026-11-06).
 
-### IMP-004: Messages notices when a project's setup changes without reopening the view
-- **Priority**: medium
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.2
-- **Plan**: -
-- **Description**: Messages reads .aurora/integrations.json only when the view opens, so a file added by a pull or a checkout keeps showing 'not set up'. Re-check each project's setup on every background poll and when Aurora's window gets the focus (a file check per project, no Git), instead of an operating system file watcher per platform (Levi, 2026-11-06).
-
 ## Adjustments
-
-### ADJ-003: Setup hint in Messages drops the change-the-slug note
-- **Priority**: low
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.2
-- **Plan**: -
-- **Description**: The hint already fills the slug, so '(change the slug if the project already has one)' only adds noise; it now says the project is not set up on the branch checked out (Levi, 2026-11-06).
 
 ### ADJ-004: Messages separates projects to set up from projects outside the network
 - **Priority**: low
@@ -522,3 +498,66 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: messages-view-adjustments
 - **Closed**: 2026-11-06, plan messages-view-adjustments
 - **Description**: Levi, 2026-11-06, testing v0.3.0-rc.1: each message and row shows sender → receiver; conversations grouped in Waiting for you, In progress and Closed (muted, collapsed), each with its color; a conversation opens right below its row, not at the bottom of the page; the navigation count shows what waits for the user plus received messages not read yet, on every screen.
+
+### BUG-005: dcp-integrations is not on the PATH after the Windows install
+- **Severity**: medium
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #31
+- **Description**: The Windows installer puts dcp-integrations.exe next to aurora.exe in %LOCALAPPDATA%\Aurora, which is not on the PATH, so 'dcp-integrations' is not found in a terminal (Levi, MSYS2 UCRT64, 2026-11-06). The .deb puts it in /usr/bin.
+
+### BUG-006: The setup hint in Messages shows a literal <slug> and a bare command
+- **Severity**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #31
+- **Description**: For a project not set up, Messages shows 'dcp-integrations init --project <slug>' to run in its folder: the slug is a placeholder and the command fails when the provider is not on the PATH (Levi, 2026-11-06).
+
+### BUG-007: Messages shows No answer yet on conversations that ended with my reply
+- **Severity**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #32
+- **Description**: A conversation of the provisional tool 0.1 format (kind 'message') whose last message is the project's own reply, marked done by the other side, shows 'No answer yet' and matches that filter, although it is Closed (Levi, 2026-11-06).
+
+### ADJ-003: Setup hint in Messages drops the change-the-slug note
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #33
+- **Description**: The hint already fills the slug, so '(change the slug if the project already has one)' only adds noise; it now says the project is not set up on the branch checked out (Levi, 2026-11-06).
+
+### ADJ-005: init says the next commands instead of 'add counterparts with add'
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #35
+- **Description**: After 'init', 'add counterparts with add, then commit it' was not clear (Levi, 2026-11-06): init now says the file lists no other project yet, the add command with its arguments, validate and the file to commit, and the slug the other projects use for this one; add says how many projects are listed and what comes next.
+
+### BUG-008: Messages gives up on a project's first read after 10 s
+- **Severity**: medium
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #35
+- **Description**: The provider's first read of a project fetches the inbox branch of every counterpart into its caches, and Aurora runs one check per project (four at once), so a read of the view fetched each inbox up to six times, several at once on the same cache; on Windows each fetch also asks Git's credential helper, so it took more than the engines' general 10 s limit: AnyContext and levix-admin-hub showed 'not reachable: dcp-integrations did not answer within 10 s' (Levi, 2026-11-06). Fix: a 60 s default for the provider, and read-only commands reuse a fetch younger than 30 s with one fetch per cache at a time.
+
+### IMP-004: Messages notices when a project's setup changes without reopening the view
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #35
+- **Description**: Messages reads .aurora/integrations.json only when the view opens, so a file added by a pull or a checkout keeps showing 'not set up'. Re-check each project's setup on every background poll and when Aurora's window gets the focus (a file check per project, no Git), instead of an operating system file watcher per platform (Levi, 2026-11-06).

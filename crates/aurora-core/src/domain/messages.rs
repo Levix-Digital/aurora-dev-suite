@@ -478,6 +478,55 @@ pub struct PollResult {
     pub project: ProjectId,
     pub changed: bool,
     pub summary: String,
+    /// The project has its `.aurora/integrations.json` (IMP-004).
+    #[serde(default = "set_up_by_default")]
+    pub set_up: bool,
+}
+
+fn set_up_by_default() -> bool {
+    true
+}
+
+/// What Aurora last saw of each project's setup, so a file added by a pull or a
+/// checkout (or removed) reads as news without reopening the view (IMP-004).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SetupMemory {
+    seen: std::collections::HashMap<ProjectId, bool>,
+}
+
+impl SetupMemory {
+    /// Notes the setup the Messages view just read; unreachable projects say nothing.
+    pub fn remember(&mut self, inboxes: &[ProjectInbox]) {
+        for inbox in inboxes {
+            match inbox.setup {
+                InboxSetup::Ready => {
+                    self.seen.insert(inbox.project.clone(), true);
+                }
+                InboxSetup::NotSetUp { .. } => {
+                    self.seen.insert(inbox.project.clone(), false);
+                }
+                InboxSetup::Unavailable { .. } => {}
+            }
+        }
+    }
+
+    /// Marks as changed every result whose setup differs from the last one seen, and
+    /// remembers the new ones. A project seen for the first time is not a change.
+    pub fn note(&mut self, results: &mut [PollResult]) {
+        for result in results {
+            let before = self.seen.insert(result.project.clone(), result.set_up);
+            if before.is_some_and(|b| b != result.set_up) {
+                result.changed = true;
+                if result.summary.is_empty() {
+                    result.summary = if result.set_up {
+                        format!("{} is now set up for messages.", result.project.0)
+                    } else {
+                        format!("{} is no longer set up for messages.", result.project.0)
+                    };
+                }
+            }
+        }
+    }
 }
 
 /// The required sections left empty.
@@ -744,6 +793,47 @@ mod tests {
         assert!(err.to_string().contains("3 rounds in cycle 1"), "{err}");
         assert!(check_action(&reply(MessageKind::Ack), &[], Some(&c)).is_ok());
         assert!(c.no_answer_yet("b") && !c.no_answer_yet("a"));
+    }
+
+    #[test]
+    fn the_setup_memory_reports_only_changes() {
+        let result = |id: &str, set_up: bool| PollResult {
+            project: ProjectId(id.into()),
+            changed: false,
+            summary: String::new(),
+            set_up,
+        };
+        let inbox = |id: &str, setup: InboxSetup| ProjectInbox {
+            project: ProjectId(id.into()),
+            name: id.into(),
+            slug: None,
+            counterparts: Vec::new(),
+            setup,
+            conversations: Vec::new(),
+        };
+        let mut memory = SetupMemory::default();
+        memory.remember(&[
+            inbox(
+                "a",
+                InboxSetup::NotSetUp {
+                    command: "c".into(),
+                },
+            ),
+            inbox("b", InboxSetup::Ready),
+            inbox("c", InboxSetup::Unavailable { reason: "r".into() }),
+        ]);
+        // a got its file, b lost it, c is seen for the first time, d did not change.
+        let mut results = [result("a", true), result("b", false), result("c", false)];
+        memory.note(&mut results);
+        assert!(results[0].changed && results[1].changed && !results[2].changed);
+        assert_eq!(results[0].summary, "a is now set up for messages.");
+        assert_eq!(results[1].summary, "b is no longer set up for messages.");
+        let mut again = [result("a", true), result("b", false), result("c", false)];
+        memory.note(&mut again);
+        assert!(again.iter().all(|r| !r.changed));
+        let mut back = [result("c", true)];
+        memory.note(&mut back);
+        assert!(back[0].changed);
     }
 
     #[test]

@@ -7,7 +7,7 @@ version: v0.3.0
 status: in_progress
 author: LeviGuilherme
 created_at: '2026-11-06T16:46:02'
-updated_at: '2026-11-06T16:49:58'
+updated_at: '2026-11-06T16:53:00'
 session_id: null
 tags: []
 supersedes: null
@@ -18,7 +18,9 @@ backlog_items:
 spec_dir: specs/009-messages-view
 milestones:
 - name: M1 Core and adapter
-  done: false
+  done: true
+  done_at: '2026-11-06'
+  by: LeviGuilherme
 - name: M2 View
   done: false
 - name: M3 Docs and manual tests
@@ -36,6 +38,9 @@ status_log:
   by: LeviGuilherme
   status: in_progress
   note: Approved by Levi at gate 3 with Spec Kit (2026-11-06).
+- at: '2026-11-06T16:53:00'
+  by: LeviGuilherme
+  note: Milestone 'M1 Core and adapter' completed
 ---
 
 # Messages view adjustments

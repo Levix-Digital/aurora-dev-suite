@@ -1008,6 +1008,7 @@ mod tests {
             },
             waiting_for_user: waiting,
             user_requests: Vec::new(),
+            unread: 0,
         }
     }
 

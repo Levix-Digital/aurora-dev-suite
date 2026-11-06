@@ -284,6 +284,84 @@ fn sample_messages() -> Vec<Message> {
             ("Closes when", "A draft schema is published."),
         ],
     ));
+    // A conversation that ended in a decision.
+    const LP: &str = "levix-platform";
+    let first = message(
+        50,
+        "",
+        MessageKind::Question,
+        ADS,
+        LP,
+        "Shared logging crate",
+        Some(1),
+        1,
+        &[
+            (
+                "Ask",
+                "Can levix-platform host the logging setup both apps use?",
+            ),
+            ("Context", "Aurora and Gedo configure tracing the same way."),
+            ("Closes when", "A crate name and an owner are agreed."),
+        ],
+    );
+    let t3 = first.header.thread.clone();
+    out.push(first);
+    out.push(message(
+        51,
+        &t3,
+        MessageKind::Agreement,
+        LP,
+        ADS,
+        "Re: Shared logging crate",
+        Some(1),
+        1,
+        &[
+            ("Conclusion", "levix-platform hosts `levix-logging`."),
+            ("Justification", "Both apps already share the same setup."),
+            (
+                "Decision needed",
+                "1. Create the crate (recommended)\n2. Keep it in each app",
+            ),
+            ("After approval", "levix-platform opens the crate."),
+        ],
+    ));
+    out.push(message(
+        52,
+        &t3,
+        MessageKind::Decision,
+        ADS,
+        LP,
+        "Re: Shared logging crate",
+        None,
+        1,
+        &[("Decision", "Create the crate")],
+    ));
+    // A notice, with nothing to answer.
+    out.push(message(
+        60,
+        "",
+        MessageKind::Notice,
+        DCP,
+        ADS,
+        "dcp v2.11.0 renames the binary",
+        None,
+        1,
+        &[("Notice", "The engine binary is `dcp` from v2.11.0.")],
+    ));
+    // Everything was read except the last message of each conversation; closed ones
+    // were handled.
+    let mut last_of: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    for (i, m) in out.iter().enumerate() {
+        last_of.insert(m.header.thread.clone(), i);
+    }
+    for (i, m) in out.iter_mut().enumerate() {
+        let closed = m.header.thread == t3 || m.header.kind == MessageKind::Notice;
+        if closed {
+            m.header.status = MessageStatus::Done;
+        } else if last_of.get(&m.header.thread) != Some(&i) {
+            m.header.status = MessageStatus::Seen;
+        }
+    }
     out
 }
 
@@ -442,6 +520,10 @@ impl FixtureMessages {
                         .filter(|m| m.header.kind == MessageKind::Guidance)
                         .filter_map(|m| m.sections.first().map(|s| s.text.clone()))
                         .collect(),
+                    unread: list
+                        .iter()
+                        .filter(|m| m.header.to == me && m.header.status == MessageStatus::Open)
+                        .count() as u32,
                 }
             })
             .collect()

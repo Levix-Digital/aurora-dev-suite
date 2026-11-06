@@ -182,9 +182,58 @@ pub struct Conversation {
     pub last: MessageHeader,
     pub waiting_for_user: bool,
     pub user_requests: Vec<String>,
+    /// Received messages of this conversation not read yet by the project.
+    #[serde(default)]
+    pub unread: u32,
+}
+
+/// Where a conversation stands for the user (spec 009, FR-004).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ConversationState {
+    /// A closing record waits for the user's decision.
+    WaitingForYou,
+    /// Rounds still running or an answer pending.
+    InProgress,
+    /// Decided, or only notices and acks.
+    Closed,
+}
+
+impl ConversationState {
+    /// The groups of the view, in their order.
+    pub const ALL: [ConversationState; 3] = [
+        ConversationState::WaitingForYou,
+        ConversationState::InProgress,
+        ConversationState::Closed,
+    ];
 }
 
 impl Conversation {
+    /// Waiting for the user first; then closed when the current cycle ended in a
+    /// decision, holds only notices and acks, or is a tool 0.1 message set to done;
+    /// otherwise in progress.
+    pub fn state(&self) -> ConversationState {
+        if self.waiting_for_user {
+            return ConversationState::WaitingForYou;
+        }
+        let closed = match &self.last.kind {
+            MessageKind::Decision => true,
+            MessageKind::Notice | MessageKind::Ack => self.round.is_none(),
+            MessageKind::Other(_) => self.last.status == MessageStatus::Done,
+            _ => false,
+        };
+        if closed {
+            ConversationState::Closed
+        } else {
+            ConversationState::InProgress
+        }
+    }
+
+    /// The user should look at it: a record waits, or something arrived unread.
+    pub fn needs_attention(&self) -> bool {
+        self.waiting_for_user || self.unread > 0
+    }
+
     /// The last message was sent by `me` and nothing came back yet.
     pub fn no_answer_yet(&self, me: &str) -> bool {
         self.last.from == me && !self.last.kind.is_outside_rounds() && !self.last.kind.is_closing()
@@ -282,6 +331,14 @@ pub struct ProjectInbox {
 }
 
 impl ProjectInbox {
+    /// Conversations that wait for the user or have unread received messages.
+    pub fn open_count(&self) -> usize {
+        self.conversations
+            .iter()
+            .filter(|c| c.needs_attention())
+            .count()
+    }
+
     pub fn waiting_count(&self) -> usize {
         self.conversations
             .iter()
@@ -568,7 +625,52 @@ mod tests {
             last: header(thread, kind, "b", date),
             waiting_for_user: waiting,
             user_requests: Vec::new(),
+            unread: 0,
         }
+    }
+
+    #[test]
+    fn the_state_follows_the_conversation() {
+        let state = |kind: MessageKind, waiting: bool, round: Option<u32>| {
+            let mut c = conversation("t", "2026-11-06T10:00:00Z", kind, waiting, 1);
+            c.round = round;
+            c.state()
+        };
+        use ConversationState::*;
+        assert_eq!(state(MessageKind::Agreement, true, Some(2)), WaitingForYou);
+        assert_eq!(state(MessageKind::Question, false, Some(1)), InProgress);
+        assert_eq!(state(MessageKind::Answer, false, Some(1)), InProgress);
+        assert_eq!(state(MessageKind::Decision, false, Some(2)), Closed);
+        // A revision after the decision opens cycle 2.
+        assert_eq!(state(MessageKind::Guidance, false, None), InProgress);
+        assert_eq!(state(MessageKind::Notice, false, None), Closed);
+        assert_eq!(state(MessageKind::Ack, false, None), Closed);
+        assert_eq!(state(MessageKind::Ack, false, Some(1)), InProgress);
+        let mut old = conversation("t", "d", MessageKind::Other("message".into()), false, 1);
+        assert_eq!(old.state(), InProgress);
+        old.last.status = MessageStatus::Done;
+        assert_eq!(old.state(), Closed);
+    }
+
+    #[test]
+    fn the_open_count_adds_waiting_and_unread() {
+        let mut quiet = conversation("q", "d", MessageKind::Answer, false, 1);
+        let waiting = conversation("w", "d", MessageKind::Agreement, true, 1);
+        let mut unread = conversation("u", "d", MessageKind::Question, false, 1);
+        unread.unread = 2;
+        let mut both = waiting.clone();
+        both.unread = 1;
+        let inbox = ProjectInbox {
+            project: crate::domain::ProjectId("p".into()),
+            name: "p".into(),
+            slug: Some("a".into()),
+            counterparts: Vec::new(),
+            setup: InboxSetup::Ready,
+            conversations: vec![quiet.clone(), waiting, unread, both],
+        };
+        assert_eq!(inbox.open_count(), 3);
+        quiet.unread = 0;
+        assert!(!quiet.needs_attention());
     }
 
     fn t(name: &str, required: bool) -> TemplateSection {

@@ -17,11 +17,11 @@ description: "Tasks of the Messages view adjustments (v0.3.0, ADJ-002)"
 
 ## Phase 1: Core and adapter (M1)
 
-- [ ] T001 [US2] Tests for `Conversation::state()` (waiting, in progress, decision, cycle 2 after a revision, notice only, tool 0.1) in `crates/aurora-core/src/domain/messages.rs`
-- [ ] T002 [US2] `ConversationState` and `Conversation::state()` in `crates/aurora-core/src/domain/messages.rs`
-- [ ] T003 [US4] Tests, then `Conversation.unread` (serde default), `ProjectInbox::open_count()` and `open_total()` in the core
-- [ ] T004 [US1] [US2] [US4] Samples in `crates/aurora-core/src/fixtures/messages.rs` covering the three states and unread messages
-- [ ] T005 [US4] Test, then `unread` per thread from `check`'s `messages` in `crates/aurora-engines/src/messages.rs`
+- [x] T001 [US2] Tests for `Conversation::state()` (waiting, in progress, decision, cycle 2 after a revision, notice only, tool 0.1) in `crates/aurora-core/src/domain/messages.rs`
+- [x] T002 [US2] `ConversationState` and `Conversation::state()` in `crates/aurora-core/src/domain/messages.rs`
+- [x] T003 [US4] Tests, then `Conversation.unread` (serde default), `ProjectInbox::open_count()` and `open_total()` in the core
+- [x] T004 [US1] [US2] [US4] Samples in `crates/aurora-core/src/fixtures/messages.rs` covering the three states and unread messages
+- [x] T005 [US4] Test, then `unread` per thread from `check`'s `messages` in `crates/aurora-engines/src/messages.rs`
 
 ## Phase 2: View (M2)
 

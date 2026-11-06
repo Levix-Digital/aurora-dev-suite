@@ -5,6 +5,7 @@ mod cycle;
 mod engine;
 mod feature;
 mod inbox;
+mod messages;
 mod portfolio;
 mod project;
 mod project_view;
@@ -21,6 +22,12 @@ pub use cycle::{
 pub use engine::{Capability, EngineKind, EngineReport, EngineSettings, EngineStatus};
 pub use feature::{AvailabilityState, EnginesOverview, Feature, FeatureAvailability};
 pub use inbox::{Inbox, InboxEntry, Urgency};
+pub use messages::{
+    ClosingRecord, Conversation, Draft, InboxSetup, MAX_BODY_BYTES, MAX_ROUNDS, Message,
+    MessageHeader, MessageKind, MessageStatus, MessagesError, PollResult, ProjectInbox, Section,
+    TemplateSection, UserAction, allowed_replies, body as message_body, check_action,
+    missing_sections, options as record_options, order_conversations,
+};
 pub use portfolio::{CyclePhase, CycleSummary, WaitingItem, WaitingKind};
 pub use project::{
     AddOutcome, Presence, Project, ProjectError, ProjectId, ProjectList, ProjectName,

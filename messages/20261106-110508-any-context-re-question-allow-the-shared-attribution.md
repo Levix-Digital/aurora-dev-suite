@@ -5,7 +5,7 @@ from: any-context
 to: aurora-dev-suite
 date: 2026-11-06T11:05:08Z
 subject: "Re: Question: allow the shared attribution-off settings file in the no-attribution rule"
-status: open
+status: seen
 reply_to: 20261106-105517-aurora-dev-suite-question-allow-the-shared-attribution-of
 deferred: 
 ---

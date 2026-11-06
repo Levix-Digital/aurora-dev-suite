@@ -536,6 +536,11 @@ fn the_binary_answers_json_and_exit_codes() {
     let (code, json, _) = run(&["version", "--json"]);
     assert_eq!(code, 0);
     valid(&json);
+    for args in [&["--help"][..], &["init", "--help"], &["help"]] {
+        let out = Command::new(bin).args(args).output().unwrap();
+        assert_eq!(out.status.code(), Some(0), "{args:?}");
+        assert!(String::from_utf8_lossy(&out.stdout).starts_with("usage:"));
+    }
     let (code, json, _) = run(&["--json", "frobnicate"]);
     assert_eq!((code, json["code"].as_str()), (2, Some("invalid")));
     let (code, _, err) = run(&["--dir", &w.root.to_string_lossy(), "list"]);

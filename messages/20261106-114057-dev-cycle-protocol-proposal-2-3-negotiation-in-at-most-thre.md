@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T11:40:57Z
 subject: "Proposal 2/3: negotiation in at most three rounds, then the user (IMP-001)"
-status: open
+status: seen
 reply_to: 
 deferred: 
 ---

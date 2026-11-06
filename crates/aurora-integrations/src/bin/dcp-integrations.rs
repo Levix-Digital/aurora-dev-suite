@@ -215,7 +215,11 @@ fn main() -> ExitCode {
             "--json" => json = true,
             "--verbose" => verbose = true,
             "--dir" => dir = it.next().map(PathBuf::from),
-            "-h" | "--help" | "help" if rest.is_empty() => {
+            "-h" | "--help" => {
+                println!("{USAGE}");
+                return ExitCode::SUCCESS;
+            }
+            "help" if rest.is_empty() => {
                 println!("{USAGE}");
                 return ExitCode::SUCCESS;
             }

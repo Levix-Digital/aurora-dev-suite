@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T13:40:00.231Z
 subject: "Same page: inbox tool 0.3.0 flow and dcp changes of 2026-11-06"
-status: open
+status: seen
 reply_to: 
 deferred: 
 thread: 20261106-134000-dev-cycle-protocol-same-page-inbox-tool-0-3-0-flow-and-dcp

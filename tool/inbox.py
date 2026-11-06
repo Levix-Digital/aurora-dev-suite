@@ -19,7 +19,8 @@ Commands (add --json for machine-readable output):
     send     --to P --subject S [--kind K] [--body-file F | stdin]
     reply    <id> --kind K [--subject S] [--body-file F | stdin]
     record   <thread>                         the closing record, as presented to the user
-    decide   <thread> --choice TEXT [--note TEXT]   the user's decision, sent to every side
+    decide   <thread> --choice TEXT [--note TEXT] | --revise TEXT   the user's decision
+    guide    <thread> --text TEXT             the user steps in; every side gets it, rounds restart
     status   <id> open|seen|done [--note TEXT]
     defer    <id> --reason TEXT               leave it pending, with the reason
     list     [--sent] [--all]
@@ -29,8 +30,11 @@ Commands (add --json for machine-readable output):
 
 Conversations (ADR-0007): a message opens a thread (round 1); a round is one
 message from each side; after three rounds the thread must close with an
-agreement or an impasse, which always needs the user. Acknowledgements (ack)
-and notices are outside rounds and templates.
+agreement or an impasse, which always needs the user. The user may step in at
+any time (guide, or decide --revise when the conclusion does not satisfy): the
+request goes to every side and a new cycle of up to three rounds starts.
+Acknowledgements (ack), notices, decisions and user requests (guidance) are
+outside rounds and templates.
 
 The current project is --project, else AURORA_PROJECT, else ~/.aurora-project,
 else the project whose repository matches the origin of the current directory.
@@ -51,7 +55,7 @@ import tempfile
 import time
 from pathlib import Path
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 BRANCH = "aurora/inbox"
 REF = f"refs/heads/{BRANCH}"
 HERE = Path(__file__).resolve().parent
@@ -59,12 +63,12 @@ REGISTRY = Path(os.environ.get("AURORA_INBOX_REGISTRY", HERE / "projects.json"))
 CACHE = Path(os.environ.get("AURORA_INBOX_CACHE", Path.home() / ".cache" / "aurora-inbox"))
 STATUSES = ("open", "seen", "done")
 FIELDS = ("id", "kind", "from", "to", "date", "subject", "status", "reply_to", "deferred",
-          "thread", "round", "needs_user", "tool")
+          "thread", "cycle", "round", "needs_user", "tool")
 MAX_ROUNDS = 3
 OPENING = ("question", "proposal", "notice")
 REPLIES = ("answer", "counter", "agreement", "impasse", "question", "ack")
 CLOSING = ("agreement", "impasse")
-OUTSIDE_ROUNDS = ("ack", "notice", "decision")
+OUTSIDE_ROUNDS = ("ack", "notice", "decision", "guidance")
 LEGACY = "message"   # free messages written by tool 0.1.x
 TEMPLATES = {
     "question": ["Ask", "Context", "Constraints", "Closes when", "Authority"],
@@ -344,18 +348,25 @@ def conversation(me: str, thread: str, peers: list[str] | None = None) -> list[d
     return sorted(msgs, key=lambda m: m.get("date", ""))
 
 
+def current_cycle(msgs: list[dict]) -> tuple[int, list[dict]]:
+    """The cycle number (1 + user requests so far) and the messages since the last request."""
+    cut = [i for i, m in enumerate(msgs) if m.get("kind") == "guidance"]
+    return len(cut) + 1, (msgs[cut[-1] + 1:] if cut else msgs)
+
+
 def next_round(msgs: list[dict]) -> int:
-    return len([m for m in msgs if is_round(m)]) // 2 + 1
+    return len([m for m in current_cycle(msgs)[1] if is_round(m)]) // 2 + 1
 
 
 def waiting_for_user(me: str, msgs: list[dict]) -> list[dict]:
     """Closing records this project must present: it opened the thread, no decision yet."""
-    decided = {thread_of(m) for m in msgs if m.get("kind") == "decision"}
     out = []
     for m in msgs:
         t = thread_of(m)
+        later = [x for x in msgs if thread_of(x) == t and x.get("date", "") > m.get("date", "")
+                 and x.get("kind") in ("decision", "guidance")]
         if (m.get("needs_user") == "true" and m.get("status") != "done"
-                and t not in decided and opener(t) == me):
+                and not later and opener(t) == me):
             out.append(m)
     return out
 
@@ -499,21 +510,21 @@ def cmd_template(args) -> None:
 
 
 def send(args, me: str, to: str, subject: str, kind: str, reply_to: str = "",
-         thread: str = "", rnd: int = 1, body: str | None = None) -> dict:
+         thread: str = "", rnd: int = 1, body: str | None = None, cycle: int = 1) -> dict:
     if to not in projects():
         raise InboxError(f"unknown project '{to}' ({', '.join(sorted(projects()))})")
     if to == me:
         raise InboxError("a project cannot send a message to itself")
     body = body if body is not None else body_from(args)
     check_template(kind, body)
-    now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+    now = dt.datetime.now(dt.timezone.utc)
     mid = f"{now:%Y%m%d-%H%M%S}-{me}-{slug(subject)}"
     taken = {m["id"] for m in read_inbox(to)}
     while mid in taken:
         mid = f"{now:%Y%m%d-%H%M%S}-{me}-{slug(subject)}-{random.randrange(16**4):04x}"
     meta = {"id": mid, "kind": kind, "from": me, "to": to,
-            "date": now.isoformat().replace("+00:00", "Z"), "subject": subject, "status": "open",
-            "reply_to": reply_to, "thread": thread or mid,
+            "date": now.isoformat(timespec="milliseconds").replace("+00:00", "Z"), "subject": subject, "status": "open",
+            "reply_to": reply_to, "thread": thread or mid, "cycle": str(cycle),
             "round": "" if kind in OUTSIDE_ROUNDS else str(rnd),
             "needs_user": "true" if kind in CLOSING else "", "tool": VERSION, "body": body}
     write_files(to, {f"messages/{meta['id']}.md": render(meta)},
@@ -533,15 +544,18 @@ def cmd_reply(args) -> None:
     me = current_project(args.project)
     orig = find(me, args.id)
     thread = thread_of(orig)
+    msgs = conversation(me, thread, [orig["from"]])
+    cycle = current_cycle(msgs)[0]
     rnd = 0
     if args.kind not in OUTSIDE_ROUNDS:
-        rnd = next_round(conversation(me, thread, [orig["from"]]))
+        rnd = next_round(msgs)
         if rnd > MAX_ROUNDS and args.kind not in CLOSING:
-            raise InboxError(f"thread {thread} has used its {MAX_ROUNDS} rounds: close it with "
-                             "'--kind agreement' or '--kind impasse', which go to the user")
+            raise InboxError(f"thread {thread} has used its {MAX_ROUNDS} rounds in cycle {cycle}: "
+                             "close it with '--kind agreement' or '--kind impasse', which go to "
+                             "the user")
     subject = args.subject or "Re: " + re.sub(r"^(Re:\s*)+", "", orig.get("subject", ""))
     m = send(args, me, orig["from"], subject, args.kind, orig["id"], thread,
-             min(max(rnd, 1), MAX_ROUNDS))
+             min(max(rnd, 1), MAX_ROUNDS), cycle=cycle)
     emit(args, public(m), f"sent {m['id']} to {m['to']} (thread {thread}, kind {args.kind})")
 
 
@@ -560,16 +574,21 @@ def cmd_record(args) -> None:
     sec = {k.lower(): v for k, v in sections(close.get("body", "")).items()}
     first = next((m for m in msgs if m["id"] == args.thread), msgs[0])
     sides = sorted({x for m in msgs for x in (m.get("from"), m.get("to")) if x})
-    rounds = max([int(m["round"]) for m in msgs if m.get("round", "").isdigit()] or [1])
+    cycle, last = current_cycle([m for m in msgs if m.get("date", "") <= close.get("date", "")])
+    rounds = max([int(m["round"]) for m in last if m.get("round", "").isdigit()] or [1])
+    requests = [sections(m.get("body", "")).get("User request", m.get("body", ""))
+                for m in msgs if m.get("kind") == "guidance"]
     record = {
         "thread": args.thread, "subject": first.get("subject", "").removeprefix("Re: "),
-        "projects": sides, "rounds": rounds, "outcome": close.get("kind"),
+        "projects": sides, "rounds": rounds, "cycle": cycle, "user_requests": requests,
+        "outcome": close.get("kind"),
         "conclusion": sec.get("conclusion", ""), "justification": sec.get("justification", ""),
         "positions": sec.get("positions", ""), "decision_needed": sec.get("decision needed", ""),
         "after_approval": sec.get("after approval", ""), "open_points": sec.get("open points", ""),
         "messages": [m["id"] for m in msgs],
     }
-    lines = [f"Discussed with: {', '.join(sides)} ({rounds} round(s))",
+    lines = [f"Discussed with: {', '.join(sides)} ({rounds} round(s)"
+             + (f", cycle {cycle} after {cycle - 1} request(s) from the user)" if cycle > 1 else ")"),
              f"Subject: {record['subject']}",
              f"Outcome: {record['outcome']}", "",
              "Conclusion:", record["conclusion"], "",
@@ -583,9 +602,42 @@ def cmd_record(args) -> None:
     emit(args, record, "\n".join(lines))
 
 
+def guide(args, me: str, thread: str, text: str) -> list[dict]:
+    """The user steps into a conversation: every side gets the request and the rounds restart."""
+    msgs = conversation(me, thread)
+    if not msgs:
+        raise InboxError(f"thread {thread} is not known to {me}")
+    cycle = current_cycle(msgs)[0] + 1
+    sides = sorted({x for m in msgs for x in (m.get("from"), m.get("to")) if x and x != me})
+    first = next((m for m in msgs if m["id"] == thread), msgs[0])
+    subject = "User request: " + re.sub(r"^(Re:\s*)+", "", first.get("subject", ""))
+    body = (f"### User request\n{text.strip()}\n\nThe user stepped into this conversation. "
+            f"Cycle {cycle} starts: up to {MAX_ROUNDS} new rounds that take this request into "
+            "account, closed by a new agreement or impasse for the user.\n")
+    sent = [send(args, me, p, subject, "guidance", msgs[-1]["id"], thread, body=body, cycle=cycle)
+            for p in sides]
+    for m in msgs:
+        if m.get("to") == me and m.get("kind") in CLOSING and m.get("status") != "done":
+            update(me, m["id"], "done", f"user asked for changes: {text.strip()}")
+    return sent
+
+
+def cmd_guide(args) -> None:
+    me = current_project(args.project)
+    text = args.text or body_from(args)
+    sent = guide(args, me, args.thread, text)
+    emit(args, [public(m) for m in sent],
+         "\n".join(f"sent {m['id']} to {m['to']} (cycle {m['cycle']})" for m in sent))
+
+
 def cmd_decide(args) -> None:
     """Send the user's decision to every other side of the thread and close the record."""
     me = current_project(args.project)
+    if args.revise:
+        sent = guide(args, me, args.thread, args.revise)
+        emit(args, [public(m) for m in sent],
+             "\n".join(f"sent {m['id']} to {m['to']} (cycle {m['cycle']})" for m in sent))
+        return
     close, msgs = closing_of(me, args.thread)
     sides = sorted({x for m in msgs for x in (m.get("from"), m.get("to")) if x and x != me})
     body = f"### Decision\n{args.choice}\n"
@@ -594,7 +646,9 @@ def cmd_decide(args) -> None:
     body += "\nEach project records this decision in its own backlog.\n"
     first = next((m for m in msgs if m["id"] == args.thread), msgs[0])
     subject = "Decision: " + first.get("subject", "").removeprefix("Re: ")
-    sent = [send(args, me, p, subject, "decision", close["id"], args.thread, body=body)
+    cycle = current_cycle(msgs)[0]
+    sent = [send(args, me, p, subject, "decision", close["id"], args.thread, body=body,
+                 cycle=cycle)
             for p in sides]
     if close.get("to") == me and close.get("status") != "done":
         update(me, close["id"], "done", f"user decided: {args.choice}")
@@ -704,9 +758,16 @@ def main() -> int:
     s.set_defaults(func=cmd_record)
     s = sub.add_parser("decide")
     s.add_argument("thread")
-    s.add_argument("--choice", required=True)
+    g = s.add_mutually_exclusive_group(required=True)
+    g.add_argument("--choice")
+    g.add_argument("--revise", help="the user is not satisfied: what to change; rounds restart")
     s.add_argument("--note")
     s.set_defaults(func=cmd_decide)
+    s = sub.add_parser("guide", help="the user steps into a conversation at any time")
+    s.add_argument("thread")
+    s.add_argument("--text")
+    s.add_argument("--body-file")
+    s.set_defaults(func=cmd_guide)
     s = sub.add_parser("status")
     s.add_argument("id")
     s.add_argument("status", choices=STATUSES)

@@ -31,7 +31,7 @@ git clone --quiet --depth 1 --single-branch --branch aurora/inbox \
 The current project is `--project`, else `AURORA_PROJECT`, else the file
 `~/.aurora-project`, else the registered project whose repository is the
 `origin` of the current directory. Every command takes `--json`.
-`version` prints the tool version (0.2.0).
+`version` prints the tool version (0.3.0).
 
 ```bash
 T=~/.aurora-inbox-tool/tool/inbox.py
@@ -43,6 +43,8 @@ python3 $T send --to dev-cycle-protocol --kind proposal --subject "..." --body-f
 python3 $T reply <id> --kind counter --body-file answer.md   # answer, counter, agreement, impasse, question, ack
 python3 $T record <thread>              # the closing record, in the report the user reads
 python3 $T decide <thread> --choice "Option 1" [--note "..."]   # the user's decision, to every side
+python3 $T decide <thread> --revise "change X"   # the user is not satisfied: new cycle of rounds
+python3 $T guide <thread> --text "..."          # the user steps in at any time: new cycle of rounds
 python3 $T status <id> done --note "answered in <reply id>"
 python3 $T defer <id> --reason "not part of the current work"
 python3 $T list --sent
@@ -98,6 +100,12 @@ wherever the user starts it, and the tool ships no scheduler.
    these first. The user's answer goes to every side with `decide`, and each
    project records it in its own backlog. No project acts on an agreement
    before the decision arrives.
+8. **The user can step in.** At any time, or when a closing record does not
+   satisfy, the user writes a request (`guide <thread> --text ...`, or
+   `decide <thread> --revise ...`). It goes to every side as `guidance`, any
+   open closing record is set aside, and a new cycle of up to three rounds
+   starts, taking the request into account and ending in a new closing
+   record. The cycle repeats until the user decides.
 
 ## Message format
 
@@ -106,7 +114,7 @@ Header, written by the tool:
 ```markdown
 ---
 id: 20261106-120000-aurora-dev-suite-settings-view
-kind: proposal        # question, proposal, notice | answer, counter, agreement, impasse, ack | decision
+kind: proposal        # question, proposal, notice | answer, counter, agreement, impasse, ack | decision, guidance
 from: aurora-dev-suite
 to: dev-cycle-protocol
 date: 2026-11-06T12:00:00Z
@@ -115,9 +123,10 @@ status: open          # open, seen, done
 reply_to:
 deferred:
 thread: 20261106-120000-aurora-dev-suite-settings-view   # id of the first message
-round: 1              # 1 to 3; empty outside rounds
+cycle: 1              # 1 + the user's requests so far; rounds restart in each cycle
+round: 1              # 1 to 3 within the cycle; empty outside rounds
 needs_user:           # true on agreement and impasse
-tool: 0.2.0
+tool: 0.3.0
 ---
 ```
 
@@ -135,7 +144,7 @@ must not be empty):
 | counter | **Answer**, **Per point**, Open points, **Next step** |
 | agreement | **Answer**, Per point, Open points, Next step, **Conclusion**, **Justification**, **Decision needed**, **After approval** |
 | impasse | as agreement, plus **Positions** |
-| ack, notice, decision | free |
+| ack, notice, decision, guidance | free |
 
 The last sections of an agreement or impasse are the report the user reads,
 written for the user, not for the other project. `record <thread>` prints it:

@@ -11,6 +11,7 @@ const FORBIDDEN_DEPENDENCIES: &[&str] = &[
     "aurora-engines",
     "aurora-desktop",
     "aurora-ui",
+    "aurora-integrations",
     "tokio",
     "wait-timeout",
     "which",

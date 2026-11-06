@@ -5,6 +5,7 @@ members = [
     "crates/aurora-engines",
     "crates/aurora-desktop",
     "crates/aurora-ui",
+    "crates/aurora-integrations",
     "xtask",
 ]
 

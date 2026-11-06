@@ -214,6 +214,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "aurora-integrations"
+version = "0.2.0"
+dependencies = [
+ "directories",
+ "jsonschema",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "time",
+]
+
+[[package]]
 name = "aurora-ui"
 version = "0.2.0"
 dependencies = [

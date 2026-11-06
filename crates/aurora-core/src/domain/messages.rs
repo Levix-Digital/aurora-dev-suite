@@ -210,7 +210,7 @@ impl ConversationState {
 
 impl Conversation {
     /// Waiting for the user first; then closed when the current cycle ended in a
-    /// decision, holds only notices and acks, or is a tool 0.1 message set to done;
+    /// decision or an ack, holds only a notice, or is a tool 0.1 message set to done;
     /// otherwise in progress.
     pub fn state(&self) -> ConversationState {
         if self.waiting_for_user {
@@ -218,7 +218,9 @@ impl Conversation {
         }
         let closed = match &self.last.kind {
             MessageKind::Decision => true,
-            MessageKind::Notice | MessageKind::Ack => self.round.is_none(),
+            // An ack only acknowledges (a decision, a notice): the exchange ended.
+            MessageKind::Ack => true,
+            MessageKind::Notice => self.round.is_none(),
             MessageKind::Other(_) => self.last.status == MessageStatus::Done,
             _ => false,
         };
@@ -645,7 +647,8 @@ mod tests {
         assert_eq!(state(MessageKind::Guidance, false, None), InProgress);
         assert_eq!(state(MessageKind::Notice, false, None), Closed);
         assert_eq!(state(MessageKind::Ack, false, None), Closed);
-        assert_eq!(state(MessageKind::Ack, false, Some(1)), InProgress);
+        // The other side acknowledges a decision: still closed.
+        assert_eq!(state(MessageKind::Ack, false, Some(2)), Closed);
         let mut old = conversation("t", "d", MessageKind::Other("message".into()), false, 1);
         assert_eq!(old.state(), InProgress);
         old.last.status = MessageStatus::Done;

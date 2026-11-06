@@ -37,7 +37,7 @@ The list is split into three groups, each with its color: what waits for the use
 
 1. **Given** a conversation whose closing record waits for the user, **When** the list is shown, **Then** it is in **Waiting for you**, in the warning color.
 2. **Given** a conversation whose current cycle has no decision yet and no record waiting, **When** the list is shown, **Then** it is in **In progress**, in the normal color.
-3. **Given** a conversation whose last message is a decision, or that holds only notices and acks, **When** the list is shown, **Then** it is in **Closed**, muted, and the group is collapsed until the user opens it.
+3. **Given** a conversation whose last message is a decision, or that ends with an ack or holds only a notice, **When** the list is shown, **Then** it is in **Closed**, muted, and the group is collapsed until the user opens it.
 4. **Given** a revision after a decision (cycle 2), **When** the list is shown, **Then** the conversation is back in **In progress**.
 5. **Given** a group with no conversation, **When** the list is shown, **Then** the group is not shown, except Waiting for you, which says "Nothing waits for your decision".
 
@@ -86,7 +86,7 @@ Next to Messages in the navigation, a number shows the conversations that need t
 - **FR-001**: Rows and message headers MUST lead with `from → to` (slugs).
 - **FR-002**: Rows MUST show the subject, the opener, the projects and the number of messages of the conversation.
 - **FR-003**: The list MUST be grouped in Waiting for you, In progress and Closed, in that order, each with its own color; Closed MUST be collapsed by default.
-- **FR-004**: The state MUST be derived in the core from the conversation (waiting for the user; last message a decision or only notices and acks; otherwise in progress), never in the view.
+- **FR-004**: The state MUST be derived in the core from the conversation (waiting for the user; last message a decision or an ack, or only a notice; otherwise in progress), never in the view.
 - **FR-005**: A conversation MUST open right below its row, one at a time, with `aria-expanded` on the row, focus moved into it, and Escape closing it.
 - **FR-006**: The navigation count MUST be the conversations waiting for the user plus those with unread received messages, computed at start and after every poll, shown on every screen.
 - **FR-007**: Unread MUST come from the received open messages that `dcp-integrations check --json` already returns; no provider or contract change.

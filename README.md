@@ -172,4 +172,4 @@ Aurora is developed by the Levix Digital team. Work follows the Dev Cycle Protoc
 
 ## License
 
-Proprietary software of Levix Digital - see [LICENSE](LICENSE). All rights reserved.
+Proprietary software of Levix Digital under the Levix Digital Proprietary License with Customer Source Access - see [LICENSE](LICENSE). All rights reserved.

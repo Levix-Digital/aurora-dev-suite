@@ -7,7 +7,7 @@ version: v0.3.0
 status: in_progress
 author: Levi
 created_at: '2026-11-06T13:13:30'
-updated_at: '2026-11-06T13:13:30'
+updated_at: '2026-11-06T13:22:28'
 session_id: null
 tags: []
 supersedes: null
@@ -22,7 +22,9 @@ backlog_items:
 spec_dir: specs/008-messages
 milestones:
 - name: M1 Provider format and rules
-  done: false
+  done: true
+  done_at: '2026-11-06'
+  by: LeviGuilherme
 - name: M2 Provider transport and commands
   done: false
 - name: M3 Aurora core, adapter and desktop
@@ -31,7 +33,6 @@ milestones:
   done: false
 - name: M5 Packaging, docs and manual tests
   done: false
-
 status_log:
 - at: '2026-11-06T13:13:30'
   by: Levi
@@ -41,6 +42,9 @@ status_log:
   by: Levi
   status: in_progress
   note: Approved at gate 3; implementation started
+- at: '2026-11-06T13:22:28'
+  by: LeviGuilherme
+  note: Milestone 'M1 Provider format and rules' completed
 ---
 
 # Messages between projects
@@ -105,4 +109,3 @@ No secrets; Git with the user's own credentials; bodies never in arguments or lo
 ## 8. Execution steps and milestones
 
 The phases of `specs/008-messages/tasks.md` (28 tasks): M1 Provider format and rules, M2 Provider transport and commands, M3 Aurora core, adapter and desktop, M4 Messages view, M5 Packaging, docs and manual tests. After the release: the projects add `.aurora/integrations.json`, switch their instructions and the Python tool is removed (research R9).
-

@@ -17,11 +17,11 @@ description: "Tasks of the Messages between projects feature (v0.3.0, FEAT-029, 
 
 ## Phase 1: Provider format and rules (M1)
 
-- [ ] T001 [US6] Create `crates/aurora-integrations` (library and binary `dcp-integrations`) in the workspace, `xtask arch-check` aware of it, `aurora-core` not depending on it
-- [ ] T002 [P] [US6] Copy sample messages written by the provisional tool 0.1, 0.2 and 0.3 from the six inbox branches into `crates/aurora-integrations/tests/fixtures/messages/`
-- [ ] T003 [US6] Write the tests of parse, render and sections (round trip of every sample) and implement `format.rs`
-- [ ] T004 [US6] Write the tests of templates, rounds, cycles, waiting for the user and the record (numbered options) and implement `rules.rs`
-- [ ] T005 [P] [US6] Write the tests of `init`, `add`, `validate` and reading `.aurora/integrations.json` and implement `registry.rs`
+- [x] T001 [US6] Create `crates/aurora-integrations` (library and binary `dcp-integrations`) in the workspace, `xtask arch-check` aware of it, `aurora-core` not depending on it
+- [x] T002 [P] [US6] Sample messages in the formats of the provisional tool 0.1, 0.2 and 0.3, written by hand in the tests of `format.rs` (no project content copied)
+- [x] T003 [US6] Write the tests of parse, render and sections (round trip of every sample) and implement `format.rs`
+- [x] T004 [US6] Write the tests of templates, rounds, cycles, waiting for the user and the record (numbered options) and implement `rules.rs`
+- [x] T005 [P] [US6] Write the tests of `init`, `add`, `validate` and reading `.aurora/integrations.json` and implement `registry.rs`
 
 **Checkpoint**: `cargo test -p aurora-integrations` passes.
 

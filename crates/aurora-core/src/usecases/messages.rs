@@ -247,9 +247,11 @@ mod tests {
         assert_eq!(
             list[1].setup,
             InboxSetup::NotSetUp {
-                command:
-                    "\"/usr/local/bin/dcp-integrations\" --dir \"/repos/gedo\" init --project gedo"
-                        .into()
+                // The folder is joined with the platform's separator.
+                command: format!(
+                    "\"/usr/local/bin/dcp-integrations\" --dir \"{}\" init --project gedo",
+                    Path::new("/repos").join("gedo").display()
+                )
             }
         );
         assert!(matches!(list[2].setup, InboxSetup::Unavailable { .. }));

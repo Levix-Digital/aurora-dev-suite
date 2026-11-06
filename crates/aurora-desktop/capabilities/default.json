@@ -19,6 +19,12 @@
     "allow-project-cycle-state",
     "allow-project-config",
     "allow-preview-project-config",
-    "allow-apply-project-config"
+    "allow-apply-project-config",
+    "allow-messages-overview",
+    "allow-messages-conversation",
+    "allow-messages-record",
+    "allow-messages-template",
+    "allow-messages-act",
+    "allow-messages-poll"
   ]
 }

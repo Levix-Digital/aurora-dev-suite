@@ -5,6 +5,7 @@
 mod commands;
 mod events;
 mod logging;
+mod messages;
 mod state;
 
 fn main() {
@@ -14,6 +15,10 @@ fn main() {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(state::AppState::new(state::AppState::default_config_dir()))
+        .setup(|app| {
+            messages::start_poll(app.handle().clone());
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::list_projects,
             commands::add_project,
@@ -29,6 +34,12 @@ fn main() {
             commands::project_config,
             commands::preview_project_config,
             commands::apply_project_config,
+            messages::messages_overview,
+            messages::messages_conversation,
+            messages::messages_record,
+            messages::messages_template,
+            messages::messages_act,
+            messages::messages_poll,
         ])
         .run(tauri::generate_context!());
 

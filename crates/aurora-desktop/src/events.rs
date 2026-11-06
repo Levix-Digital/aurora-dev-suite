@@ -57,7 +57,7 @@ mod tests {
         let mut seen = seen.into_inner().expect("lock");
         seen.sort();
         assert_eq!(seen, EngineKind::ALL.to_vec());
-        assert_eq!(overview.reports.len(), 3);
+        assert_eq!(overview.reports.len(), EngineKind::ALL.len());
         assert!(!overview.features.is_empty());
     }
 }

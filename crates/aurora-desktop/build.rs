@@ -15,6 +15,12 @@ const COMMANDS: &[&str] = &[
     "project_config",
     "preview_project_config",
     "apply_project_config",
+    "messages_overview",
+    "messages_conversation",
+    "messages_record",
+    "messages_template",
+    "messages_act",
+    "messages_poll",
 ];
 
 fn main() {

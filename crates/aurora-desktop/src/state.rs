@@ -4,8 +4,12 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use aurora_core::domain::EnginesOverview;
-use aurora_core::ports::{ConfigSource, CycleSource, EngineProbe, ProjectRegistry, SettingsStore};
-use aurora_engines::{CliProbe, DcpConfigSource, DcpCycleSource, TomlRegistry, TomlSettings};
+use aurora_core::ports::{
+    ConfigSource, CycleSource, EngineProbe, MessagesSource, ProjectRegistry, SettingsStore,
+};
+use aurora_engines::{
+    CliProbe, DcpConfigSource, DcpCycleSource, ProviderMessagesSource, TomlRegistry, TomlSettings,
+};
 
 pub struct AppState {
     pub registry: Arc<dyn ProjectRegistry>,
@@ -13,6 +17,7 @@ pub struct AppState {
     pub probe: Arc<dyn EngineProbe>,
     pub cycle: Arc<dyn CycleSource>,
     pub config: Arc<dyn ConfigSource>,
+    pub messages: Arc<dyn MessagesSource>,
     /// The result of the last complete probe of the engines.
     pub engines: Arc<Mutex<Option<EnginesOverview>>>,
     /// Held during the first probe, so concurrent first calls probe once (spec 003 FR-009).
@@ -28,6 +33,7 @@ impl AppState {
             probe: Arc::new(CliProbe::new()),
             cycle: Arc::new(DcpCycleSource::new()),
             config: Arc::new(DcpConfigSource::new()),
+            messages: Arc::new(ProviderMessagesSource),
             engines: Arc::new(Mutex::new(None)),
             first_probe: Arc::new(Mutex::new(())),
         }

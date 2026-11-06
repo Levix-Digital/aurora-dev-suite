@@ -40,13 +40,13 @@ description: "Tasks of the Messages between projects feature (v0.3.0, FEAT-029, 
 
 ## Phase 3: Aurora core, adapter and desktop (M3)
 
-- [ ] T010 [US5] Add `EngineKind::Integrations` (`dcp-integrations`, `dcp-integrations.version`), `Feature::Messages` (capability `messages` MAJOR 1, v0.3.0) and the poll interval setting, with tests
-- [ ] T011 [US1] Write the tests and implement `domain/messages.rs` (types, checks before running, overview order, options) re-exported from `domain/mod.rs`
-- [ ] T012 [US1] Add the `MessagesSource` port and `usecases/messages.rs` (overview, conversation, record, template, act, poll) with tests, and `FixtureMessages` with the sample conversations of the quickstart in `fixtures.rs`
-- [ ] T013 [P] [US6] Write the sample replies in `crates/aurora-engines/tests/fixtures/dcp-integrations/` and validate them against the schema
-- [ ] T014 [US1] Implement `ProviderMessagesSource` in `aurora-engines/src/messages.rs`, the fake provider's answers, and the adapter tests (arguments, body file removed, refusal, Git error, unsupported version, timeout, invalid reply)
-- [ ] T015 [US5] Find `dcp-integrations` next to Aurora's executable first in `probe.rs`, with tests
-- [ ] T016 [US5] Add the six desktop commands, the background poll with the `messages-news` event and the capability file entries, with the timer test
+- [x] T010 [US5] Add `EngineKind::Integrations` (`dcp-integrations`, `dcp-integrations.version`), `Feature::Messages` (capability `messages` MAJOR 1, v0.3.0) and the poll interval setting, with tests
+- [x] T011 [US1] Write the tests and implement `domain/messages.rs` (types, checks before running, overview order, options) re-exported from `domain/mod.rs`
+- [x] T012 [US1] Add the `MessagesSource` port and `usecases/messages.rs` (overview, conversation, record, template, act, poll) with tests, and `FixtureMessages` with the sample conversations of the quickstart in `fixtures.rs`
+- [x] T013 [P] [US6] Write the sample replies in `crates/aurora-engines/tests/fixtures/dcp-integrations/` and validate them against the schema
+- [x] T014 [US1] Implement `ProviderMessagesSource` in `aurora-engines/src/messages.rs`, the fake provider's answers, and the adapter tests (arguments, body file removed, refusal, Git error, unsupported version, timeout, invalid reply)
+- [x] T015 [US5] Find `dcp-integrations` next to Aurora's executable first in `probe.rs`, with tests
+- [x] T016 [US5] Add the six desktop commands, the background poll with the `messages-news` event and the capability file entries, with the timer test
 
 **Checkpoint**: `cargo test --workspace --all-features` and `cargo xtask arch-check` pass.
 

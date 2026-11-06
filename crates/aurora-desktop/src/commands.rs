@@ -6,8 +6,8 @@ use std::sync::Arc;
 
 use aurora_core::domain::{
     AddOutcome, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState, EngineKind,
-    EngineReport, EnginesOverview, Project, ProjectConfig, ProjectError, ProjectId, ProjectList,
-    Settings,
+    EngineReport, EnginesOverview, MessagesError, Project, ProjectConfig, ProjectError, ProjectId,
+    ProjectList, Settings,
 };
 use aurora_core::usecases::{config, cycle, projects, settings};
 use serde::Serialize;
@@ -29,6 +29,9 @@ pub struct CommandError {
     /// The settings error itself, for the `config` kind.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config: Option<Box<ConfigError>>,
+    /// The messages error itself, for the `messages` kind.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub messages: Option<Box<MessagesError>>,
 }
 
 impl CommandError {
@@ -38,6 +41,16 @@ impl CommandError {
             message: message.to_string(),
             detail: None,
             config: None,
+            messages: None,
+        }
+    }
+}
+
+impl From<MessagesError> for CommandError {
+    fn from(error: MessagesError) -> Self {
+        Self {
+            messages: Some(Box::new(error.clone())),
+            ..Self::new("messages", error)
         }
     }
 }
@@ -74,9 +87,11 @@ impl From<ProjectError> for CommandError {
     }
 }
 
-type Reply<T> = Result<T, CommandError>;
+pub(crate) type Reply<T> = Result<T, CommandError>;
 
-async fn blocking<T: Send + 'static>(work: impl FnOnce() -> Reply<T> + Send + 'static) -> Reply<T> {
+pub(crate) async fn blocking<T: Send + 'static>(
+    work: impl FnOnce() -> Reply<T> + Send + 'static,
+) -> Reply<T> {
     tauri::async_runtime::spawn_blocking(work)
         .await
         .map_err(|error| CommandError::new("internal", error))?
@@ -396,6 +411,18 @@ mod tests {
         assert_eq!(error.message, cause.to_string());
         let json = serde_json::to_value(&error).expect("serializes");
         assert_eq!(json["detail"]["kind"], "timedOut");
+    }
+
+    #[test]
+    fn messages_errors_keep_the_error() {
+        let error = CommandError::from(MessagesError::Refused {
+            message: "no".into(),
+            missing_sections: vec!["Ask".into()],
+        });
+        assert_eq!(error.kind, "messages");
+        let json = serde_json::to_value(&error).expect("serializes");
+        assert_eq!(json["messages"]["kind"], "refused");
+        assert_eq!(json["messages"]["missingSections"][0], "Ask");
     }
 
     #[test]

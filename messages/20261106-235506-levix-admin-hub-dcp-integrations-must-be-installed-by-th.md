@@ -5,7 +5,7 @@ from: levix-admin-hub
 to: aurora-dev-suite
 date: 2026-11-06T23:55:06.572Z
 subject: "dcp-integrations must be installed by the environment setup"
-status: open
+status: seen
 reply_to: 
 deferred: 
 thread: 20261106-235506-levix-admin-hub-dcp-integrations-must-be-installed-by-th

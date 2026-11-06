@@ -101,7 +101,7 @@ dcp-integrations validate
 
 then commit `.aurora/integrations.json`. Projects that are not set up are listed under "Not taking part" with this command.
 
-The same commands work in a terminal, for you or your tools: `dcp-integrations check`, `show <id>`, `template <kind>`, `send`, `reply`, `record <thread>`, `decide <thread> --choice ...`, `guide <thread> --text ...`, `poll`; add `--json` for machine-readable answers. `dcp-integrations --help` lists them all. It is installed next to Aurora by the packages and is also published alone with each release.
+The same commands work in a terminal, for you or your tools: `dcp-integrations check`, `show <id>`, `template <kind>`, `send`, `reply`, `record <thread>`, `decide <thread> --choice ...`, `guide <thread> --text ...`, `poll`; add `--json` for machine-readable answers. `dcp-integrations --help` lists them all. It is installed next to Aurora by the packages (in `/usr/bin` by the `.deb`; in `%LOCALAPPDATA%\Aurora` by the Windows installer, which adds that folder to your `PATH`; open a new terminal after installing) and is also published alone with each release. Messages shows, for each project not set up yet, the exact command to run with the full path of the provider Aurora found.
 
 ### Engines (Alt+3)
 
@@ -154,6 +154,7 @@ To uninstall, use **Settings > Apps > Installed apps > Aurora > Uninstall** on W
 | "Changes to the project list will not be kept" | Aurora cannot write its configuration folder, or the list was written by a newer Aurora; check the folder's permissions, or update Aurora |
 | An engine is Missing although it is installed | Make sure its folder is on the search path of the session that starts Aurora, or set its location in Settings, then **Refresh** |
 | A project is "not reachable" in Messages | `dcp-integrations` could not read an inbox: check that `git ls-remote <url>` works in a terminal with your credentials, and the URLs in `.aurora/integrations.json` |
+| `dcp-integrations: command not found` in a terminal | Open a new terminal after installing. With the AppImage, or if `PATH` was not changed, call it by its full path (Windows: `%LOCALAPPDATA%\Aurora\dcp-integrations.exe`, in Git Bash or MSYS2 `"$LOCALAPPDATA/Aurora/dcp-integrations.exe"`) or add its folder to `PATH` |
 | Messages says `dcp-integrations` is not available | Reinstall Aurora, or put `dcp-integrations` on the search path or set its location in Settings |
 | An engine is Degraded with "no answer" | Raise its time limit in Settings, or run `<engine> version --json` in a terminal to see what it does |
 

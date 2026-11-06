@@ -146,7 +146,23 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Improvements
 
+### IMP-003: Messages tells when .aurora/integrations.json is on another branch
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: A project whose file is only on its integration branch (AnyContext: on dev, not main) shows as not set up with the init command, and running init creates a second, empty file. The provider could look for the file on the other local branches and Aurora would say which branch to check out instead (Levi, 2026-11-06).
+
 ## Adjustments
+
+### ADJ-003: Setup hint in Messages drops the change-the-slug note
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: The hint already fills the slug, so '(change the slug if the project already has one)' only adds noise; it now says the project is not set up on the branch checked out (Levi, 2026-11-06).
 
 ## Epics
 

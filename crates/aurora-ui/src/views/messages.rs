@@ -472,7 +472,7 @@ fn Setup(inboxes: Vec<ProjectInbox>) -> impl IntoView {
             <ul class="items">
                 {lines.into_iter().map(|(name, setup)| match setup {
                     InboxSetup::NotSetUp { command } => view! {
-                        <li><strong>{name}</strong>" — not set up: run " <code>{command}</code>" in its folder, then commit .aurora/integrations.json."</li>
+                        <li><strong>{name}</strong>" — not set up: run " <code>{command}</code>" (change the slug if the project already has one), then commit .aurora/integrations.json."</li>
                     }.into_any(),
                     InboxSetup::Unavailable { reason } => view! {
                         <li><strong>{name}</strong>" — not reachable: " {sentence(&reason)}</li>

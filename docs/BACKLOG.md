@@ -6,6 +6,22 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
+### BUG-005: dcp-integrations is not on the PATH after the Windows install
+- **Severity**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Description**: The Windows installer puts dcp-integrations.exe next to aurora.exe in %LOCALAPPDATA%\Aurora, which is not on the PATH, so 'dcp-integrations' is not found in a terminal (Levi, MSYS2 UCRT64, 2026-11-06). The .deb puts it in /usr/bin.
+
+### BUG-006: The setup hint in Messages shows a literal <slug> and a bare command
+- **Severity**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Description**: For a project not set up, Messages shows 'dcp-integrations init --project <slug>' to run in its folder: the slug is a placeholder and the command fails when the provider is not on the PATH (Levi, 2026-11-06).
+
 ## Features
 
 ### FEAT-018: Inbox actions

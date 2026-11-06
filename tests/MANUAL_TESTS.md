@@ -560,7 +560,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   1. Open Messages
   2. Remove the provider, restart Aurora and open Messages
 - **Expected**:
-  - Step 1 lists the project as not set up with the command to set it up, and the other projects work normally
+  - Step 1 lists the project as not set up with a command that runs from any folder: the full path of the provider, `--dir` with the project's folder and `init --project` with a slug from its name; the other projects work normally
   - Step 2 says once that the provider is missing and how to install it; nothing else runs and Aurora stays responsive
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
@@ -577,12 +577,14 @@ These tests use the packages of a release (or of a dry run of the release workfl
   1. Run the installer as a standard user (choose **More info**, **Run anyway** if SmartScreen asks) and accept the license
   2. Open Aurora from the Start menu, add a project and close Aurora
   3. Look at the size of Aurora's installation folder (`%LOCALAPPDATA%\Aurora`)
-  4. Uninstall Aurora from **Settings > Apps > Installed apps**, then install it again and open it
+  4. Open a new terminal and run `dcp-integrations version`
+  5. Uninstall Aurora from **Settings > Apps > Installed apps**, open a new terminal and run `dcp-integrations version` again; then install Aurora again and open it
 - **Expected**:
   - Step 1: no administrator prompt; the installer shows the Levix Digital license and finishes
   - Step 2: the window opens; the sidebar shows the release's version
   - Step 3: under 30 MB
-  - Step 4: the Start menu entry is removed by the uninstall; after installing again, the project added in step 2 is still listed
+  - Step 4: prints the release's version (the installation folder is on the user's `PATH`)
+  - Step 5: the Start menu entry is removed and the command is no longer found (the folder left `PATH`, other entries unchanged); after installing again, the project added in step 2 is still listed
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 

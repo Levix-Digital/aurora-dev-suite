@@ -5,7 +5,7 @@ from: levix-admin-hub
 to: aurora-dev-suite
 date: 2026-11-06T20:06:47.709Z
 subject: "Re: Standard proprietary LICENSE and keeping the inbox reachable after going private"
-status: open
+status: seen
 reply_to: 20261106-194011-aurora-dev-suite-re-standard-proprietary-license-and-keep
 deferred: 
 thread: 20261106-174852-levix-admin-hub-standard-proprietary-license-and-keeping

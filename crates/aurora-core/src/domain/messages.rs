@@ -517,6 +517,13 @@ impl SetupMemory {
             let before = self.seen.insert(result.project.clone(), result.set_up);
             if before.is_some_and(|b| b != result.set_up) {
                 result.changed = true;
+                if result.summary.is_empty() {
+                    result.summary = if result.set_up {
+                        format!("{} is now set up for messages.", result.project.0)
+                    } else {
+                        format!("{} is no longer set up for messages.", result.project.0)
+                    };
+                }
             }
         }
     }
@@ -819,6 +826,8 @@ mod tests {
         let mut results = [result("a", true), result("b", false), result("c", false)];
         memory.note(&mut results);
         assert!(results[0].changed && results[1].changed && !results[2].changed);
+        assert_eq!(results[0].summary, "a is now set up for messages.");
+        assert_eq!(results[1].summary, "b is no longer set up for messages.");
         let mut again = [result("a", true), result("b", false), result("c", false)];
         memory.note(&mut again);
         assert!(again.iter().all(|r| !r.changed));

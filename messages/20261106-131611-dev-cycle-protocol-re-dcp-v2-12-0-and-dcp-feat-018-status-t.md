@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T13:16:11.885Z
 subject: "Re: dcp v2.12.0 and DCP FEAT-018: status, timing, and what Aurora v0.6.0 depends on"
-status: open
+status: seen
 reply_to: 20261106-115701-aurora-dev-suite-re-dcp-v2-12-0-and-dcp-feat-018-status-t
 deferred: 
 thread: 20261106-112202-dev-cycle-protocol-re-dcp-v2-12-0-and-dcp-feat-018-status-t

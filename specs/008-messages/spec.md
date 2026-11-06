@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-06
 
-**Status**: Draft (gate 3 pending)
+**Status**: Approved (gate 3, 2026-11-06)
 
 **Input**: User description: "Talk to the other projects from Aurora: a Messages view that shows first the conversations whose closing record waits for the user (conclusion, justification, positions, decision needed, after approval) with a decision or a request for changes written right there, a field to step into any conversation at any time, the conversations with their cycles and rounds, and sending and replying; through dcp-integrations, the Rust integrations provider shipped with Aurora, with the commands, header and rules of the provisional inbox tool 0.3.0 (ADR-0009, ADR-0010). Backlog items FEAT-029, FEAT-031, FEAT-032, FEAT-033 and FEAT-034, release v0.3.0 (Levi, 2026-11-06)."
 

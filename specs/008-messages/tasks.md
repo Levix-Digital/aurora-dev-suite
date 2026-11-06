@@ -54,13 +54,13 @@ description: "Tasks of the Messages between projects feature (v0.3.0, FEAT-029, 
 
 ## Phase 4: Messages view (M4)
 
-- [ ] T017 [US1] Backend calls and fixture answers for the six commands and the event in `aurora-ui/src/backend/`
-- [ ] T018 [US1] The Messages view: "Waiting for you" with the closing records as fields, decide with options and a free choice, confirmation
-- [ ] T019 [US2] "Ask for changes" on a record and the field of every conversation (guide), with cycle and requests shown
-- [ ] T020 [US3] Conversation list (newest first, waiting first), filters, the conversation with its messages and sections, "no answer yet", "Not set up" and "not reachable"
-- [ ] T021 [US4] New conversation and reply from templates, required sections marked, refusals next to the form, kinds limited after three rounds
-- [ ] T022 [US5] Navigation entry "Messages" with the count, updated by `messages-news`; the simulated poll in the preview
-- [ ] T023 [P] Styles in `styles/app.css`, light and dark, contrast checked by `theme_contrast.rs`
+- [x] T017 [US1] Backend calls and fixture answers for the six commands and the event in `aurora-ui/src/backend/`
+- [x] T018 [US1] The Messages view: "Waiting for you" with the closing records as fields, decide with options and a free choice, confirmation
+- [x] T019 [US2] "Ask for changes" on a record and the field of every conversation (guide), with cycle and requests shown
+- [x] T020 [US3] Conversation list (newest first, waiting first), filters, the conversation with its messages and sections, "no answer yet", "Not set up" and "not reachable"
+- [x] T021 [US4] New conversation and reply from templates, required sections marked, refusals next to the form, kinds limited after three rounds
+- [x] T022 [US5] Navigation entry "Messages" with the count, updated by `messages-news`; the simulated poll in the preview
+- [x] T023 [P] Styles in `styles/app.css`, light and dark, contrast checked by `theme_contrast.rs`
 
 **Checkpoint**: the quickstart passes in the preview.
 

@@ -118,3 +118,4 @@ button.link { font: inherit; color: var(--accent); background: none; border: 0; 
 .message.kind-guidance, .message.kind-decision { border-left-color: var(--primary); }
 .message h4 { margin: 0.4rem 0 0.1rem; color: var(--text); font-size: 0.95rem; }
 .message pre.body { white-space: pre-wrap; font: inherit; margin: 0; }
+.section { margin-bottom: 1.5rem; }

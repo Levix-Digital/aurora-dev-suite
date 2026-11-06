@@ -7,7 +7,7 @@ version: v0.3.0
 status: in_progress
 author: Levi
 created_at: '2026-11-06T13:13:30'
-updated_at: '2026-11-06T13:51:58'
+updated_at: '2026-11-06T14:01:18'
 session_id: null
 tags: []
 supersedes: null
@@ -34,7 +34,9 @@ milestones:
   done_at: '2026-11-06'
   by: LeviGuilherme
 - name: M4 Messages view
-  done: false
+  done: true
+  done_at: '2026-11-06'
+  by: LeviGuilherme
 - name: M5 Packaging, docs and manual tests
   done: false
 status_log:
@@ -55,6 +57,9 @@ status_log:
 - at: '2026-11-06T13:51:58'
   by: LeviGuilherme
   note: Milestone 'M3 Aurora core, adapter and desktop' completed
+- at: '2026-11-06T14:01:18'
+  by: LeviGuilherme
+  note: Milestone 'M4 Messages view' completed
 ---
 
 # Messages between projects

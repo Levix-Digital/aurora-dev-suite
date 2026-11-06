@@ -127,11 +127,12 @@ pub fn MessagesView() -> impl IntoView {
         });
     };
     load();
-    // A background poll found news: read again.
+    // A background poll found news: offer to read again, so nothing being typed is lost.
+    let has_news = RwSignal::new(false);
     Effect::new(move |previous: Option<u32>| {
         let news = ctx.messages_news.get();
         if previous.is_some_and(|p| p != news) {
-            load();
+            has_news.set(true);
         }
         news
     });
@@ -178,6 +179,15 @@ pub fn MessagesView() -> impl IntoView {
             </div>
             <FeatureState feature=Feature::Messages />
             <StatusLine message=status />
+            {move || has_news.get().then(|| view! {
+                <div class="banner info" role="status">
+                    "New messages arrived. "
+                    <button class="btn" on:click=move |_| {
+                        has_news.set(false);
+                        load();
+                    }>"Show them"</button>
+                </div>
+            })}
             {move || composing.get().then(|| view! {
                 <NewConversation inboxes=Signal::derive(list) on_done=Callback::new(move |text| {
                     composing.set(false);

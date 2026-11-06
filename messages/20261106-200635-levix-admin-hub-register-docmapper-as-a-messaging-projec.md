@@ -7,7 +7,7 @@ date: 2026-11-06T20:06:35.400Z
 subject: "Register DocMapper as a messaging project"
 status: seen
 reply_to: 
-deferred: 
+deferred: "Outside the work in progress (license and going private); taken to the owner to schedule."
 thread: 20261106-200635-levix-admin-hub-register-docmapper-as-a-messaging-projec
 cycle: 1
 round: 1
@@ -34,3 +34,5 @@ tool/projects.json on aurora/inbox lists docmapper.
 
 ### Authority
 The projects settle the slug and timing. Registering is already decided by the owner.
+
+> seen (2026-11-06 20:17 UTC): deferred: Outside the work in progress (license and going private); taken to the owner to schedule.

@@ -492,16 +492,18 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
 
 ### MT-MSG-003: Follow and filter the conversations
 
-- **Covers**: conversation list and panel (spec 008 US3, FR-002, FR-003)
-- **Prerequisites**: at least three conversations across the two projects, one of them with a message sent more than 48 hours ago and still unread
+- **Covers**: conversation list and panel (spec 008 US3, FR-002, FR-003; spec 009 US1 to US3)
+- **Prerequisites**: across the two projects, a conversation waiting for the user, one in progress with a received message not read, one closed by a decision, and one with a message sent more than 48 hours ago and still unread
 - **Steps**:
   1. Open Messages and look at the list
-  2. Open a conversation with an unread message
-  3. Filter by one project, then by "Waiting for a project's answer"
+  2. Open the Closed group
+  3. Click the second row of In progress, then click another row, then press Escape
+  4. Filter by one project, then by "Waiting for a project's answer"
 - **Expected**:
-  - Step 1 lists every conversation, most recent first, with its project, subject, last kind, cycle and round; the old unread one is marked "no answer yet"
-  - Step 2 shows the messages oldest first with sender, receiver, kind, cycle, round, date and each section, and the unread message becomes seen
-  - Step 3 shows only the matching conversations each time
+  - Step 1 shows the groups Waiting for you (amber), In progress and Closed (grey, folded) with their counts; each row starts with `from → to` of its last message, then the subject, who opened it, the projects and the number of messages; the unread one has "1 new", the old unsent one "No answer yet"
+  - Step 2 shows the decided conversation in grey
+  - Step 3 opens the conversation right below the clicked row (the page does not jump to the bottom), with every message oldest first, each starting with `from → to`, then kind, cycle, round, date and its sections; clicking another row closes the first and opens the second below its own row; Escape closes it and the focus is back on the row; the opened unread message becomes seen
+  - Step 4 shows only the matching conversations each time
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
@@ -522,7 +524,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
 
 ### MT-MSG-005: News arrives without asking
 
-- **Covers**: background poll (spec 008 US5, FR-001, FR-007)
+- **Covers**: background poll and the navigation count (spec 008 US5, FR-001, FR-007; spec 009 US4)
 - **Prerequisites**: Aurora open on Messages, the poll interval at 1 minute in Settings
 - **Steps**:
   1. From a terminal in the other project's folder, send a question to this project
@@ -530,6 +532,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   3. In Settings, set the interval to 0 (off) and Save; send another message from the terminal and wait two minutes
 - **Expected**:
   - Step 2 shows "New messages arrived" with "Show them" and the navigation count goes up; nothing reloads by itself while a form is open
+  - Step 2 repeated with Portfolio open: the count next to Messages goes up there too, and equals the conversations waiting for the user plus those with unread messages
   - Step 3 shows no news until "Check now" or reopening Messages
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:

@@ -33,10 +33,10 @@ description: "Tasks of the Messages view adjustments (v0.3.0, ADJ-002)"
 
 ## Phase 3: Docs and manual tests (M3)
 
-- [ ] T011 [P] `docs/architecture/core.md` and `ui.md`
-- [ ] T012 [P] README Messages section
-- [ ] T013 MT-MSG-003 and MT-MSG-005 in `tests/MANUAL_TESTS.md`, checked with `quality-assurance manual_tests validate`
-- [ ] T014 Mark the milestones done in `docs/plans/messages-view-adjustments.md`
+- [x] T011 [P] `docs/architecture/core.md` and `ui.md`
+- [x] T012 [P] README Messages section
+- [x] T013 MT-MSG-003 and MT-MSG-005 in `tests/MANUAL_TESTS.md`, checked with `quality-assurance manual_tests validate`
+- [x] T014 Mark the milestones done in `docs/plans/messages-view-adjustments.md`
 
 ## Dependencies
 

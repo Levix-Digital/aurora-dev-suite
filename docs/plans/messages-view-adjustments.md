@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Messages view adjustments
 kind: feature
 version: v0.3.0
-status: in_progress
+status: completed
 author: LeviGuilherme
 created_at: '2026-11-06T16:46:02'
-updated_at: '2026-11-06T16:57:36'
+updated_at: '2026-11-06T16:58:09'
 session_id: null
 tags: []
 supersedes: null
@@ -26,7 +26,9 @@ milestones:
   done_at: '2026-11-06'
   by: LeviGuilherme
 - name: M3 Docs and manual tests
-  done: false
+  done: true
+  done_at: '2026-11-06'
+  by: LeviGuilherme
 status_log:
 - at: '2026-11-06T16:46:02'
   by: LeviGuilherme
@@ -46,6 +48,13 @@ status_log:
 - at: '2026-11-06T16:57:36'
   by: LeviGuilherme
   note: Milestone 'M2 View' completed
+- at: '2026-11-06T16:58:09'
+  by: LeviGuilherme
+  note: Milestone 'M3 Docs and manual tests' completed
+- at: '2026-11-06T16:58:09'
+  by: LeviGuilherme
+  status: completed
+  note: All milestones completed
 ---
 
 # Messages view adjustments

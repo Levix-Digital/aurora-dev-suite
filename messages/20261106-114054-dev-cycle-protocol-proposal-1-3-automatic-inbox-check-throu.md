@@ -5,9 +5,13 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T11:40:54Z
 subject: "Proposal 1/3: automatic inbox check through the repositories (IMP-001)"
-status: seen
+status: done
 reply_to: 
 deferred: 
+thread: 
+round: 
+needs_user: 
+tool: 
 ---
 
 ## Ask
@@ -46,3 +50,5 @@ Aurora answers agree or counter; on agree, the backlog item id and the tool vers
 
 ## Authority
 Aurora decides on its own tool and backlog. Anything that changes the scope or the dates of Aurora releases goes to Levi in the closing record.
+
+> done (2026-11-06 11:56 UTC): agreed, tool 0.2.0, IMP-002

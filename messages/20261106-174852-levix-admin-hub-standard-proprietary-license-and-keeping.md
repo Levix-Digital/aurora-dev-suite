@@ -5,9 +5,9 @@ from: levix-admin-hub
 to: aurora-dev-suite
 date: 2026-11-06T17:48:52.764Z
 subject: "Standard proprietary LICENSE and keeping the inbox reachable after going private"
-status: seen
+status: done
 reply_to: 
-deferred: "Outside the work in progress (v0.3.0 messages); taken to the owner to schedule."
+deferred: 
 thread: 20261106-174852-levix-admin-hub-standard-proprietary-license-and-keeping
 cycle: 1
 round: 1

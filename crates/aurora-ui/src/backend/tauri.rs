@@ -3,12 +3,14 @@
 
 use std::path::PathBuf;
 
-use aurora_core::domain::{ConfigChange, EngineReport, EnginesOverview, Settings};
+use aurora_core::domain::{
+    ConfigChange, EngineReport, EnginesOverview, MessageKind, PollResult, Settings, UserAction,
+};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-use super::{CommandError, OnReady, OnReport, Reply};
+use super::{CommandError, OnNews, OnReady, OnReport, Reply};
 
 #[wasm_bindgen]
 extern "C" {
@@ -49,6 +51,23 @@ pub struct ChangeArgs {
 pub struct RelocateArgs {
     pub id: String,
     pub path: PathBuf,
+}
+
+#[derive(Serialize)]
+pub struct ThreadArgs {
+    pub project: String,
+    pub thread: String,
+}
+
+#[derive(Serialize)]
+pub struct KindArgs {
+    pub kind: MessageKind,
+}
+
+#[derive(Serialize)]
+pub struct ActArgs {
+    pub project: String,
+    pub action: UserAction,
 }
 
 #[derive(Serialize)]
@@ -115,4 +134,8 @@ fn listen<T: DeserializeOwned + 'static>(event: &'static str, handle: impl Fn(T)
 pub fn subscribe_engines(on_report: OnReport, on_ready: OnReady) {
     listen::<EngineReport>("engine-report", move |report| on_report(report));
     listen::<EnginesOverview>("engines-ready", move |overview| on_ready(overview));
+}
+
+pub fn subscribe_messages(on_news: OnNews) {
+    listen::<Vec<PollResult>>("messages-news", move |news| on_news(news));
 }

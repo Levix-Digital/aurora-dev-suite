@@ -19,15 +19,17 @@ pub enum View {
     Project,
     Engines,
     Inbox,
+    Messages,
     Settings,
 }
 
 impl View {
-    pub const ALL: [View; 5] = [
+    pub const ALL: [View; 6] = [
         View::Portfolio,
         View::Project,
         View::Engines,
         View::Inbox,
+        View::Messages,
         View::Settings,
     ];
 
@@ -37,6 +39,7 @@ impl View {
             View::Project => "Project",
             View::Engines => "Engines",
             View::Inbox => "Inbox",
+            View::Messages => "Messages",
             View::Settings => "Settings",
         }
     }
@@ -48,7 +51,8 @@ impl View {
             View::Project => '2',
             View::Engines => '3',
             View::Inbox => '4',
-            View::Settings => '5',
+            View::Messages => '5',
+            View::Settings => '6',
         }
     }
 }
@@ -86,6 +90,10 @@ pub struct AppContext {
     pub project_tab: RwSignal<ProjectTab>,
     /// How many settings edits the Settings tab holds that were not applied.
     pub unsaved_settings: RwSignal<usize>,
+    /// The closing records waiting for the user, shown on the navigation (spec 008 FR-007).
+    pub messages_waiting: RwSignal<usize>,
+    /// Bumped by each `messages-news` event, so the Messages view reads again.
+    pub messages_news: RwSignal<u32>,
 }
 
 /// The tabs of the Project view.
@@ -126,6 +134,8 @@ pub fn App() -> impl IntoView {
         project: RwSignal::new(None),
         project_tab: RwSignal::new(ProjectTab::Cycle),
         unsaved_settings: RwSignal::new(0),
+        messages_waiting: RwSignal::new(0),
+        messages_news: RwSignal::new(0),
     };
     provide_context(ctx);
 
@@ -151,7 +161,7 @@ pub fn App() -> impl IntoView {
         <div class="shell">
             <aside class="sidebar">
                 <div class="brand">"Aurora" <span>" Dev Suite"</span></div>
-                <Navigation view=ctx.view />
+                <Navigation view=ctx.view waiting=ctx.messages_waiting />
                 <div class="footer">
                     {preview.then(|| view! { <p>"Preview with sample data"</p> })}
                     <p>{concat!("v", env!("CARGO_PKG_VERSION"))}</p>
@@ -171,6 +181,7 @@ pub fn App() -> impl IntoView {
                     View::Project => view! { <views::project::ProjectView /> }.into_any(),
                     View::Engines => view! { <views::engines::Engines /> }.into_any(),
                     View::Inbox => view! { <views::inbox::Inbox /> }.into_any(),
+                    View::Messages => view! { <views::messages::MessagesView /> }.into_any(),
                     View::Settings => view! { <views::settings::SettingsView /> }.into_any(),
                 }}
             </main>
@@ -180,8 +191,8 @@ pub fn App() -> impl IntoView {
 
 /// Buttons in a list; the arrow keys move between them, Enter or Space opens.
 #[component]
-fn Navigation(view: RwSignal<View>) -> impl IntoView {
-    let buttons: [NodeRef<html::Button>; 5] = std::array::from_fn(|_| NodeRef::new());
+fn Navigation(view: RwSignal<View>, waiting: RwSignal<usize>) -> impl IntoView {
+    let buttons: [NodeRef<html::Button>; 6] = std::array::from_fn(|_| NodeRef::new());
     let on_keydown = move |ev: KeyboardEvent| {
         let step: isize = match ev.key().as_str() {
             "ArrowDown" => 1,
@@ -219,7 +230,16 @@ fn Navigation(view: RwSignal<View>) -> impl IntoView {
                                     aria-keyshortcuts=format!("Alt+{}", target.key())
                                     on:click=move |_| view.set(target)
                                 >
-                                    <span>{target.label()}</span>
+                                    <span>
+                                        {target.label()}
+                                        {move || {
+                                            let n = waiting.get();
+                                            (target == View::Messages && n > 0).then(|| view! {
+                                                " "
+                                                <span class="count" aria-label=format!("{n} waiting for you")>{n}</span>
+                                            })
+                                        }}
+                                    </span>
                                     <span class="key" aria-hidden="true">
                                         {format!("Alt+{}", target.key())}
                                     </span>
@@ -247,6 +267,23 @@ fn start(ctx: AppContext) {
             });
         }),
     );
+    let (waiting, news) = (ctx.messages_waiting, ctx.messages_news);
+    let poll_backend = backend.clone();
+    backend.subscribe_messages(Arc::new(move |_changed| {
+        news.update(|n| *n += 1);
+        let backend = poll_backend.clone();
+        spawn_local(async move {
+            if let Ok(list) = backend.messages_overview().await {
+                waiting.set(views::messages::waiting_total(&list));
+            }
+        });
+    }));
+    let count_backend = backend.clone();
+    spawn_local(async move {
+        if let Ok(list) = count_backend.messages_overview().await {
+            waiting.set(views::messages::waiting_total(&list));
+        }
+    });
     spawn_local(async move {
         match backend.get_settings().await {
             Ok(settings) => ctx.settings.set(settings),

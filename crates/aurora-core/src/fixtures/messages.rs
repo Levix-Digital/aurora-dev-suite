@@ -241,6 +241,35 @@ fn sample_messages() -> Vec<Message> {
         ],
     ));
     out.push(message(
+        23,
+        &t2,
+        MessageKind::Agreement,
+        ADS,
+        DCP,
+        "Re: Hook timeouts",
+        Some(2),
+        1,
+        &[
+            ("Answer", "Agree."),
+            (
+                "Conclusion",
+                "A 300-second cap, 120 seconds by default after a merge.",
+            ),
+            (
+                "Justification",
+                "Long checks still finish; a hung hook never blocks for long.",
+            ),
+            (
+                "Decision needed",
+                "1. Accept the limits (recommended)\n2. Keep one limit of 30 seconds",
+            ),
+            (
+                "After approval",
+                "The Dev Cycle Protocol updates the draft contract.",
+            ),
+        ],
+    ));
+    out.push(message(
         40,
         "",
         MessageKind::Question,

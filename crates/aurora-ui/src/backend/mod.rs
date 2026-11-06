@@ -8,8 +8,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aurora_core::domain::{
-    AddOutcome, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState, EngineReport,
-    EnginesOverview, Project, ProjectConfig, ProjectList, Settings,
+    AddOutcome, ClosingRecord, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState,
+    EngineReport, EnginesOverview, Message, MessageHeader, MessageKind, MessagesError, PollResult,
+    Project, ProjectConfig, ProjectInbox, ProjectList, Settings, TemplateSection, UserAction,
 };
 use serde::Deserialize;
 
@@ -26,6 +27,9 @@ pub struct CommandError {
     /// The settings error itself, for the `config` kind.
     #[serde(default)]
     pub config: Option<Box<ConfigError>>,
+    /// The messages error itself, for the `messages` kind.
+    #[serde(default)]
+    pub messages: Option<Box<MessagesError>>,
 }
 
 impl CommandError {
@@ -35,6 +39,7 @@ impl CommandError {
             message: message.to_string(),
             detail: None,
             config: None,
+            messages: None,
         }
     }
 
@@ -61,7 +66,17 @@ impl From<ConfigError> for CommandError {
     }
 }
 
+impl From<MessagesError> for CommandError {
+    fn from(error: MessagesError) -> Self {
+        Self {
+            messages: Some(Box::new(error.clone())),
+            ..Self::new("messages", error)
+        }
+    }
+}
+
 pub type Reply<T> = Result<T, CommandError>;
+pub type OnNews = Arc<dyn Fn(Vec<PollResult>) + Send + Sync>;
 
 pub type OnReport = Arc<dyn Fn(EngineReport) + Send + Sync>;
 pub type OnReady = Arc<dyn Fn(EnginesOverview) + Send + Sync>;
@@ -198,6 +213,74 @@ impl Backend {
                 tauri::invoke("apply_project_config", &tauri::ChangeArgs { id, change }).await
             }
             Backend::Fixture(fixture) => fixture.set_project_config(&id, &change, false),
+        }
+    }
+
+    /// Follows `messages-news`: the projects whose inbox changed (spec 008 FR-007).
+    pub fn subscribe_messages(&self, on_news: OnNews) {
+        match self {
+            Backend::Tauri => tauri::subscribe_messages(on_news),
+            Backend::Fixture(fixture) => fixture.subscribe_messages(on_news),
+        }
+    }
+
+    pub async fn messages_overview(&self) -> Reply<Vec<ProjectInbox>> {
+        match self {
+            Backend::Tauri => tauri::invoke("messages_overview", &()).await,
+            Backend::Fixture(fixture) => Ok(fixture.messages_overview()),
+        }
+    }
+
+    pub async fn messages_conversation(
+        &self,
+        project: String,
+        thread: String,
+    ) -> Reply<Vec<Message>> {
+        match self {
+            Backend::Tauri => {
+                tauri::invoke(
+                    "messages_conversation",
+                    &tauri::ThreadArgs { project, thread },
+                )
+                .await
+            }
+            Backend::Fixture(fixture) => fixture.messages_conversation(&project, &thread),
+        }
+    }
+
+    pub async fn messages_record(&self, project: String, thread: String) -> Reply<ClosingRecord> {
+        match self {
+            Backend::Tauri => {
+                tauri::invoke("messages_record", &tauri::ThreadArgs { project, thread }).await
+            }
+            Backend::Fixture(fixture) => fixture.messages_record(&project, &thread),
+        }
+    }
+
+    pub async fn messages_template(&self, kind: MessageKind) -> Reply<Vec<TemplateSection>> {
+        match self {
+            Backend::Tauri => tauri::invoke("messages_template", &tauri::KindArgs { kind }).await,
+            Backend::Fixture(fixture) => fixture.messages_template(&kind),
+        }
+    }
+
+    pub async fn messages_act(
+        &self,
+        project: String,
+        action: UserAction,
+    ) -> Reply<Vec<MessageHeader>> {
+        match self {
+            Backend::Tauri => {
+                tauri::invoke("messages_act", &tauri::ActArgs { project, action }).await
+            }
+            Backend::Fixture(fixture) => fixture.messages_act(&project, &action),
+        }
+    }
+
+    pub async fn messages_poll(&self) -> Reply<Vec<PollResult>> {
+        match self {
+            Backend::Tauri => tauri::invoke("messages_poll", &()).await,
+            Backend::Fixture(fixture) => Ok(fixture.messages_poll()),
         }
     }
 

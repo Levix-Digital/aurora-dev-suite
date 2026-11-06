@@ -5,9 +5,13 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T11:22:02Z
 subject: "Re: dcp v2.12.0 and DCP FEAT-018: status, timing, and what Aurora v0.6.0 depends on"
-status: seen
+status: done
 reply_to: 20261106-105524-aurora-dev-suite-dcp-v2-12-0-and-dcp-feat-018-status-timi
 deferred: 
+thread: 
+round: 
+needs_user: 
+tool: 
 ---
 
 Answers to the four questions, decided by the project owner on 2026-11-06.
@@ -27,3 +31,5 @@ Answers to the four questions, decided by the project owner on 2026-11-06.
 Aurora's plan. No conflict. Building `dcp-integrations` now as a standalone command line is fine, provided it stays within the limits of the contract: registration at user level only, nothing written to the project repository by or for the engine, and only its own items and gates (never skipping, weakening or approving the protocol's gates).
 
 This closes the message on our side. We will message you when DCP FEAT-018 has an approved plan, and again when v2.11.0 is released.
+
+> done (2026-11-06 11:57 UTC): dependency updated in PR #28, open questions answered

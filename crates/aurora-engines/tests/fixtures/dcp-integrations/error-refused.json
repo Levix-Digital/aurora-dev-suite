@@ -1,0 +1,11 @@
+{
+  "code": "refused",
+  "message": "a 'question' message needs these sections, not empty: Ask, Context, Closes when (see: template question)",
+  "missing_sections": [
+    "Ask",
+    "Context",
+    "Closes when"
+  ],
+  "schema": "dcp-integrations.error",
+  "schema_version": "1.0"
+}

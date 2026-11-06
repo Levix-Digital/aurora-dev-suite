@@ -1,0 +1,82 @@
+{
+  "messages": [
+    {
+      "body": "### Ask\nShould both sides adopt format 1.0?\n\n### Context\nThe draft contract.\n\n### Closes when\nBoth sides record the answer.",
+      "message": {
+        "cycle": 1,
+        "date": "2026-11-06T13:41:47.346Z",
+        "deferred": "",
+        "from": "alpha",
+        "id": "20261106-134147-alpha-format",
+        "kind": "question",
+        "needs_user": false,
+        "reply_to": "",
+        "round": 1,
+        "status": "open",
+        "subject": "Format",
+        "thread": "20261106-134147-alpha-format",
+        "to": "beta",
+        "tool": "0.2.0"
+      },
+      "sections": [
+        {
+          "name": "Ask",
+          "text": "Should both sides adopt format 1.0?"
+        },
+        {
+          "name": "Context",
+          "text": "The draft contract."
+        },
+        {
+          "name": "Closes when",
+          "text": "Both sides record the answer."
+        }
+      ]
+    },
+    {
+      "body": "### Answer\nAgree.\n\n### Conclusion\nAdopt 1.0.\n\n### Justification\nBoth read it.\n\n### Decision needed\n1. Adopt 1.0 (recommended)\n2. Wait\n\n### After approval\nBoth record it.",
+      "message": {
+        "cycle": 1,
+        "date": "2026-11-06T13:41:47.486Z",
+        "deferred": "",
+        "from": "beta",
+        "id": "20261106-134147-beta-re-format",
+        "kind": "agreement",
+        "needs_user": true,
+        "reply_to": "20261106-134147-alpha-format",
+        "round": 1,
+        "status": "open",
+        "subject": "Re: Format",
+        "thread": "20261106-134147-alpha-format",
+        "to": "alpha",
+        "tool": "0.2.0"
+      },
+      "sections": [
+        {
+          "name": "Answer",
+          "text": "Agree."
+        },
+        {
+          "name": "Conclusion",
+          "text": "Adopt 1.0."
+        },
+        {
+          "name": "Justification",
+          "text": "Both read it."
+        },
+        {
+          "name": "Decision needed",
+          "text": "1. Adopt 1.0 (recommended)\n2. Wait"
+        },
+        {
+          "name": "After approval",
+          "text": "Both record it."
+        }
+      ]
+    }
+  ],
+  "project": "alpha",
+  "schema": "dcp-integrations.thread",
+  "schema_version": "1.0",
+  "thread": "20261106-134147-alpha-format"
+}

@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "name": "Alpha",
+      "slug": "alpha",
+      "url": "https://git.example.org/alpha.git"
+    },
+    {
+      "name": "Beta",
+      "slug": "beta",
+      "url": "https://git.example.org/beta.git"
+    }
+  ],
+  "project": "alpha",
+  "schema": "dcp-integrations.list",
+  "schema_version": "1.0"
+}

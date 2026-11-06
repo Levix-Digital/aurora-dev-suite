@@ -1,0 +1,28 @@
+{
+  "after_approval": "Both record it.",
+  "conclusion": "Adopt 1.0.",
+  "cycle": 1,
+  "decision_needed": "1. Adopt 1.0 (recommended)\n2. Wait",
+  "justification": "Both read it.",
+  "messages": [
+    "20261106-134147-alpha-format",
+    "20261106-134147-beta-re-format"
+  ],
+  "open_points": "",
+  "options": [
+    "Adopt 1.0 (recommended)",
+    "Wait"
+  ],
+  "outcome": "agreement",
+  "positions": "",
+  "projects": [
+    "alpha",
+    "beta"
+  ],
+  "rounds": 1,
+  "schema": "dcp-integrations.record",
+  "schema_version": "1.0",
+  "subject": "Format",
+  "thread": "20261106-134147-alpha-format",
+  "user_requests": []
+}

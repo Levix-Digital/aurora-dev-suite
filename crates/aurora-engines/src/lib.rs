@@ -5,6 +5,7 @@ pub mod config;
 pub mod contract;
 pub mod cycle;
 pub mod dcp;
+pub mod messages;
 pub mod probe;
 pub mod registry;
 pub mod repo;
@@ -12,6 +13,7 @@ pub mod runner;
 
 pub use config::DcpConfigSource;
 pub use cycle::DcpCycleSource;
+pub use messages::ProviderMessagesSource;
 pub use probe::CliProbe;
 pub use registry::{TomlRegistry, TomlSettings};
 

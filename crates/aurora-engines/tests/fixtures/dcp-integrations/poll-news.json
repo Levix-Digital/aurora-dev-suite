@@ -1,0 +1,9 @@
+{
+  "changed": true,
+  "new": 1,
+  "project": "beta",
+  "schema": "dcp-integrations.poll",
+  "schema_version": "1.0",
+  "summary": "Inbox (beta): 1 new message(s).",
+  "waiting_for_user": 0
+}

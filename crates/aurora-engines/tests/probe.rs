@@ -116,3 +116,26 @@ fn a_configured_path_that_does_not_exist_is_missing_with_a_reason() {
     assert_eq!(report.status, EngineStatus::Missing);
     assert!(report.last_error.is_some());
 }
+
+#[test]
+fn the_provider_next_to_aurora_wins_over_the_search_path() {
+    let on_path = common::engine_dir();
+    common::install_fake(on_path.path(), "dcp-integrations", "no-contract");
+    let bundled = common::engine_dir();
+    let shipped = common::install_fake(bundled.path(), "dcp-integrations", "ready");
+    let probe = CliProbe::with_search_path(&[on_path.path()]).with_bundled_dir(bundled.path());
+    let report = probe.probe(EngineKind::Integrations, &EngineSettings::default());
+    assert_eq!(report.status, EngineStatus::Ready);
+    assert_eq!(report.location, Some(shipped));
+    assert!(report.has_capability("messages", 1));
+    // Only the provider is looked for there: other engines come from the search path.
+    common::install_fake(bundled.path(), "gedo", "ready");
+    let gedo = probe.probe(EngineKind::Gedo, &EngineSettings::default());
+    assert_eq!(gedo.status, EngineStatus::Missing);
+    // Without one next to Aurora, the search path is used.
+    let empty = common::engine_dir();
+    let fallback = CliProbe::with_search_path(&[on_path.path()])
+        .with_bundled_dir(empty.path())
+        .probe(EngineKind::Integrations, &EngineSettings::default());
+    assert_eq!(fallback.status, EngineStatus::InstalledWithoutContract);
+}

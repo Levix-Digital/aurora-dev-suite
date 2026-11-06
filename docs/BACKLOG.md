@@ -146,7 +146,39 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Improvements
 
+### IMP-003: Messages tells when .aurora/integrations.json is on another branch
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: A project whose file is only on its integration branch (AnyContext: on dev, not main) shows as not set up with the init command, and running init creates a second, empty file. The provider could look for the file on the other local branches and Aurora would say which branch to check out instead (Levi, 2026-11-06).
+
+### IMP-004: Messages notices when a project's setup changes without reopening the view
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: Messages reads .aurora/integrations.json only when the view opens, so a file added by a pull or a checkout keeps showing 'not set up'. Re-check each project's setup on every background poll and when Aurora's window gets the focus (a file check per project, no Git), instead of an operating system file watcher per platform (Levi, 2026-11-06).
+
 ## Adjustments
+
+### ADJ-003: Setup hint in Messages drops the change-the-slug note
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: The hint already fills the slug, so '(change the slug if the project already has one)' only adds noise; it now says the project is not set up on the branch checked out (Levi, 2026-11-06).
+
+### ADJ-004: Messages separates projects to set up from projects outside the network
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: Under 'Not taking part', DocMapper and the website get the same init command as projects that are counterparts but lack the file. List the counterparts of the other projects' registries as 'to set up' with the command, and the rest as 'not in the network' with the command folded (Levi, 2026-11-06).
 
 ## Epics
 

@@ -236,7 +236,7 @@ fn Navigation(view: RwSignal<View>, waiting: RwSignal<usize>) -> impl IntoView {
                                             let n = waiting.get();
                                             (target == View::Messages && n > 0).then(|| view! {
                                                 " "
-                                                <span class="count" aria-label=format!("{n} waiting for you")>{n}</span>
+                                                <span class="count" aria-label=format!("{n} conversation(s) need you") title="Waiting for you or not read yet">{n}</span>
                                             })
                                         }}
                                     </span>
@@ -274,14 +274,14 @@ fn start(ctx: AppContext) {
         let backend = poll_backend.clone();
         spawn_local(async move {
             if let Ok(list) = backend.messages_overview().await {
-                waiting.set(views::messages::waiting_total(&list));
+                waiting.set(views::messages::open_total(&list));
             }
         });
     }));
     let count_backend = backend.clone();
     spawn_local(async move {
         if let Ok(list) = count_backend.messages_overview().await {
-            waiting.set(views::messages::waiting_total(&list));
+            waiting.set(views::messages::open_total(&list));
         }
     });
     spawn_local(async move {

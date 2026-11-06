@@ -22,6 +22,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: For a project not set up, Messages shows 'dcp-integrations init --project <slug>' to run in its folder: the slug is a placeholder and the command fails when the provider is not on the PATH (Levi, 2026-11-06).
 
+### BUG-007: Messages shows No answer yet on conversations that ended with my reply
+- **Severity**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Description**: A conversation of the provisional tool 0.1 format (kind 'message') whose last message is the project's own reply, marked done by the other side, shows 'No answer yet' and matches that filter, although it is Closed (Levi, 2026-11-06).
+
 ## Features
 
 ### FEAT-018: Inbox actions
@@ -473,3 +481,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: messages
 - **Closed**: 2026-11-06, plan messages
 - **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the messages and integrations commands as a standalone command line, usable from a terminal and from Aurora's Messages tab without dcp; plugging it into the Dev Cycle is FEAT-037. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing. It offers poll (one git ls-remote, no fetch) for every touchpoint and an optional watch that runs the user's local command in a project's folder when news arrives (ADR-0009). Shipped with Aurora's installer (signed once FEAT-035 lands) and updated with it, and published per platform as a separate download for machines without Aurora; nothing executable is stored on an aurora/inbox branch, which holds only messages and inbox.json with the format version (ADR-0010). It replaces the provisional Python tool, which is then removed.
+
+### ADJ-002: Messages view: From → To, states by color, inline conversation, open count
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: messages-view-adjustments
+- **Closed**: 2026-11-06, plan messages-view-adjustments
+- **Description**: Levi, 2026-11-06, testing v0.3.0-rc.1: each message and row shows sender → receiver; conversations grouped in Waiting for you, In progress and Closed (muted, collapsed), each with its color; a conversation opens right below its row, not at the bottom of the page; the navigation count shows what waits for the user plus received messages not read yet, on every screen.

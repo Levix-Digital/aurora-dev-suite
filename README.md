@@ -84,10 +84,10 @@ Everything that waits for you across all projects, the most urgent first: what b
 
 ### Messages (Alt+5)
 
-Conversations between your projects, carried on each repository's `aurora/inbox` branch by `dcp-integrations`. The navigation shows how many conclusions wait for you.
+Conversations between your projects, carried on each repository's `aurora/inbox` branch by `dcp-integrations`. The number next to Messages, on every screen, counts the conversations that need you: a conclusion waiting for your decision, or messages your projects received and nobody read yet.
 
 - **Waiting for you** comes first: each conclusion in full (who discussed it, rounds, cycle, conclusion, justification, positions, open points, what happens after approval) with the numbered options or a choice of your own, an optional note, and **Decide**, which asks to confirm and sends the decision to every project of the conversation. **Ask for changes** sends your request instead: the projects get up to three new rounds to take it into account and come back with a new conclusion.
-- **Conversations** lists every conversation of your projects, the most recent first, filtered by project and by state (waiting for you, no answer yet, after your requests). Open one to read every message with its sections, to **Step in** with a request at any time (a new cycle of up to three rounds), or to reply. After three rounds in a cycle, only an agreement or an impasse can be sent.
+- **Conversations** lists every conversation of your projects, one row per conversation starting with who sent the last message to whom (`aurora-dev-suite → gedo`), in three groups: **Waiting for you** (amber), **In progress** and **Closed** (grey, folded until you open it); filter by project and by state (waiting for you, no answer yet, after your requests). Click a row (or press Enter) to open the conversation right below it, and again or Escape to close it: every message shows `from → to` and its sections, and you can **Step in** with a request at any time (a new cycle of up to three rounds) or reply. After three rounds in a cycle, only an agreement or an impasse can be sent.
 - **New conversation** starts a question, a proposal or a notice from a project to one of its counterparts. Each kind has a template; required sections are marked, and what is missing is shown next to the form.
 - **Check now** asks every project's inbox whether something new arrived. Aurora also checks in the background every 5 minutes, and offers to show what arrived.
 

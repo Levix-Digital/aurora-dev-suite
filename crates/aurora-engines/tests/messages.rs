@@ -154,6 +154,9 @@ mod fake {
         assert_eq!(inbox.counterparts, ["beta"]);
         assert!(inbox.conversations[0].waiting_for_user);
         assert_eq!(inbox.conversations[0].last.kind, MessageKind::Agreement);
+        // The sample's received agreement is still open: one unread message.
+        assert_eq!(inbox.conversations[0].unread, 1);
+        assert!(inbox.conversations[1..].iter().all(|c| c.unread == 0));
         let root = s.root.to_string_lossy().into_owned();
         assert_eq!(s.args(), ["--json", "--dir", root.as_str(), "check"]);
         let thread = &inbox.conversations[0].thread;

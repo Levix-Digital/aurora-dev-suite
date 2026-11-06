@@ -111,6 +111,26 @@ struct RawConversation {
 struct RawCheck {
     #[serde(default)]
     conversations: Vec<RawConversation>,
+    /// The received messages not done yet.
+    #[serde(default)]
+    messages: Vec<RawPending>,
+}
+
+#[derive(Deserialize)]
+struct RawPending {
+    #[serde(default)]
+    thread: String,
+    #[serde(default)]
+    status: String,
+}
+
+/// Received messages still open (not read), per thread.
+fn unread_by_thread(pending: &[RawPending]) -> std::collections::HashMap<&str, u32> {
+    let mut out = std::collections::HashMap::new();
+    for m in pending.iter().filter(|m| m.status == "open") {
+        *out.entry(m.thread.as_str()).or_insert(0) += 1;
+    }
+    out
 }
 
 #[derive(Deserialize)]
@@ -433,6 +453,7 @@ fn conversation(raw: RawConversation) -> Conversation {
         last: raw.last.into(),
         waiting_for_user: raw.waiting_for_user,
         user_requests: raw.user_requests,
+        unread: 0,
     }
 }
 
@@ -453,7 +474,23 @@ impl MessagesSource for ProviderMessagesSource {
                 .filter(|s| *s != list.project)
                 .collect(),
             slug: list.project,
-            conversations: check.conversations.into_iter().map(conversation).collect(),
+            conversations: {
+                let unread = unread_by_thread(&check.messages);
+                let counts: Vec<u32> = check
+                    .conversations
+                    .iter()
+                    .map(|c| unread.get(c.thread.as_str()).copied().unwrap_or(0))
+                    .collect();
+                check
+                    .conversations
+                    .into_iter()
+                    .zip(counts)
+                    .map(|(raw, unread)| Conversation {
+                        unread,
+                        ..conversation(raw)
+                    })
+                    .collect()
+            },
         })
     }
 
@@ -569,5 +606,27 @@ impl MessagesSource for ProviderMessagesSource {
         )?;
         let poll: RawPoll = parse(&stdout, "poll")?;
         Ok((poll.changed || code == NEWS).then_some(poll.summary))
+    }
+}
+
+#[cfg(test)]
+mod unread_tests {
+    use super::*;
+
+    #[test]
+    fn only_open_messages_count_as_unread() {
+        let pending = |thread: &str, status: &str| RawPending {
+            thread: thread.into(),
+            status: status.into(),
+        };
+        let list = [
+            pending("a", "open"),
+            pending("a", "open"),
+            pending("a", "seen"),
+            pending("b", "seen"),
+        ];
+        let unread = unread_by_thread(&list);
+        assert_eq!(unread.get("a"), Some(&2));
+        assert_eq!(unread.get("b"), None);
     }
 }

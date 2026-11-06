@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: 2262338c4b45201ffd91cb5958d39004fb1d62503c5af525b0b29712d172f4d4
-content-sha256: df38fbf0f1fb10159a151f59d25a8a87c974dc6f691d0a7e13059e37b8b23a61
+sources-sha256: 14b8dc4c3064ee0000250590d981b05f1d7ba4be460157cf5ca1b3c35bd878f3
+content-sha256: c6eddc31f059e3bbaaa627cb917bbe1df9c47ad4a84190be8677c174dfa4eb51
 -->
 # aurora-dev-suite Constitution
 
@@ -155,7 +155,7 @@ A desktop application without a service. Recovery means: a missing or broken eng
 - Proprietary, binary-only distribution; every crate `publish = false`; dependencies limited to permissive licenses (MIT, MIT-0, Apache-2.0, BSD, ISC, Zlib, Unicode-3.0), checked with `cargo-deny` (ADR-0005). Named exceptions in `deny.toml`, each used unmodified: MPL-2.0 (file-level copyleft) for `cssparser`, `cssparser-macros`, `selectors` and `dtoa-short` of the Tauri tree and `option-ext` of `directories`; CC0-1.0 for `base16` and BSL-1.0 for `xxhash-rust`. Any other crate outside the list needs a new review.
 - No engine crate is linked (ADR-0003); the engines' schedules decide when each feature can ship.
 - One small team (Levi and coding agents): the foundations stay small, and every feature is testable with fixtures before its engine exists.
-- Windows and Linux are both first-class: CI builds and tests on both.
+- Windows and Linux are both first-class: CI builds and tests on both, Linux on every pull request and both on every push to main (so on every release candidate).
 
 ## Architecture Decisions
 
@@ -178,4 +178,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.7.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-06
+**Version**: 1.8.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-06

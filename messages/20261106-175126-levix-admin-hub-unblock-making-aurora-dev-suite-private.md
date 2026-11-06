@@ -7,7 +7,7 @@ date: 2026-11-06T17:51:26.314Z
 subject: "Unblock making aurora-dev-suite private: inbox bridge and messaging priority"
 status: seen
 reply_to: 
-deferred: 
+deferred: "Outside the work in progress (v0.3.0 messages); taken to the owner to schedule."
 thread: 20261106-175126-levix-admin-hub-unblock-making-aurora-dev-suite-private
 cycle: 1
 round: 1
@@ -35,3 +35,5 @@ Aurora names the bridge it chose and the date the repository can go private, and
 
 ### Authority
 The projects settle the bridge and the schedule. Making the repository private is the owner's action.
+
+> seen (2026-11-06 19:36 UTC): deferred: Outside the work in progress (v0.3.0 messages); taken to the owner to schedule.

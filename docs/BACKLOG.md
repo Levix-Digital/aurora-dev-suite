@@ -128,6 +128,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: Sign the Windows installer (Authenticode) and the Linux packages once Levix has a certificate, in the release workflow, so SmartScreen and package managers trust them (ADR-0005, ADR-0008).
 
+### FEAT-038: Set up a project for messages from Aurora in one click
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Description**: Adding a project becomes 'register the folder, click Set up, commit' (Levi, 2026-11-06). Set up asks dcp-integrations for init with the slug the network already uses for the repository (closes BUG-009) and add for every counterpart; each project that does not list the new one yet offers 'add X to Y' in one click. Aurora still runs no Git: it lists the changed files, and when Gedo is ready the commit goes through Gedo on a branch that follows each project's branching model (pull request through the cycle), otherwise by hand. Depends on Gedo's command line for the commit part.
+
 ## Improvements
 
 ### IMP-003: Messages tells when .aurora/integrations.json is on another branch

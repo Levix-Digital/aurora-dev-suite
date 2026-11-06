@@ -236,9 +236,13 @@ impl Conversation {
         self.waiting_for_user || self.unread > 0
     }
 
-    /// The last message was sent by `me` and nothing came back yet.
+    /// The last message was sent by `me`, the conversation is not closed and
+    /// nothing came back yet (a closed conversation never waits for an answer, BUG-007).
     pub fn no_answer_yet(&self, me: &str) -> bool {
-        self.last.from == me && !self.last.kind.is_outside_rounds() && !self.last.kind.is_closing()
+        self.last.from == me
+            && self.state() != ConversationState::Closed
+            && !self.last.kind.is_outside_rounds()
+            && !self.last.kind.is_closing()
     }
 
     /// The kinds a reply may have now: after the rounds of the cycle, only a closing
@@ -740,6 +744,18 @@ mod tests {
         assert!(err.to_string().contains("3 rounds in cycle 1"), "{err}");
         assert!(check_action(&reply(MessageKind::Ack), &[], Some(&c)).is_ok());
         assert!(c.no_answer_yet("b") && !c.no_answer_yet("a"));
+    }
+
+    #[test]
+    fn a_closed_conversation_waits_for_no_answer() {
+        // BUG-007: a tool 0.1 reply of mine, marked done by the other side, ended it.
+        let mut c = conversation("x", "d", MessageKind::Other("message".into()), false, 1);
+        c.last.status = MessageStatus::Done;
+        assert_eq!(c.state(), ConversationState::Closed);
+        assert!(!c.no_answer_yet("b"));
+        // Still open on the other side: it waits for an answer.
+        c.last.status = MessageStatus::Seen;
+        assert!(c.no_answer_yet("b"));
     }
 
     #[test]

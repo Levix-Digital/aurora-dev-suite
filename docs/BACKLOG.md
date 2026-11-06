@@ -22,6 +22,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: For a project not set up, Messages shows 'dcp-integrations init --project <slug>' to run in its folder: the slug is a placeholder and the command fails when the provider is not on the PATH (Levi, 2026-11-06).
 
+### BUG-007: Messages shows No answer yet on conversations that ended with my reply
+- **Severity**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Description**: A conversation of the provisional tool 0.1 format (kind 'message') whose last message is the project's own reply, marked done by the other side, shows 'No answer yet' and matches that filter, although it is Closed (Levi, 2026-11-06).
+
 ## Features
 
 ### FEAT-018: Inbox actions

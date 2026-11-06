@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T11:41:00Z
 subject: "Proposal 3/3: fixed message and reply template (IMP-001)"
-status: open
+status: seen
 reply_to: 
 deferred: 
 ---

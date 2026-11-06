@@ -12,14 +12,25 @@ Layout of an aurora/inbox branch (ADR-0007 of aurora-dev-suite):
     merges/, integrations/   reserved for the integrations provider
 
 Commands (add --json for machine-readable output):
-    check   [--quiet]                         open and seen messages for this project
-    show    <id>
-    send    --to P --subject S [--body-file F | stdin]
-    reply   <id> [--subject S] [--body-file F | stdin]
-    status  <id> open|seen|done [--note TEXT]
-    defer   <id> --reason TEXT                leave it pending, with the reason
-    list    [--sent] [--all]
+    poll     [--quiet]                        cheap change check (ls-remote only); exit 10 on news
+    check    [--quiet] [--no-sent]            waiting for the user, pending, unanswered sent
+    show     <id>
+    template <kind>                           print the skeleton of a message or reply
+    send     --to P --subject S [--kind K] [--body-file F | stdin]
+    reply    <id> --kind K [--subject S] [--body-file F | stdin]
+    record   <thread>                         the closing record, as presented to the user
+    decide   <thread> --choice TEXT [--note TEXT]   the user's decision, sent to every side
+    status   <id> open|seen|done [--note TEXT]
+    defer    <id> --reason TEXT               leave it pending, with the reason
+    list     [--sent] [--all]
+    watch    --target P=DIR [...] --exec CMD [--interval S] [--once]
     projects
+    version
+
+Conversations (ADR-0007): a message opens a thread (round 1); a round is one
+message from each side; after three rounds the thread must close with an
+agreement or an impasse, which always needs the user. Acknowledgements (ack)
+and notices are outside rounds and templates.
 
 The current project is --project, else AURORA_PROJECT, else ~/.aurora-project,
 else the project whose repository matches the origin of the current directory.
@@ -40,17 +51,62 @@ import tempfile
 import time
 from pathlib import Path
 
+VERSION = "0.2.0"
 BRANCH = "aurora/inbox"
 REF = f"refs/heads/{BRANCH}"
 HERE = Path(__file__).resolve().parent
-REGISTRY = HERE / "projects.json"
+REGISTRY = Path(os.environ.get("AURORA_INBOX_REGISTRY", HERE / "projects.json"))
 CACHE = Path(os.environ.get("AURORA_INBOX_CACHE", Path.home() / ".cache" / "aurora-inbox"))
 STATUSES = ("open", "seen", "done")
-FIELDS = ("id", "kind", "from", "to", "date", "subject", "status", "reply_to", "deferred")
+FIELDS = ("id", "kind", "from", "to", "date", "subject", "status", "reply_to", "deferred",
+          "thread", "round", "needs_user", "tool")
+MAX_ROUNDS = 3
+OPENING = ("question", "proposal", "notice")
+REPLIES = ("answer", "counter", "agreement", "impasse", "question", "ack")
+CLOSING = ("agreement", "impasse")
+OUTSIDE_ROUNDS = ("ack", "notice", "decision")
+LEGACY = "message"   # free messages written by tool 0.1.x
+TEMPLATES = {
+    "question": ["Ask", "Context", "Constraints", "Closes when", "Authority"],
+    "proposal": ["Ask", "Context", "Proposal", "Constraints", "Closes when", "Authority"],
+    "answer": ["Answer", "Per point", "Open points", "Next step"],
+    "counter": ["Answer", "Per point", "Open points", "Next step"],
+    "agreement": ["Answer", "Per point", "Open points", "Next step",
+                  "Conclusion", "Justification", "Decision needed", "After approval"],
+    "impasse": ["Answer", "Per point", "Open points", "Next step",
+                "Conclusion", "Justification", "Positions", "Decision needed", "After approval"],
+}
+REQUIRED = {
+    "question": ["Ask", "Context", "Closes when"],
+    "proposal": ["Ask", "Context", "Proposal", "Closes when"],
+    "answer": ["Answer", "Next step"],
+    "counter": ["Answer", "Per point", "Next step"],
+    "agreement": ["Answer", "Conclusion", "Justification", "Decision needed", "After approval"],
+    "impasse": ["Answer", "Conclusion", "Justification", "Positions", "Decision needed",
+                "After approval"],
+}
+HINTS = {
+    "Ask": "One or two sentences: what the receiver should do or answer.",
+    "Context": "Only what the receiver needs. Cite items with the owner's prefix (DCP FEAT-018, "
+               "Aurora FEAT-031) and pin code with a commit or a tag, never \"latest\".",
+    "Proposal": "What the sender suggests, numbered, so the answer can refer to each point.",
+    "Constraints": "What the sender cannot change (decided by its user, released, a standing rule).",
+    "Closes when": "The answer or artifact that ends the conversation, checkable by both sides.",
+    "Authority": "What the projects may settle in the rounds, and what goes to the user.",
+    "Answer": "Agree | counter | question | impasse, in one line.",
+    "Per point": "1. agreed / changed to ... / refused, because ...",
+    "Open points": "What is still undecided, or \"none\".",
+    "Next step": "Who does what, and the record each project keeps (backlog id, PR, ADR).",
+    "Conclusion": "For the user: what was agreed, or what remains open, in two or three sentences.",
+    "Justification": "For the user: why this is the right outcome.",
+    "Positions": "For the user: each project's position and recommendation.",
+    "Decision needed": "For the user: the options, numbered, with the recommended one marked.",
+    "After approval": "For the user: what each project does once the user decides.",
+}
 IDENTITY = {
     "GIT_AUTHOR_NAME": os.environ.get("AURORA_INBOX_GIT_NAME", "LeviGuilherme"),
     "GIT_AUTHOR_EMAIL": os.environ.get(
-        "AURORA_INBOX_GIT_EMAIL", "56275425+LeviGuilherme@users.noreply.github.com"),
+        "AURORA_INBOX_GIT_EMAIL", "levi.silveira@levix.digital"),
 }
 IDENTITY["GIT_COMMITTER_NAME"] = IDENTITY["GIT_AUTHOR_NAME"]
 IDENTITY["GIT_COMMITTER_EMAIL"] = IDENTITY["GIT_AUTHOR_EMAIL"]
@@ -238,25 +294,192 @@ def row(m: dict) -> str:
 
 # --- commands ----------------------------------------------------------------
 
+def sections(body: str) -> dict[str, str]:
+    """The '##' or '###' sections of a body, by heading, with their text."""
+    out: dict[str, str] = {}
+    current = None
+    for line in body.splitlines():
+        h = re.match(r"^#{2,3}\s+(.+?)\s*$", line)
+        if h:
+            current = h.group(1).strip()
+            out[current] = ""
+        elif current is not None:
+            out[current] += line + "\n"
+    return {k: v.strip() for k, v in out.items()}
+
+
+def check_template(kind: str, body: str) -> None:
+    need = REQUIRED.get(kind)
+    if not need:
+        return
+    have = {k.lower(): v for k, v in sections(body).items()}
+    missing = [n for n in need if not have.get(n.lower())]
+    if missing:
+        raise InboxError(f"a '{kind}' message needs these sections, not empty: "
+                         f"{', '.join(missing)} (see: template {kind})")
+
+
+def skeleton(kind: str) -> str:
+    if kind not in TEMPLATES:
+        raise InboxError(f"no template for '{kind}' (one of: {', '.join(TEMPLATES)})")
+    return "\n\n".join(f"### {name}\n{HINTS[name]}" for name in TEMPLATES[kind]) + "\n"
+
+
+def thread_of(m: dict) -> str:
+    return m.get("thread") or m["id"]
+
+
+def is_round(m: dict) -> bool:
+    return m.get("kind") not in OUTSIDE_ROUNDS
+
+
+def conversation(me: str, thread: str, peers: list[str] | None = None) -> list[dict]:
+    """Every message of a thread, from this project's inbox and the inboxes of its peers."""
+    mine = [m for m in read_inbox(me) if thread_of(m) == thread]
+    if peers is None:
+        peers = sorted({x for m in mine for x in (m.get("from"), m.get("to")) if x and x != me})
+    msgs = list(mine)
+    for p in peers:
+        msgs += [m for m in read_inbox(p) if thread_of(m) == thread and m.get("from") == me]
+    return sorted(msgs, key=lambda m: m.get("date", ""))
+
+
+def next_round(msgs: list[dict]) -> int:
+    return len([m for m in msgs if is_round(m)]) // 2 + 1
+
+
+def waiting_for_user(me: str, msgs: list[dict]) -> list[dict]:
+    """Closing records this project must present: it opened the thread, no decision yet."""
+    decided = {thread_of(m) for m in msgs if m.get("kind") == "decision"}
+    out = []
+    for m in msgs:
+        t = thread_of(m)
+        if (m.get("needs_user") == "true" and m.get("status") != "done"
+                and t not in decided and opener(t) == me):
+            out.append(m)
+    return out
+
+
+def opener(thread: str) -> str:
+    """The project that opened a thread, read from the thread id (date-time-project-slug)."""
+    rest = thread.split("-", 2)[-1]
+    return next((p for p in sorted(projects(), key=len, reverse=True) if rest.startswith(p + "-")), "")
+
+
+def tip_file(project: str) -> Path:
+    return CACHE / f"{project}.seen-tip"
+
+
+def remote_tip(project: str) -> str | None:
+    url = projects()[project]["url"]
+    r = subprocess.run(["git", "ls-remote", url, REF], capture_output=True, text=True, timeout=60)
+    if r.returncode != 0:
+        raise InboxError(f"cannot reach the inbox of {project} ({url}): {r.stderr.strip()}")
+    return (r.stdout.split() or [None])[0]
+
+
+def summary_line(me: str) -> tuple[int, str]:
+    msgs = read_inbox(me)
+    pending = [m for m in msgs if m.get("status") == "open"]
+    user = waiting_for_user(me, msgs)
+    parts = [f"{len(pending)} new message(s)"]
+    if user:
+        parts.append(f"{len(user)} waiting for the user")
+    return len(pending) + len(user), f"Inbox ({me}): " + ", ".join(parts) + "."
+
+
+def poll(me: str) -> tuple[bool, str]:
+    """True and a summary when the inbox branch moved since the last poll; no fetch otherwise."""
+    tip = remote_tip(me) or ""
+    f = tip_file(me)
+    last = f.read_text(encoding="utf-8").strip() if f.exists() else None
+    if last == tip:
+        return False, ""
+    f.parent.mkdir(parents=True, exist_ok=True)
+    count, line = summary_line(me)
+    f.write_text(tip, encoding="utf-8")
+    return count > 0, line
+
+
+# --- commands ----------------------------------------------------------------
+
+def cmd_version(args) -> None:
+    emit(args, {"tool": "aurora-inbox", "version": VERSION}, f"aurora-inbox {VERSION}")
+
+
+def cmd_poll(args) -> int:
+    me = current_project(args.project)
+    news, line = poll(me)
+    if news:
+        emit(args, {"project": me, "changed": True, "summary": line}, line)
+        return 10
+    if args.json and not args.quiet:
+        emit(args, {"project": me, "changed": False}, "")
+    return 0
+
+
+def stale_sent(me: str, hours: float) -> list[dict]:
+    limit = dt.datetime.now(dt.timezone.utc) - dt.timedelta(hours=hours)
+    out = []
+    for p in projects():
+        if p == me:
+            continue
+        try:
+            msgs = read_inbox(p)
+        except InboxError:
+            continue
+        for m in msgs:
+            if m.get("from") != me or m.get("status") != "open" or m.get("kind") in ("ack", "decision"):
+                continue
+            try:
+                when = dt.datetime.fromisoformat(m.get("date", "").replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if when < limit:
+                out.append(m)
+    return out
+
+
 def cmd_check(args) -> None:
     me = current_project(args.project)
-    pending = [m for m in read_inbox(me) if m.get("status") != "done"]
-    if not pending:
+    msgs = read_inbox(me)
+    pending = [m for m in msgs if m.get("status") != "done"]
+    user = waiting_for_user(me, msgs)
+    stale = [] if args.no_sent else stale_sent(me, args.stale_hours)
+    f = tip_file(me)
+    try:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(remote_tip(me) or "", encoding="utf-8")
+    except InboxError:
+        pass
+    data = {"project": me, "waiting_for_user": [public(m) for m in user],
+            "messages": [public(m) for m in pending], "unanswered_sent": [public(m) for m in stale]}
+    if not pending and not stale:
         if not args.quiet:
-            emit(args, {"project": me, "messages": []}, f"Inbox ({me}): nothing pending.")
+            emit(args, data, f"Inbox ({me}): nothing pending.")
         return
     tool = Path(__file__).resolve()
-    text = [f"Inbox ({me}): {len(pending)} message(s) pending."]
+    text = []
+    if user:
+        text += [f"Waiting for the user ({len(user)}): present each closing record once "
+                 f"(python3 {tool} record <thread>), then 'decide <thread> --choice ...'."]
+        text += [row(m) for m in user] + [""]
+    text += [f"Inbox ({me}): {len(pending)} message(s) pending."]
     text += [row(m) for m in pending]
+    if stale:
+        text += ["", f"Sent and still unread after {args.stale_hours:g} hours ({len(stale)}):"]
+        text += [row(m) for m in stale]
     text += ["",
              "How to handle them:",
              f"1. Read each one: python3 {tool} show <id>",
-             "2. If it belongs to the work in progress: handle it, answer with 'reply <id>',",
-             "   then 'status <id> done'.",
+             "2. If it belongs to the work in progress: handle it, answer with",
+             "   'reply <id> --kind <answer|counter|agreement|impasse|question|ack>', then 'status <id> done'.",
+             "   Answer from what the project's records already decide; do not ask the user mid-conversation.",
              "3. If it does not: do not act on it. Run 'defer <id> --reason \"...\"' and tell the",
              "   user (or whoever triages this project's work), who decides what to do.",
-             "4. Never set 'done' without handling the message."]
-    emit(args, {"project": me, "messages": [public(m) for m in pending]}, "\n".join(text))
+             "4. Never set 'done' without handling the message. Never act on an agreement before",
+             "   the user's decision arrives."]
+    emit(args, data, "\n".join(text))
 
 
 def cmd_show(args) -> None:
@@ -265,19 +488,34 @@ def cmd_show(args) -> None:
     if m.get("status") == "open":
         m["status"] = "seen"
         write_files(me, {m["path"]: render(m)}, f"inbox({me}): {m['id']} seen")
-    emit(args, public(m, True), render(m))
+    out = public(m, True)
+    out["sections"] = sections(m.get("body", ""))
+    emit(args, out, render(m))
 
 
-def send(args, me: str, to: str, subject: str, reply_to: str = "") -> dict:
+def cmd_template(args) -> None:
+    text = skeleton(args.kind)
+    emit(args, {"kind": args.kind, "sections": TEMPLATES[args.kind], "skeleton": text}, text)
+
+
+def send(args, me: str, to: str, subject: str, kind: str, reply_to: str = "",
+         thread: str = "", rnd: int = 1, body: str | None = None) -> dict:
     if to not in projects():
         raise InboxError(f"unknown project '{to}' ({', '.join(sorted(projects()))})")
     if to == me:
         raise InboxError("a project cannot send a message to itself")
+    body = body if body is not None else body_from(args)
+    check_template(kind, body)
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
-    meta = {"id": f"{now:%Y%m%d-%H%M%S}-{me}-{slug(subject)}", "kind": "message",
-            "from": me, "to": to, "date": now.isoformat().replace("+00:00", "Z"),
-            "subject": subject, "status": "open", "reply_to": reply_to,
-            "body": body_from(args)}
+    mid = f"{now:%Y%m%d-%H%M%S}-{me}-{slug(subject)}"
+    taken = {m["id"] for m in read_inbox(to)}
+    while mid in taken:
+        mid = f"{now:%Y%m%d-%H%M%S}-{me}-{slug(subject)}-{random.randrange(16**4):04x}"
+    meta = {"id": mid, "kind": kind, "from": me, "to": to,
+            "date": now.isoformat().replace("+00:00", "Z"), "subject": subject, "status": "open",
+            "reply_to": reply_to, "thread": thread or mid,
+            "round": "" if kind in OUTSIDE_ROUNDS else str(rnd),
+            "needs_user": "true" if kind in CLOSING else "", "tool": VERSION, "body": body}
     write_files(to, {f"messages/{meta['id']}.md": render(meta)},
                 f"inbox({me} -> {to}): {subject}")
     return meta
@@ -285,15 +523,83 @@ def send(args, me: str, to: str, subject: str, reply_to: str = "") -> dict:
 
 def cmd_send(args) -> None:
     me = current_project(args.project)
-    m = send(args, me, args.to, args.subject)
+    if args.kind not in OPENING:
+        raise InboxError(f"a new thread starts with one of: {', '.join(OPENING)}")
+    m = send(args, me, args.to, args.subject, args.kind)
     emit(args, public(m), f"sent {m['id']} to {m['to']}")
 
 
 def cmd_reply(args) -> None:
     me = current_project(args.project)
     orig = find(me, args.id)
-    m = send(args, me, orig["from"], args.subject or f"Re: {orig.get('subject')}", orig["id"])
-    emit(args, public(m), f"sent {m['id']} to {m['to']}")
+    thread = thread_of(orig)
+    rnd = 0
+    if args.kind not in OUTSIDE_ROUNDS:
+        rnd = next_round(conversation(me, thread, [orig["from"]]))
+        if rnd > MAX_ROUNDS and args.kind not in CLOSING:
+            raise InboxError(f"thread {thread} has used its {MAX_ROUNDS} rounds: close it with "
+                             "'--kind agreement' or '--kind impasse', which go to the user")
+    subject = args.subject or "Re: " + re.sub(r"^(Re:\s*)+", "", orig.get("subject", ""))
+    m = send(args, me, orig["from"], subject, args.kind, orig["id"], thread,
+             min(max(rnd, 1), MAX_ROUNDS))
+    emit(args, public(m), f"sent {m['id']} to {m['to']} (thread {thread}, kind {args.kind})")
+
+
+def closing_of(me: str, thread: str) -> tuple[dict, list[dict]]:
+    msgs = conversation(me, thread)
+    closes = [m for m in msgs if m.get("kind") in CLOSING]
+    if not closes:
+        raise InboxError(f"thread {thread} has no agreement or impasse yet")
+    return closes[-1], msgs
+
+
+def cmd_record(args) -> None:
+    """The closing record of a thread, in the fixed report the user reads."""
+    me = current_project(args.project)
+    close, msgs = closing_of(me, args.thread)
+    sec = {k.lower(): v for k, v in sections(close.get("body", "")).items()}
+    first = next((m for m in msgs if m["id"] == args.thread), msgs[0])
+    sides = sorted({x for m in msgs for x in (m.get("from"), m.get("to")) if x})
+    rounds = max([int(m["round"]) for m in msgs if m.get("round", "").isdigit()] or [1])
+    record = {
+        "thread": args.thread, "subject": first.get("subject", "").removeprefix("Re: "),
+        "projects": sides, "rounds": rounds, "outcome": close.get("kind"),
+        "conclusion": sec.get("conclusion", ""), "justification": sec.get("justification", ""),
+        "positions": sec.get("positions", ""), "decision_needed": sec.get("decision needed", ""),
+        "after_approval": sec.get("after approval", ""), "open_points": sec.get("open points", ""),
+        "messages": [m["id"] for m in msgs],
+    }
+    lines = [f"Discussed with: {', '.join(sides)} ({rounds} round(s))",
+             f"Subject: {record['subject']}",
+             f"Outcome: {record['outcome']}", "",
+             "Conclusion:", record["conclusion"], "",
+             "Justification:", record["justification"]]
+    if record["positions"]:
+        lines += ["", "Positions:", record["positions"]]
+    if record["open_points"] and record["open_points"].lower() != "none":
+        lines += ["", "Open points:", record["open_points"]]
+    lines += ["", "Decision needed:", record["decision_needed"], "",
+              "After approval:", record["after_approval"]]
+    emit(args, record, "\n".join(lines))
+
+
+def cmd_decide(args) -> None:
+    """Send the user's decision to every other side of the thread and close the record."""
+    me = current_project(args.project)
+    close, msgs = closing_of(me, args.thread)
+    sides = sorted({x for m in msgs for x in (m.get("from"), m.get("to")) if x and x != me})
+    body = f"### Decision\n{args.choice}\n"
+    if args.note:
+        body += f"\n### Note\n{args.note}\n"
+    body += "\nEach project records this decision in its own backlog.\n"
+    first = next((m for m in msgs if m["id"] == args.thread), msgs[0])
+    subject = "Decision: " + first.get("subject", "").removeprefix("Re: ")
+    sent = [send(args, me, p, subject, "decision", close["id"], args.thread, body=body)
+            for p in sides]
+    if close.get("to") == me and close.get("status") != "done":
+        update(me, close["id"], "done", f"user decided: {args.choice}")
+    emit(args, [public(m) for m in sent],
+         "\n".join(f"sent {m['id']} to {m['to']}" for m in sent))
 
 
 def update(me: str, msg_id: str, status: str, note: str | None, deferred: str = "") -> dict:
@@ -331,6 +637,31 @@ def cmd_list(args) -> None:
     emit(args, [public(m) for m in msgs], "\n".join(row(m) for m in msgs) or "no messages")
 
 
+def cmd_watch(args) -> int:
+    """Poll the listed projects through Git; on news, run the user's command in its folder."""
+    targets = []
+    for t in args.target:
+        name, _, folder = t.partition("=")
+        if name not in projects() or not folder:
+            raise InboxError(f"--target must be <registered project>=<folder>, got '{t}'")
+        targets.append((name, Path(folder).expanduser()))
+    while True:
+        for name, folder in targets:
+            try:
+                news, line = poll(name)
+            except InboxError as exc:
+                print(f"inbox: {exc}", file=sys.stderr)
+                continue
+            if news:
+                print(line, flush=True)
+                subprocess.run(args.exec, shell=True, cwd=folder,
+                               env={**os.environ, "AURORA_PROJECT": name,
+                                    "AURORA_INBOX_SUMMARY": line})
+        if args.once:
+            return 0
+        time.sleep(args.interval)
+
+
 def cmd_projects(args) -> None:
     known = projects()
     emit(args, known, "\n".join(f"- {k}: {v['name']} ({v['url']})" for k, v in known.items()))
@@ -341,22 +672,41 @@ def main() -> int:
     p.add_argument("--project")
     p.add_argument("--json", action="store_true")
     sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("version").set_defaults(func=cmd_version)
+    c = sub.add_parser("poll", help="exit 0 and silent when nothing changed, 10 on news")
+    c.add_argument("--quiet", action="store_true")
+    c.set_defaults(func=cmd_poll)
     c = sub.add_parser("check")
     c.add_argument("--quiet", action="store_true", help="print nothing when nothing is pending")
+    c.add_argument("--no-sent", action="store_true", help="skip the unanswered sent messages")
+    c.add_argument("--stale-hours", type=float, default=48.0)
     c.set_defaults(func=cmd_check)
     s = sub.add_parser("show")
     s.add_argument("id")
     s.set_defaults(func=cmd_show)
+    s = sub.add_parser("template")
+    s.add_argument("kind", choices=list(TEMPLATES))
+    s.set_defaults(func=cmd_template)
     s = sub.add_parser("send")
     s.add_argument("--to", required=True)
     s.add_argument("--subject", required=True)
+    s.add_argument("--kind", default="question", choices=OPENING)
     s.add_argument("--body-file")
     s.set_defaults(func=cmd_send)
     s = sub.add_parser("reply")
     s.add_argument("id")
+    s.add_argument("--kind", required=True, choices=REPLIES)
     s.add_argument("--subject")
     s.add_argument("--body-file")
     s.set_defaults(func=cmd_reply)
+    s = sub.add_parser("record")
+    s.add_argument("thread")
+    s.set_defaults(func=cmd_record)
+    s = sub.add_parser("decide")
+    s.add_argument("thread")
+    s.add_argument("--choice", required=True)
+    s.add_argument("--note")
+    s.set_defaults(func=cmd_decide)
     s = sub.add_parser("status")
     s.add_argument("id")
     s.add_argument("status", choices=STATUSES)
@@ -370,14 +720,19 @@ def main() -> int:
     s.add_argument("--sent", action="store_true")
     s.add_argument("--all", action="store_true")
     s.set_defaults(func=cmd_list)
+    s = sub.add_parser("watch")
+    s.add_argument("--target", action="append", required=True, help="<project>=<folder>")
+    s.add_argument("--exec", required=True, help="local command run in the folder on news")
+    s.add_argument("--interval", type=float, default=300.0)
+    s.add_argument("--once", action="store_true")
+    s.set_defaults(func=cmd_watch)
     sub.add_parser("projects").set_defaults(func=cmd_projects)
     args = p.parse_args()
     try:
-        args.func(args)
+        return args.func(args) or 0
     except InboxError as exc:
         print(f"inbox: {exc}", file=sys.stderr)
         return 1
-    return 0
 
 
 if __name__ == "__main__":

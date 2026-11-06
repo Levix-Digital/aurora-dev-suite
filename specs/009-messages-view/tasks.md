@@ -25,11 +25,11 @@ description: "Tasks of the Messages view adjustments (v0.3.0, ADJ-002)"
 
 ## Phase 2: View (M2)
 
-- [ ] T006 [US1] `from → to` first on rows and message headers in `crates/aurora-ui/src/views/messages.rs`
-- [ ] T007 [US2] Groups Waiting for you, In progress and Closed (collapsed `<details>`), with their colors in `crates/aurora-ui/styles/app.css`
-- [ ] T008 [US3] The conversation panel inside the row's item, one at a time, `aria-expanded`, focus in and out, Escape closes
-- [ ] T009 [US4] The navigation count from `open_total` in `crates/aurora-ui/src/app.rs`, at start and after every poll
-- [ ] T010 Preview check by screenshots (groups, inline panel, count on Portfolio)
+- [x] T006 [US1] `from → to` first on rows and message headers in `crates/aurora-ui/src/views/messages.rs`
+- [x] T007 [US2] Groups Waiting for you, In progress and Closed (collapsed `<details>`), with their colors in `crates/aurora-ui/styles/app.css`
+- [x] T008 [US3] The conversation panel inside the row's item, one at a time, `aria-expanded`, focus in and out, Escape closes
+- [x] T009 [US4] The navigation count from `open_total` in `crates/aurora-ui/src/app.rs`, at start and after every poll
+- [x] T010 Preview check by screenshots (groups, inline panel, count on Portfolio)
 
 ## Phase 3: Docs and manual tests (M3)
 

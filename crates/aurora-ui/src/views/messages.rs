@@ -3,8 +3,8 @@
 //! a field to step into any of them, replies and new conversations from the templates.
 
 use aurora_core::domain::{
-    ClosingRecord, Conversation, Draft, Feature, InboxSetup, Message, MessageKind, MessagesError,
-    ProjectInbox, Section, TemplateSection, UserAction,
+    ClosingRecord, Conversation, ConversationState, Draft, Feature, InboxSetup, Message,
+    MessageKind, MessagesError, ProjectInbox, Section, TemplateSection, UserAction,
 };
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -59,8 +59,10 @@ impl Filter {
 }
 
 /// The total of closing records waiting for the user, for the navigation.
-pub fn waiting_total(inboxes: &[ProjectInbox]) -> usize {
-    inboxes.iter().map(ProjectInbox::waiting_count).sum()
+/// The navigation count: conversations that wait for the user or have unread
+/// received messages, across every project (spec 009, FR-006).
+pub fn open_total(inboxes: &[ProjectInbox]) -> usize {
+    inboxes.iter().map(ProjectInbox::open_count).sum()
 }
 
 fn short_date(date: &str) -> String {
@@ -120,7 +122,7 @@ pub fn MessagesView() -> impl IntoView {
         spawn_local(async move {
             let answer = ctx.backend.get_value().messages_overview().await;
             if let Ok(list) = &answer {
-                ctx.messages_waiting.set(waiting_total(list));
+                ctx.messages_waiting.set(open_total(list));
             }
             inboxes.set(Some(answer));
             loading.set(false);
@@ -210,23 +212,11 @@ pub fn MessagesView() -> impl IntoView {
                             project=project_filter
                             filter=filter
                             open=open
+                            on_done=done
                         />
                     </section>
                 }.into_any(),
             }}
-            {move || open.get().and_then(|(project, thread)| {
-                let all = list();
-                let inbox = all.into_iter().find(|i| i.project.0 == project)?;
-                let conversation = inbox.conversations.iter().find(|c| c.thread == thread)?.clone();
-                Some(view! {
-                    <ConversationPanel
-                        inbox=inbox.clone()
-                        conversation=conversation
-                        on_close=Callback::new(move |()| open.set(None))
-                        on_done=done
-                    />
-                })
-            })}
         </section>
     }
 }
@@ -536,6 +526,7 @@ fn ConversationList(
     project: RwSignal<String>,
     filter: RwSignal<Filter>,
     open: RwSignal<Option<(String, String)>>,
+    on_done: Callback<String>,
 ) -> impl IntoView {
     move || {
         let wanted = project.get();
@@ -556,38 +547,138 @@ fn ConversationList(
         if rows.is_empty() {
             return view! { <p class="muted empty">"No conversation to show."</p> }.into_any();
         }
-        view! {
-            <ul class="items conversations">
-                {rows.into_iter().map(|(inbox, c)| {
-                    let me = inbox.slug.clone().unwrap_or_default();
-                    let target = (inbox.project.0.clone(), c.thread.clone());
-                    let others: Vec<String> = c.projects.iter().filter(|p| **p != me).cloned().collect();
-                    let round = c.round.map(|r| format!(", round {r}")).unwrap_or_default();
+        ConversationState::ALL
+            .into_iter()
+            .map(|state| {
+                let group: Vec<(ProjectInbox, Conversation)> = rows
+                    .iter()
+                    .filter(|(_, c)| c.state() == state)
+                    .cloned()
+                    .collect();
+                if group.is_empty() {
+                    return None;
+                }
+                let (title, class) = state_label(state);
+                let count = group.len();
+                let items = view! {
+                    <ul class=format!("items conversations {class}")>
+                        {group.into_iter().map(|(inbox, c)| view! {
+                            <ConversationRow inbox=inbox conversation=c open=open on_done=on_done />
+                        }).collect_view()}
+                    </ul>
+                };
+                Some(if state == ConversationState::Closed {
                     view! {
-                        <li class="conversation-row">
-                            <button class="link" on:click=move |_| open.set(Some(target.clone()))>
-                                {c.subject.clone()}
-                            </button>
-                            <span class="muted">
-                                {format!(
-                                    " {} with {} · cycle {}{round} · last: {} from {} on {}",
-                                    inbox.name,
-                                    others.join(", "),
-                                    c.cycle,
-                                    c.last.kind,
-                                    c.last.from,
-                                    short_date(&c.last.date)
-                                )}
-                            </span>
-                            {c.waiting_for_user.then(|| view! { " " <span class="badge warn">"Waiting for you"</span> })}
-                            {c.no_answer_yet(&me).then(|| view! { " " <span class="badge muted">"No answer yet"</span> })}
-                            {(c.cycle > 1).then(|| view! { " " <span class="badge info">{format!("{} request(s) of yours", c.user_requests.len())}</span> })}
-                        </li>
+                        <details class=format!("group {class}")>
+                            <summary><h3>{format!("{title} ({count})")}</h3></summary>
+                            {items}
+                        </details>
                     }
-                }).collect_view()}
-            </ul>
+                    .into_any()
+                } else {
+                    view! {
+                        <div class=format!("group {class}")>
+                            <h3>{format!("{title} ({count})")}</h3>
+                            {items}
+                        </div>
+                    }
+                    .into_any()
+                })
+            })
+            .collect_view()
+            .into_any()
+    }
+}
+
+/// The group's title and its class (color).
+fn state_label(state: ConversationState) -> (&'static str, &'static str) {
+    match state {
+        ConversationState::WaitingForYou => ("Waiting for you", "state-waiting"),
+        ConversationState::InProgress => ("In progress", "state-progress"),
+        ConversationState::Closed => ("Closed", "state-closed"),
+    }
+}
+
+/// `from → to` of a message.
+fn route(from: &str, to: &str) -> String {
+    format!("{from} → {to}")
+}
+
+/// One conversation: its row, and the conversation itself right below it when open
+/// (spec 009, US3).
+#[component]
+fn ConversationRow(
+    inbox: ProjectInbox,
+    conversation: Conversation,
+    open: RwSignal<Option<(String, String)>>,
+    on_done: Callback<String>,
+) -> impl IntoView {
+    let me = inbox.slug.clone().unwrap_or_default();
+    let target = (inbox.project.0.clone(), conversation.thread.clone());
+    let is_open = {
+        let target = target.clone();
+        Memo::new(move |_| open.get().as_ref() == Some(&target))
+    };
+    let row = NodeRef::<leptos::html::Button>::new();
+    let c = conversation.clone();
+    let others: Vec<String> = c.projects.iter().filter(|p| **p != me).cloned().collect();
+    let round = c.round.map(|r| format!(", round {r}")).unwrap_or_default();
+    let opener = c
+        .opener
+        .clone()
+        .unwrap_or_else(|| c.projects.first().cloned().unwrap_or_default());
+    let toggle = {
+        let target = target.clone();
+        move |_| {
+            if is_open.get_untracked() {
+                open.set(None);
+            } else {
+                open.set(Some(target.clone()));
+            }
         }
-        .into_any()
+    };
+    let close = Callback::new(move |()| {
+        open.set(None);
+        if let Some(button) = row.get_untracked() {
+            let _ = button.focus();
+        }
+    });
+    view! {
+        <li class="conversation-row">
+            <button
+                class="row-button"
+                node_ref=row
+                aria-expanded=move || if is_open.get() { "true" } else { "false" }
+                on:click=toggle
+            >
+                <span class="route">{route(&c.last.from, &c.last.to)}</span>
+                " "
+                <strong class="subject">{c.subject.clone()}</strong>
+                <span class="muted">
+                    {format!(
+                        " · opened by {opener} · {} with {} · {} message(s) · cycle {}{round} · last: {} on {}",
+                        inbox.name,
+                        others.join(", "),
+                        c.messages,
+                        c.cycle,
+                        c.last.kind,
+                        short_date(&c.last.date)
+                    )}
+                </span>
+            </button>
+            {(c.unread > 0).then(|| view! { " " <span class="badge info">{format!("{} new", c.unread)}</span> })}
+            {c.waiting_for_user.then(|| view! { " " <span class="badge warn">"Waiting for you"</span> })}
+            {c.no_answer_yet(&me).then(|| view! { " " <span class="badge muted">"No answer yet"</span> })}
+            {(c.cycle > 1).then(|| view! { " " <span class="badge info">{format!("{} request(s) of yours", c.user_requests.len())}</span> })}
+            {move || is_open.get().then(|| view! {
+                <ConversationPanel
+                    inbox=inbox.clone()
+                    conversation=conversation.clone()
+                    on_close=close
+                    on_done=on_done
+                />
+            })}
+        </li>
     }
 }
 
@@ -778,8 +869,26 @@ fn ConversationPanel(
         );
     };
     let limited = conversation.next_round > aurora_core::domain::MAX_ROUNDS;
+    // The focus moves into the conversation when it opens (spec 009, US3).
+    let panel = NodeRef::<leptos::html::Section>::new();
+    Effect::new(move |_| {
+        if let Some(section) = panel.get() {
+            let _ = section.focus();
+        }
+    });
     view! {
-        <section class="card conversation" aria-labelledby="conversation-title">
+        <section
+            class="card conversation"
+            aria-labelledby="conversation-title"
+            tabindex="-1"
+            node_ref=panel
+            on:keydown=move |ev| {
+                if ev.key() == "Escape" {
+                    ev.stop_propagation();
+                    on_close.run(());
+                }
+            }
+        >
             <div class="row">
                 <h2 id="conversation-title">{conversation.subject.clone()}</h2>
                 <button class="btn" on:click=move |_| on_close.run(())>"Close"</button>
@@ -804,11 +913,11 @@ fn ConversationPanel(
                         {list.into_iter().map(|m| view! {
                             <li class=format!("message kind-{}", m.header.kind)>
                                 <p class="muted">
-                                    <strong>{m.header.from.clone()}</strong>
+                                    <strong class="route">{route(&m.header.from, &m.header.to)}</strong>
                                     {format!(
-                                        " to {} · {} · {}{}",
-                                        m.header.to,
+                                        " · {} · cycle {} · {}{}",
                                         m.header.kind,
+                                        m.header.cycle,
                                         short_date(&m.header.date),
                                         m.header.round.map(|r| format!(" · round {r}")).unwrap_or_default()
                                     )}
@@ -1024,7 +1133,7 @@ mod tests {
     }
 
     #[test]
-    fn the_navigation_count_adds_every_waiting_record() {
+    fn the_navigation_count_adds_waiting_and_unread() {
         let inbox = |waiting: bool| ProjectInbox {
             project: ProjectId("p".into()),
             name: "p".into(),
@@ -1033,7 +1142,10 @@ mod tests {
             setup: InboxSetup::Ready,
             conversations: vec![conversation(waiting, 1, "b"), conversation(true, 1, "b")],
         };
-        assert_eq!(waiting_total(&[inbox(true), inbox(false)]), 3);
+        assert_eq!(open_total(&[inbox(true), inbox(false)]), 3);
+        let mut unread = inbox(false);
+        unread.conversations[0].unread = 2;
+        assert_eq!(open_total(&[unread]), 2);
         let refused = CommandError::from(MessagesError::Refused {
             message: "a 'question' message needs these sections".into(),
             missing_sections: vec!["Ask".into()],

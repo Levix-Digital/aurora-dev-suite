@@ -7,7 +7,7 @@ version: v0.3.0
 status: in_progress
 author: LeviGuilherme
 created_at: '2026-11-06T16:46:02'
-updated_at: '2026-11-06T16:53:00'
+updated_at: '2026-11-06T16:57:36'
 session_id: null
 tags: []
 supersedes: null
@@ -22,7 +22,9 @@ milestones:
   done_at: '2026-11-06'
   by: LeviGuilherme
 - name: M2 View
-  done: false
+  done: true
+  done_at: '2026-11-06'
+  by: LeviGuilherme
 - name: M3 Docs and manual tests
   done: false
 status_log:
@@ -41,6 +43,9 @@ status_log:
 - at: '2026-11-06T16:53:00'
   by: LeviGuilherme
   note: Milestone 'M1 Core and adapter' completed
+- at: '2026-11-06T16:57:36'
+  by: LeviGuilherme
+  note: Milestone 'M2 View' completed
 ---
 
 # Messages view adjustments

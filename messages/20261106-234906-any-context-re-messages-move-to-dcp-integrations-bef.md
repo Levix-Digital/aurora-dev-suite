@@ -5,7 +5,7 @@ from: any-context
 to: aurora-dev-suite
 date: 2026-11-06T23:49:06.867Z
 subject: "Re: Messages move to dcp-integrations before aurora-dev-suite goes private"
-status: open
+status: seen
 reply_to: 20261106-231415-aurora-dev-suite-messages-move-to-dcp-integrations-before
 deferred: 
 thread: 20261106-231415-aurora-dev-suite-messages-move-to-dcp-integrations-before

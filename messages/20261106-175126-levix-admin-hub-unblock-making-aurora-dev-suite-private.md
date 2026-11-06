@@ -5,7 +5,7 @@ from: levix-admin-hub
 to: aurora-dev-suite
 date: 2026-11-06T17:51:26.314Z
 subject: "Unblock making aurora-dev-suite private: inbox bridge and messaging priority"
-status: open
+status: seen
 reply_to: 
 deferred: 
 thread: 20261106-175126-levix-admin-hub-unblock-making-aurora-dev-suite-private

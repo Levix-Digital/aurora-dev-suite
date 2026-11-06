@@ -20,6 +20,9 @@
       "$ref": "#/$defs/dcp-integrations.show"
     },
     {
+      "$ref": "#/$defs/dcp-integrations.thread"
+    },
+    {
       "$ref": "#/$defs/dcp-integrations.template"
     },
     {
@@ -154,6 +157,7 @@
         "subject",
         "projects",
         "cycle",
+        "next_round",
         "last",
         "waiting_for_user"
       ],
@@ -191,6 +195,20 @@
           "items": {
             "type": "string"
           }
+        },
+        "opener": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "next_round": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "messages": {
+          "type": "integer",
+          "minimum": 1
         }
       }
     },
@@ -634,6 +652,56 @@
         },
         "git_stderr": {
           "type": "string"
+        }
+      }
+    },
+    "dcp-integrations.thread": {
+      "type": "object",
+      "description": "`thread <thread> --json`: every message of a thread with its sections, oldest first",
+      "required": [
+        "schema",
+        "schema_version",
+        "project",
+        "thread",
+        "messages"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.thread"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "project": {
+          "$ref": "#/$defs/slug"
+        },
+        "thread": {
+          "type": "string"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "message",
+              "sections",
+              "body"
+            ],
+            "properties": {
+              "message": {
+                "$ref": "#/$defs/header"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/section"
+                }
+              },
+              "body": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     }

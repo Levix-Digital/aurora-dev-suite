@@ -543,21 +543,123 @@ pub fn poll(cx: &Context) -> Result<Reply> {
     })
 }
 
-fn stale_sent(cx: &Context, hours: f64) -> Vec<Message> {
-    let limit = now() - Duration::from_secs_f64(hours.max(0.0) * 3600.0);
+/// What this project sent, read from its counterparts' inboxes (an unreachable one is
+/// skipped).
+fn sent_all(cx: &Context) -> Vec<Message> {
     let mut out = Vec::new();
     for c in &cx.registry.counterparts {
         let Ok(inbox) = cx.inbox(&c.slug) else {
             continue;
         };
-        out.extend(inbox.into_iter().filter(|m| {
+        out.extend(inbox.into_iter().filter(|m| m.from == cx.me()));
+    }
+    out
+}
+
+fn stale(cx: &Context, sent: &[Message], hours: f64) -> Vec<Message> {
+    let limit = now() - Duration::from_secs_f64(hours.max(0.0) * 3600.0);
+    sent.iter()
+        .filter(|m| {
             m.from == cx.me()
                 && m.status == Status::Open
                 && !matches!(m.kind, Kind::Ack | Kind::Decision)
                 && parse_date(&m.date).is_some_and(|d| d < limit)
-        }));
+        })
+        .cloned()
+        .collect()
+}
+
+/// The user's requests of a thread, in date order.
+fn user_requests(messages: &[Message]) -> Vec<String> {
+    messages
+        .iter()
+        .filter(|m| m.kind == Kind::Guidance)
+        .map(|m| {
+            let text = format::section(&m.sections(), "User request")
+                .map(str::to_owned)
+                .unwrap_or_else(|| m.body.clone());
+            match text.find("\n\nThe user stepped into this conversation.") {
+                Some(i) => text[..i].trim().to_owned(),
+                None => text.trim().to_owned(),
+            }
+        })
+        .collect()
+}
+
+/// Every conversation of this project from what it received and what it sent, the most
+/// recent first.
+fn conversations(
+    cx: &Context,
+    received: &[Message],
+    sent: &[Message],
+    waiting: &[&Message],
+) -> Vec<Value> {
+    let mut all: Vec<Message> = received.iter().chain(sent).cloned().collect();
+    all.sort_by(|a, b| a.date.cmp(&b.date).then_with(|| a.id.cmp(&b.id)));
+    let mut threads: Vec<String> = Vec::new();
+    for m in all.iter().rev() {
+        if !threads.iter().any(|t| t == m.thread_id()) {
+            threads.push(m.thread_id().to_owned());
+        }
     }
-    out
+    threads
+        .iter()
+        .map(|t| {
+            let messages: Vec<Message> =
+                all.iter().filter(|m| m.thread_id() == t).cloned().collect();
+            let first = messages.iter().find(|m| m.id == *t).unwrap_or(&messages[0]);
+            let last = messages.last().unwrap_or(first);
+            let (cycle, current) = rules::current_cycle(&messages);
+            let mut projects: Vec<String> = messages
+                .iter()
+                .flat_map(|m| [m.from.clone(), m.to.clone()])
+                .filter(|p| !p.is_empty())
+                .collect();
+            projects.sort();
+            projects.dedup();
+            json!({
+                "thread": t,
+                "subject": rules::strip_re(&first.subject),
+                "projects": projects,
+                "opener": rules::opener(t, &cx.registry.slugs()),
+                "cycle": cycle,
+                "round": current.iter().filter_map(|m| m.round).max(),
+                "next_round": rules::next_round(&messages),
+                "messages": messages.len(),
+                "last": header(last),
+                "waiting_for_user": waiting.iter().any(|w| w.thread_id() == t),
+                "user_requests": user_requests(&messages),
+            })
+        })
+        .collect()
+}
+
+/// `thread <thread>`: every message of a thread with its sections, oldest first.
+pub fn thread(cx: &Context, thread: &str) -> Result<Reply> {
+    let messages = cx.conversation(thread, None)?;
+    if messages.is_empty() {
+        return Err(Failure::new(
+            "unknown_id",
+            4,
+            format!("thread {thread} is not known to {}", cx.me()),
+        ));
+    }
+    let items: Vec<Value> = messages
+        .iter()
+        .map(|m| json!({ "message": header(m), "sections": m.sections(), "body": m.body }))
+        .collect();
+    let text = messages
+        .iter()
+        .map(|m| format::render(m, &cx.transport.tool))
+        .collect::<Vec<_>>()
+        .join("\n");
+    ok(
+        doc(
+            "thread",
+            json!({ "project": cx.me(), "thread": thread, "messages": items }),
+        ),
+        text,
+    )
 }
 
 pub fn check(
@@ -571,11 +673,9 @@ pub fn check(
     let pending: Vec<&Message> = mine.iter().filter(|m| m.status != Status::Done).collect();
     let slugs = cx.registry.slugs();
     let user = rules::waiting_for_user(cx.me(), &mine, &slugs);
-    let stale = if no_sent {
-        Vec::new()
-    } else {
-        stale_sent(cx, stale_hours)
-    };
+    let sent = if no_sent { Vec::new() } else { sent_all(cx) };
+    let stale = stale(cx, &sent, stale_hours);
+    let conversations = conversations(cx, &mine, &sent, &user);
     if let Ok(url) = cx.url(cx.me())
         && let Ok(Some(tip)) = cx.transport.remote_tip(cx.me(), url)
     {
@@ -589,6 +689,7 @@ pub fn check(
             "waiting_for_user": user.iter().map(|m| header(m)).collect::<Vec<_>>(),
             "messages": pending.iter().map(|m| header(m)).collect::<Vec<_>>(),
             "unanswered_sent": stale.iter().map(header).collect::<Vec<_>>(),
+            "conversations": conversations,
         }),
     );
     if pending.is_empty() && stale.is_empty() {

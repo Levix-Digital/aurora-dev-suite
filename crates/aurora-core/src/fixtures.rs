@@ -250,6 +250,7 @@ pub fn sample_reports() -> Vec<EngineReport> {
             &["doctor", "radar", "scope", "stream", "check-contracts"],
         ),
         any_context,
+        ready_report(EngineKind::Integrations, &["messages"]),
     ]
 }
 

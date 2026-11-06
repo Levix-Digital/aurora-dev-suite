@@ -10,13 +10,16 @@ pub enum EngineKind {
     DevCycle,
     Gedo,
     AnyContext,
+    /// The integrations provider, `dcp-integrations`, shipped with Aurora (ADR-0010).
+    Integrations,
 }
 
 impl EngineKind {
-    pub const ALL: [EngineKind; 3] = [
+    pub const ALL: [EngineKind; 4] = [
         EngineKind::DevCycle,
         EngineKind::Gedo,
         EngineKind::AnyContext,
+        EngineKind::Integrations,
     ];
 
     /// The command name of the engine's binary.
@@ -25,6 +28,7 @@ impl EngineKind {
             EngineKind::DevCycle => "dcp",
             EngineKind::Gedo => "gedo",
             EngineKind::AnyContext => "actx",
+            EngineKind::Integrations => "dcp-integrations",
         }
     }
 
@@ -33,6 +37,7 @@ impl EngineKind {
             EngineKind::DevCycle => "Dev Cycle Protocol",
             EngineKind::Gedo => "Gedo",
             EngineKind::AnyContext => "AnyContext",
+            EngineKind::Integrations => "Integrations",
         }
     }
 
@@ -42,6 +47,7 @@ impl EngineKind {
             EngineKind::DevCycle => "dcp.version",
             EngineKind::Gedo => "gedo.version",
             EngineKind::AnyContext => "actx.version",
+            EngineKind::Integrations => "dcp-integrations.version",
         }
     }
 }

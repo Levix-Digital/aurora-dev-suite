@@ -24,7 +24,7 @@ const SCHEMA_MAJOR: u32 = 1;
 
 const DCP_HINT: &str = "Install the Dev Cycle Protocol (dcp) with its JSON contract";
 
-const CATALOG: [Requirement; 6] = [
+const CATALOG: [Requirement; 7] = [
     Requirement {
         feature: Feature::Portfolio,
         engine: EngineKind::DevCycle,
@@ -67,6 +67,13 @@ const CATALOG: [Requirement; 6] = [
         hint: "Update AnyContext to a version with --json output",
         release: "v0.5.0",
     },
+    Requirement {
+        feature: Feature::Messages,
+        engine: EngineKind::Integrations,
+        capabilities: &[MESSAGES_CAPABILITY],
+        hint: "Install dcp-integrations next to Aurora (it ships with Aurora's packages)",
+        release: "v0.3.0",
+    },
 ];
 
 /// The capability of `dcp` that answers a project's cycle state (`dcp diagnose --json`).
@@ -75,6 +82,9 @@ pub const CYCLE_CAPABILITY: &str = "diagnose";
 /// The capability of `dcp` that reads and changes a project's settings (`dcp config get`
 /// and `dcp config set`, FEAT-027).
 pub const CONFIG_CAPABILITY: &str = "config";
+
+/// The capability of `dcp-integrations` that reads and writes messages (FEAT-031).
+pub const MESSAGES_CAPABILITY: &str = "messages";
 
 /// The `dcp` report when it is ready with the cycle capability at the supported MAJOR;
 /// otherwise what to install or update.
@@ -88,11 +98,19 @@ pub fn usable_dcp_for(
     feature: Feature,
     report: Option<&EngineReport>,
 ) -> Result<&EngineReport, String> {
+    usable_for(feature, report)
+}
+
+/// The report of the engine `feature` needs when it is ready with every capability at
+/// the supported MAJOR; otherwise what to install or update.
+pub fn usable_for(
+    feature: Feature,
+    report: Option<&EngineReport>,
+) -> Result<&EngineReport, String> {
     let requirement = requirement(feature);
     match report {
         Some(report)
-            if report.kind == EngineKind::DevCycle
-                && requirement.engine == EngineKind::DevCycle
+            if report.kind == requirement.engine
                 && requirement
                     .capabilities
                     .iter()
@@ -354,6 +372,22 @@ mod tests {
         );
         assert!(usable_dcp_for(Feature::ProjectSettings, Some(&both)).is_ok());
         assert!(usable_dcp_for(Feature::ProjectSettings, None).is_err());
+    }
+
+    #[test]
+    fn messages_need_the_integrations_provider() {
+        let provider = report(EngineKind::Integrations, EngineStatus::Ready, &["messages"]);
+        assert!(usable_for(Feature::Messages, Some(&provider)).is_ok());
+        let dcp = report(EngineKind::DevCycle, EngineStatus::Ready, &["messages"]);
+        assert!(usable_for(Feature::Messages, Some(&dcp)).is_err());
+        assert!(!matches!(
+            availability(Feature::Messages, &[provider]).state,
+            AvailabilityState::Unavailable { .. }
+        ));
+        assert_eq!(
+            features_of(EngineKind::Integrations),
+            vec![Feature::Messages]
+        );
     }
 
     #[test]

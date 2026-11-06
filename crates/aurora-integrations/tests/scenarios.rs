@@ -426,6 +426,29 @@ fn guide_on_a_thread_and_unanswered_sent_messages() {
     let check = ok(commands::check(&a, false, 0.0, false, "x"));
     assert_eq!(check.json["unanswered_sent"].as_array().unwrap().len(), 2);
     assert!(check.text.contains("Sent and still unread"));
+    let convs = check.json["conversations"].as_array().unwrap();
+    assert_eq!(convs.len(), 1);
+    assert_eq!(
+        (convs[0]["thread"].as_str(), convs[0]["cycle"].as_i64()),
+        (Some(q.as_str()), Some(2))
+    );
+    assert_eq!(convs[0]["opener"], "alpha");
+    assert_eq!(
+        convs[0]["user_requests"],
+        serde_json::json!(["Answer by Friday."])
+    );
+    let t = ok(commands::thread(&a, &q));
+    let kinds: Vec<&str> = t.json["messages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|m| m["message"]["kind"].as_str().unwrap())
+        .collect();
+    assert_eq!(kinds, ["question", "guidance"]);
+    assert_eq!(
+        refused(commands::thread(&a, "20990101-000000-alpha-x")).exit,
+        4
+    );
     let quiet = ok(commands::check(&a, true, 24.0, true, "x"));
     assert!(quiet.text.is_empty());
     // A reply in cycle 2 starts at round 1.

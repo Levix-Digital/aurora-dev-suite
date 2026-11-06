@@ -15,7 +15,7 @@ commands:
   version | init --project <slug> [--name <n>] | add <slug> --url <u> [--name <n>] | validate
   projects | poll | check [--no-sent] [--stale-hours H] | list [--sent] [--all] | show <id>
   template <kind> | send --to <slug> --kind <kind> --subject <s> --body-file <f>
-  reply <id> --kind <kind> [--subject <s>] --body-file <f> | record <thread>
+  reply <id> --kind <kind> [--subject <s>] --body-file <f> | thread <thread> | record <thread>
   decide <thread> (--choice <text> [--note <text>] | --revise <text>) | guide <thread> --text <text>
   status <id> open|seen|done [--note <text>] | defer <id> --reason <text>
   watch --target <slug>=<dir> [--target ...] --exec <cmd> [--interval S] [--once]";
@@ -152,6 +152,7 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
             a.opt("--subject"),
             &body_file(a.need("--body-file")?)?,
         ),
+        "thread" => commands::thread(&cx()?, a.arg(1, "thread")?),
         "record" => commands::record(&cx()?, a.arg(1, "thread")?),
         "decide" => {
             let thread = a.arg(1, "thread")?;

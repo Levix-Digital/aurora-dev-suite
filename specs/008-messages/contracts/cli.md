@@ -10,9 +10,10 @@ Same commands, arguments and text output as the provisional tool 0.3.0 (`aurora/
 | `validate` | `dcp-integrations.status` | 0; 3 invalid |
 | `projects` | `dcp-integrations.list` of counterparts | 0 |
 | `poll` | `dcp-integrations.poll` | 0 nothing new; 10 news (`--json` still answers) |
-| `check [--no-sent] [--stale-hours H]` | `dcp-integrations.check` | 0 |
+| `check [--no-sent] [--stale-hours H] [--quiet]` | `dcp-integrations.check` (with `conversations`, most recent first) | 0 |
 | `list [--sent] [--all]` | `dcp-integrations.list` | 0 |
 | `show <id>` | `dcp-integrations.show` (header, sections, body); marks it seen | 0; 4 unknown id |
+| `thread <thread>` | `dcp-integrations.thread` (every message of the thread with its sections, oldest first) | 0; 4 unknown thread |
 | `template <kind>` | `dcp-integrations.template` | 0 |
 | `send --to <slug> --kind <kind> --subject <s> --body-file <f>` | `dcp-integrations.sent` | 0; 5 refused |
 | `reply <id> --kind <kind> [--subject <s>] --body-file <f>` | `dcp-integrations.sent` | 0; 5 refused |

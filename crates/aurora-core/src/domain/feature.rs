@@ -12,16 +12,18 @@ pub enum Feature {
     ProjectSettings,
     Agents,
     Knowledge,
+    Messages,
 }
 
 impl Feature {
-    pub const ALL: [Feature; 6] = [
+    pub const ALL: [Feature; 7] = [
         Feature::Portfolio,
         Feature::ProjectView,
         Feature::Inbox,
         Feature::ProjectSettings,
         Feature::Agents,
         Feature::Knowledge,
+        Feature::Messages,
     ];
 
     pub const fn display_name(self) -> &'static str {
@@ -32,6 +34,7 @@ impl Feature {
             Feature::ProjectSettings => "Project settings",
             Feature::Agents => "Agent work",
             Feature::Knowledge => "Knowledge",
+            Feature::Messages => "Messages",
         }
     }
 }

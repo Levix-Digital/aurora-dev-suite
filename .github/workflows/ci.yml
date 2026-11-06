@@ -1,5 +1,6 @@
-# Every pull request into main and every push to main (trunk branching), on Linux and
-# Windows (FR-019, research R10).
+# Every pull request into main and every push to main (trunk branching). Pull requests test
+# on Linux only; every push to main, so every commit a release candidate is tagged on, also
+# tests on Windows, where CI minutes cost double (FR-019, research R10).
 name: CI
 
 on:
@@ -68,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "windows-latest"]') }}
     steps:
       - uses: actions/checkout@v4
 

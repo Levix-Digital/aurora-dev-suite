@@ -75,4 +75,5 @@ Implements the ports of `aurora-core`. Runs the engines' binaries and reads and 
 - [ADR-0006](../adr/0006-no-stand-in-adapters-engines-plugged-in-only-through-their-r.md): no stand-in adapters; engines only through their Rust binaries.
 - [ADR-0007](../adr/0007-cross-project-integrations-through-git-on-an-orphan-inbox-br.md): the integrations provider ships with Aurora and plugs into `dcp` through its extension point.
 - [ADR-0009](../adr/0009-conversations-between-projects-in-rounds-that-close-with-a-r.md): the provider declares its points and gate through `describe --json` and offers `poll` for every touchpoint.
+- [ADR-0010](../adr/0010-the-integrations-provider-ships-with-aurora-and-the-inbox-br.md): the provider ships with Aurora, each project keeps its own counterparts, the inbox branch holds only data.
 - [ADR-0004](../adr/0004-local-first-state-derived-from-the-repositories.md): the registry and settings files are the only own state.

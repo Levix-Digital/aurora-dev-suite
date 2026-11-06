@@ -23,7 +23,7 @@ Levi proposed on 2026-11-06 to keep a Rust executable on the `aurora/inbox` bran
 
 This amends ADR-0007.
 
-- **The executable ships with Aurora.** `dcp-integrations` (FEAT-034) is built in this repository, signed, installed by Aurora's installer next to the desktop application (ADR-0008) and updated with it. For machines without Aurora (a CI runner, a server), the same release publishes it as a separate download per platform. Nothing executable is ever stored on an `aurora/inbox` branch.
+- **The executable ships with Aurora.** `dcp-integrations` (FEAT-034) is built in this repository, signed (FEAT-035), installed by Aurora's installer next to the desktop application (ADR-0008) and updated with it. For machines without Aurora (a CI runner, a server), the same release publishes it as a separate download per platform. Nothing executable is ever stored on an `aurora/inbox` branch.
 - **Each project keeps its own list of counterparts.** `.aurora/integrations.json` on the project's work branch (FEAT-029) names the projects it talks to and their repositories; the provider reads it from the project's clone. No central registry, and no project depends on Aurora's repository.
 - **The `aurora/inbox` branch holds only data.** Messages and a small `inbox.json` with the format version (`schema: aurora.inbox`, `schema_version`). Any version of the provider reads a format it knows and refuses, with a clear message, one it does not; the format follows the same rules as the other versioned contracts (MINOR adds optional fields, MAJOR breaks).
 - **Same commands as the provisional tool.** The provider offers the commands of tool 0.3.0 with the same header and kinds (ADR-0009), so messages already written stay readable.

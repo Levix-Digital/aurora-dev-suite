@@ -118,7 +118,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: Every conversation closes with an agreement or an impasse carrying the closing record for the user (ADR-0009): the projects and rounds, the subject, the outcome, conclusion, justification, positions for an impasse, the decision needed with one option recommended, and what each project does after approval. Only the project that opened it presents the record, once, in the user's language; the user's decision goes to every side as a decision message and each project records its own backlog item; no project acts before it. When the conclusion does not satisfy, the user asks for changes instead (decide --revise), which goes to every side and starts a new cycle of up to three rounds ending in a new closing record, until the user decides. For integrations this is the integration gate, declared by the integrations provider through dcp-integrations describe --json and the Dev Cycle's extension point (DCP FEAT-018), not built into the protocol.
+- **Description**: Every conversation closes with an agreement or an impasse carrying the closing record for the user (ADR-0009): the projects and rounds, the subject, the outcome, conclusion, justification, positions for an impasse, the decision needed with one option recommended, and what each project does after approval. Only the project that opened it presents the record, once, in the user's language; the user's decision goes to every side as a decision message and each project records its own backlog item; no project acts before it. When the conclusion does not satisfy, the user asks for changes instead (decide --revise), which goes to every side and starts a new cycle of up to three rounds ending in a new closing record, until the user decides. Recorded in Aurora's Messages tab or with the provider's decide command; the same decision becomes the integration gate in the Dev Cycle with FEAT-036.
 
 ### FEAT-033: Integrations view
 - **Priority**: medium
@@ -134,7 +134,23 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the integrations commands and plugs into dcp through its extension point: external subcommand, registered provider, cycle points discovery, after-merge and before-release-gate, and the integration gate (DCP FEAT-018, dcp v2.11.0; draft contract dcp.extension 1.0 in Levix-Digital/ai-code-agent-skills pull request #86). Registered at user level by Aurora's installer, it only adds items, warnings and its own gate, never weakens the protocol's gates. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing. It declares its cycle points and the integration gate through dcp-integrations describe --json (draft dcp.extension 1.0), and offers poll (one git ls-remote, no fetch) for every touchpoint and an optional watch that runs the user's local command in a project's folder when news arrives (ADR-0009). Shipped with Aurora's installer, signed and updated with it, and published per platform as a separate download for machines without Aurora; nothing executable is stored on an aurora/inbox branch, which holds only messages and inbox.json with the format version (ADR-0010). It replaces the provisional Python tool, which is then removed.
+- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the messages and integrations commands as a standalone command line, usable from a terminal and from Aurora's Messages tab without dcp; plugging it into the Dev Cycle is FEAT-037. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing. It offers poll (one git ls-remote, no fetch) for every touchpoint and an optional watch that runs the user's local command in a project's folder when news arrives (ADR-0009). Shipped with Aurora's installer (signed once FEAT-035 lands) and updated with it, and published per platform as a separate download for machines without Aurora; nothing executable is stored on an aurora/inbox branch, which holds only messages and inbox.json with the format version (ADR-0010). It replaces the provisional Python tool, which is then removed.
+
+### FEAT-036: Integration gate in the Dev Cycle
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, split from FEAT-032 when messages moved to v0.3.0 (Levi)
+- **Plan**: -
+- **Description**: The closing record and the user's decision of FEAT-032 become the integration gate of the Dev Cycle: declared by the integrations provider through dcp-integrations describe --json and the Dev Cycle's extension point (DCP FEAT-018, dcp v2.11.0, draft contract dcp.extension 1.0), decided before gate 8, recorded through dcp-integrations gate <id> approve|reject --json, presented like the protocol's own gates and never built into the protocol.
+
+### FEAT-037: Integrations provider in the Dev Cycle
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-06, split from FEAT-034 when messages moved to v0.3.0 (Levi)
+- **Plan**: -
+- **Description**: dcp-integrations plugs into dcp through its extension point (DCP FEAT-018, dcp v2.11.0; draft contract dcp.extension 1.0 in Levix-Digital/ai-code-agent-skills pull request #86): external subcommand, provider registered at user level by Aurora's installer, describe --json declaring the cycle points discovery, after-merge and before-release-gate and the integration gate (FEAT-036), and the hook commands that run poll and the merge notices (FEAT-030) at those points. It only adds items, warnings and its own gate, never weakens the protocol's gates; a provider that fails or times out is a warning. Without Aurora there is no provider and the step does nothing.
 
 ### FEAT-035: Signed packages
 - **Priority**: medium

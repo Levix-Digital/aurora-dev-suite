@@ -47,7 +47,7 @@ This amends ADR-0007; its transport, layout and gate stay.
 ## Consequences
 
 - Every Levix project's instructions say when to poll, the reply kinds, the templates and the closing record (updated by Levi on 2026-11-06).
-- The provider (FEAT-034) implements the same commands and header as the provisional tool 0.2.0, so moving from one to the other changes no message already written; messages of tool 0.1.x (`kind: message`, no thread) are read as their own threads.
+- The provider (FEAT-034) implements the same commands and header as the provisional tool 0.3.0, so moving from one to the other changes no message already written; messages of tool 0.1.x (`kind: message`, no thread) are read as their own threads.
 - The Integrations view (FEAT-033) and the Inbox show the conversations waiting for the user first and display the closing report as fields.
 - The `after-merge` point may need more than the draft's 30 seconds, since one notice is pushed to every subscribed project; Aurora asked DCP for a per-point limit declared in `describe` (2026-11-06).
 - Verification: the provider's tests cover the round limit, the refusal of incomplete templates, `ack` outside rounds, the closing record shown only to the opener, the decision sent to every side, a user request restarting the rounds in a new cycle, and `poll` making no fetch when nothing changed.

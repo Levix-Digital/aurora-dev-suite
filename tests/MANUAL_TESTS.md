@@ -457,6 +457,111 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Result** (v0.2.0-rc.4): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
+## Messages
+
+These tests need two projects registered in Aurora, each with `.aurora/integrations.json` listing the other (`dcp-integrations init` and `add`), and push access to both repositories. A conversation can be prepared from a terminal with `dcp-integrations` in either folder.
+
+### MT-MSG-001: Decide on a closing record
+
+- **Covers**: Messages view, waiting records (spec 008 US1, FR-001, FR-002, FR-004)
+- **Prerequisites**: a conversation between the two projects closed with an agreement (`reply <id> --kind agreement`) and no decision yet
+- **Steps**:
+  1. Open Messages (Alt+5)
+  2. Read the closing record at the top, pick an option and confirm
+  3. In a terminal, run `dcp-integrations check` in the other project's folder
+- **Expected**:
+  - Step 1 shows the record first and apart, with projects, rounds, cycle, conclusion, justification, positions, open points and the numbered options; the navigation shows its count
+  - Step 2 asks to confirm before anything is sent, then the record leaves the waiting section and the conversation shows a decision
+  - Step 3 lists the decision as a new message for the other project
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-002: Ask for changes and step into a conversation
+
+- **Covers**: guidance and revision (spec 008 US2, FR-005)
+- **Prerequisites**: one closing record waiting, and one other conversation open
+- **Steps**:
+  1. On the record, press "Ask for changes", leave the field empty, then write a request and send it
+  2. Open the other conversation, write in its field and send
+- **Expected**:
+  - With the field empty, sending stays disabled
+  - Step 1 removes the record from the waiting section; the conversation shows a guidance message that starts cycle 2, with the request under "User request"
+  - Step 2 adds a guidance message to that conversation; the next reply counts from round 1 of the new cycle
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-003: Follow and filter the conversations
+
+- **Covers**: conversation list and panel (spec 008 US3, FR-002, FR-003)
+- **Prerequisites**: at least three conversations across the two projects, one of them with a message sent more than 48 hours ago and still unread
+- **Steps**:
+  1. Open Messages and look at the list
+  2. Open a conversation with an unread message
+  3. Filter by one project, then by "Waiting for a project's answer"
+- **Expected**:
+  - Step 1 lists every conversation, most recent first, with its project, subject, last kind, cycle and round; the old unread one is marked "no answer yet"
+  - Step 2 shows the messages oldest first with sender, receiver, kind, cycle, round, date and each section, and the unread message becomes seen
+  - Step 3 shows only the matching conversations each time
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-004: Start a conversation and answer
+
+- **Covers**: new conversation and reply forms (spec 008 US4, FR-006)
+- **Prerequisites**: the two projects ready for messages
+- **Steps**:
+  1. Press "New conversation", pick the sending project, the receiving project and the kind "question"
+  2. Leave a required section empty and send; then fill every section and send
+  3. In the other project's conversation, answer with "answer"
+- **Expected**:
+  - Step 1 offers only the sender's counterparts and shows the sections of the question template, the required ones marked
+  - The first send in step 2 is refused next to the form with the missing sections named, and nothing is written; the second shows the new conversation
+  - Step 3 offers only the kinds the provider allows; after three rounds only agreement and impasse remain
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-005: News arrives without asking
+
+- **Covers**: background poll (spec 008 US5, FR-001, FR-007)
+- **Prerequisites**: Aurora open on Messages, the poll interval at 1 minute in Settings
+- **Steps**:
+  1. From a terminal in the other project's folder, send a question to this project
+  2. Wait up to two minutes
+  3. In Settings, set the interval to 0 (off) and Save; send another message from the terminal and wait two minutes
+- **Expected**:
+  - Step 2 shows "New messages arrived" with "Show them" and the navigation count goes up; nothing reloads by itself while a form is open
+  - Step 3 shows no news until "Check now" or reopening Messages
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-006: The provider from a terminal
+
+- **Covers**: `dcp-integrations` command line (spec 008 US6, FR-008, FR-009, FR-011)
+- **Prerequisites**: the installed package (the provider sits next to `aurora`), a clone of a project's repository (with its `origin` remote) without `.aurora/integrations.json`
+- **Steps**:
+  1. Run `dcp-integrations version`, then `dcp-integrations check` in the folder
+  2. Run `dcp-integrations init --project <slug>`, `dcp-integrations add <other-slug> --url <repository>` and `dcp-integrations validate`
+  3. Run `dcp-integrations check --json`, then `dcp-integrations poll`; echo the exit code
+- **Expected**:
+  - Step 1 prints the version (Aurora's), then says `.aurora/integrations.json` is not found and gives the `init` command
+  - Step 2 writes `.aurora/integrations.json` with the counterpart and `validate` reports it valid
+  - Step 3 answers a document with `schema` `dcp-integrations.check` and `schema_version` 1.0; `poll` exits with 10 when there is news and 0 otherwise
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-007: Without the provider or with a project not set up
+
+- **Covers**: capabilities and setup states (spec 008 FR-011, FR-014)
+- **Prerequisites**: one registered project without `.aurora/integrations.json`; a second run with `dcp-integrations` removed from Aurora's folder and from the PATH
+- **Steps**:
+  1. Open Messages
+  2. Remove the provider, restart Aurora and open Messages
+- **Expected**:
+  - Step 1 lists the project as not set up with the command to set it up, and the other projects work normally
+  - Step 2 says once that the provider is missing and how to install it; nothing else runs and Aurora stays responsive
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
 ## Packages
 
 These tests use the packages of a release (or of a dry run of the release workflow, in the run's artifacts), not a build from source.

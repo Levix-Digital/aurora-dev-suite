@@ -1,6 +1,6 @@
 # Desktop commands added by this feature
 
-Same conventions as `specs/001-foundations/contracts/desktop-commands.md`: arguments and results are `aurora-core` types serialized with serde in `camelCase`; every command returns `Result<T, CommandError>`; a `MessagesError` comes back as `CommandError { kind: "messages", message }` with `detail` holding the serialized error.
+Same conventions as `specs/001-foundations/contracts/desktop-commands.md`: arguments and results are `aurora-core` types serialized with serde in `camelCase`; every command returns `Result<T, CommandError>`; a `MessagesError` comes back as `CommandError { kind: "messages", message }` with `messages` holding the serialized error.
 
 | Command | Arguments | Result | Use case |
 |---|---|---|---|

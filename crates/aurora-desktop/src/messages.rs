@@ -208,10 +208,8 @@ pub async fn messages_poll(app: AppHandle, state: State<'_, AppState>) -> Reply<
 
 /// How long to wait before the next background poll; `None` when it is off.
 pub fn next_wait(settings: &Settings) -> Option<Duration> {
-    settings
-        .messages_poll_minutes
-        .filter(|minutes| *minutes > 0)
-        .map(|minutes| Duration::from_secs(u64::from(minutes.min(24 * 60)) * 60))
+    let minutes = settings.messages_poll_minutes.min(24 * 60);
+    (minutes > 0).then(|| Duration::from_secs(u64::from(minutes) * 60))
 }
 
 /// The results worth an event: only the projects whose inbox changed.
@@ -272,10 +270,10 @@ mod tests {
     fn the_timer_follows_the_setting_and_emits_only_changes() {
         let mut s = Settings::default();
         assert_eq!(next_wait(&s), Some(Duration::from_secs(300)));
-        s.messages_poll_minutes = None;
+        s.messages_poll_minutes = 0;
         assert_eq!(next_wait(&s), None);
-        s.messages_poll_minutes = Some(0);
-        assert_eq!(next_wait(&s), None);
+        s.messages_poll_minutes = 100_000;
+        assert_eq!(next_wait(&s), Some(Duration::from_secs(24 * 3600)));
         assert_eq!(news(vec![result("a", false)]), None);
         assert_eq!(
             news(vec![result("a", false), result("b", true)]),

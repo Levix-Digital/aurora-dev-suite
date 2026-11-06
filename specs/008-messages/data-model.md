@@ -71,6 +71,6 @@ Rules (ADR-0009): a round is one message from each side; after three rounds of t
 
 Checks in the core before any command runs: an empty required section, a kind not allowed for a reply at this point (round limit), an empty user text, a body over 256 KiB.
 
-Settings (`domain/settings.rs`): `messages_poll_minutes: Option<u32>` (default 5, `None` = off), and the provider's location under the existing engine settings.
+Settings (`domain/settings.rs`): `messages_poll_minutes: u32` (default 5, 0 = off, kept in `settings.toml` as `messagesPollMinutes`), and the provider's location under the existing engine settings.
 
 Feature (`domain/feature.rs`): `Feature::Messages`, needing engine `EngineKind::Integrations` (`dcp-integrations`, version schema `dcp-integrations.version`) MAJOR 1, release v0.3.0.

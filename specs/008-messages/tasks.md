@@ -68,11 +68,11 @@ description: "Tasks of the Messages between projects feature (v0.3.0, FEAT-029, 
 
 ## Phase 5: Packaging, docs and manual tests (M5)
 
-- [ ] T024 [US6] Tauri `bundle.externalBin` for `dcp-integrations`; `release.yml` builds it, bundles it and uploads it alone with its checksum; `xtask release-check` checks its version
-- [ ] T025 [P] `docs/architecture/integrations.md` (new), and in place `core.md`, `engines.md`, `ui.md`, `desktop.md`; `TECDOC.md` index
-- [ ] T026 [P] README: the Messages view, the command line, setting up `.aurora/integrations.json`
-- [ ] T027 Manual tests MT-MSG-001 to MT-MSG-007 in `tests/MANUAL_TESTS.md`, checked with `quality-assurance manual_tests validate`
-- [ ] T028 Mark the milestones done in `docs/plans/messages.md`, the backlog items in the pull request that closes the plan
+- [x] T024 [US6] Tauri `bundle.externalBin` for `dcp-integrations`; `release.yml` builds it, bundles it and uploads it alone with its checksum; `xtask release-check` checks its version
+- [x] T025 [P] `docs/architecture/integrations.md` (new), and in place `core.md`, `engines.md`, `ui.md`, `desktop.md`; `TECDOC.md` index
+- [x] T026 [P] README: the Messages view, the command line, setting up `.aurora/integrations.json`
+- [x] T027 Manual tests MT-MSG-001 to MT-MSG-007 in `tests/MANUAL_TESTS.md`, checked with `quality-assurance manual_tests validate`
+- [x] T028 Mark the milestones done in `docs/plans/messages.md`, the backlog items in the pull request that closes the plan
 
 ---
 

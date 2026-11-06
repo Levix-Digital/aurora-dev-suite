@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Messages between projects
 kind: feature
 version: v0.3.0
-status: in_progress
+status: completed
 author: Levi
 created_at: '2026-11-06T13:13:30'
-updated_at: '2026-11-06T14:01:18'
+updated_at: '2026-11-06T14:13:30'
 session_id: null
 tags: []
 supersedes: null
@@ -38,7 +38,9 @@ milestones:
   done_at: '2026-11-06'
   by: LeviGuilherme
 - name: M5 Packaging, docs and manual tests
-  done: false
+  done: true
+  done_at: '2026-11-06'
+  by: LeviGuilherme
 status_log:
 - at: '2026-11-06T13:13:30'
   by: Levi
@@ -60,6 +62,13 @@ status_log:
 - at: '2026-11-06T14:01:18'
   by: LeviGuilherme
   note: Milestone 'M4 Messages view' completed
+- at: '2026-11-06T14:13:30'
+  by: LeviGuilherme
+  note: Milestone 'M5 Packaging, docs and manual tests' completed
+- at: '2026-11-06T14:13:30'
+  by: LeviGuilherme
+  status: completed
+  note: All milestones completed
 ---
 
 # Messages between projects

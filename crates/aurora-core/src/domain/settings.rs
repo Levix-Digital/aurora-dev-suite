@@ -61,8 +61,8 @@ pub struct Settings {
     pub version: u32,
     pub theme: ThemeChoice,
     pub engines: EnginesSettings,
-    /// Minutes between two background polls of the projects' inboxes; `None` turns it off.
-    pub messages_poll_minutes: Option<u32>,
+    /// Minutes between two background polls of the projects' inboxes; 0 turns it off.
+    pub messages_poll_minutes: u32,
 }
 
 impl Settings {
@@ -75,7 +75,7 @@ impl Default for Settings {
             version: SETTINGS_VERSION,
             theme: ThemeChoice::System,
             engines: EnginesSettings::default(),
-            messages_poll_minutes: Some(Settings::DEFAULT_POLL_MINUTES),
+            messages_poll_minutes: Settings::DEFAULT_POLL_MINUTES,
         }
     }
 }

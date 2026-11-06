@@ -12,7 +12,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-06, v0.3.0-rc.2
 - **Plan**: -
-- **Description**: The provider's first read of a project fetches the inbox branch of every counterpart into its caches, which takes more than the engines' general 10 s limit: AnyContext showed 'not reachable: dcp-integrations did not answer within 10 s' and answered from a terminal right after (Levi, 2026-11-06).
+- **Description**: The provider's first read of a project fetches the inbox branch of every counterpart into its caches, and Aurora runs one check per project (four at once), so a read of the view fetched each inbox up to six times, several at once on the same cache; on Windows each fetch also asks Git's credential helper, so it took more than the engines' general 10 s limit: AnyContext and levix-admin-hub showed 'not reachable: dcp-integrations did not answer within 10 s' (Levi, 2026-11-06). Fix: a 60 s default for the provider, and read-only commands reuse a fetch younger than 30 s with one fetch per cache at a time.
 
 ## Features
 

@@ -167,6 +167,7 @@ impl Context {
             cache,
             identity: Identity::of_project(root),
             tool: tool.to_owned(),
+            reuse_fetch: None,
         };
         Ok(Context {
             root: root.to_path_buf(),

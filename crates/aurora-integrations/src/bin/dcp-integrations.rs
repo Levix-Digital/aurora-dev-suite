@@ -108,6 +108,14 @@ fn root_of(dir: &Path) -> PathBuf {
 fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
     let cache = transport::default_cache();
     let cx = || Context::open(root, cache.clone(), VERSION);
+    // Read-only commands reuse a fetch of the last seconds: Aurora runs one per project
+    // and each reads every counterpart's inbox (BUG-008).
+    let reading = || {
+        cx().map(|mut c| {
+            c.transport.reuse_fetch = Some(transport::REUSE_FETCH);
+            c
+        })
+    };
     match command {
         "version" => commands::version(VERSION),
         "template" => commands::template(a.arg(1, "kind")?),
@@ -129,15 +137,15 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
                 None => 24.0,
             };
             commands::check(
-                &cx()?,
+                &reading()?,
                 a.flag("--no-sent"),
                 hours,
                 a.flag("--quiet"),
                 "dcp-integrations",
             )
         }
-        "list" => commands::list(&cx()?, a.flag("--sent"), a.flag("--all")),
-        "show" => commands::show(&cx()?, a.arg(1, "id")?),
+        "list" => commands::list(&reading()?, a.flag("--sent"), a.flag("--all")),
+        "show" => commands::show(&reading()?, a.arg(1, "id")?),
         "send" => commands::send(
             &cx()?,
             a.need("--to")?,
@@ -152,8 +160,8 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
             a.opt("--subject"),
             &body_file(a.need("--body-file")?)?,
         ),
-        "thread" => commands::thread(&cx()?, a.arg(1, "thread")?),
-        "record" => commands::record(&cx()?, a.arg(1, "thread")?),
+        "thread" => commands::thread(&reading()?, a.arg(1, "thread")?),
+        "record" => commands::record(&reading()?, a.arg(1, "thread")?),
         "decide" => {
             let thread = a.arg(1, "thread")?;
             match (a.opt("--choice"), a.opt("--revise")) {

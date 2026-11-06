@@ -122,6 +122,62 @@ const COUNTER: &str = "### Answer\nCounter.\n\n### Per point\n1. Use 1.1 instead
 const AGREEMENT: &str = "### Answer\nAgree.\n\n### Conclusion\nAdopt 1.1.\n\n### Justification\nIt keeps the dates.\n\n### Decision needed\n1. Adopt 1.1\n2. Keep 1.0\n\n### After approval\nBoth record it.\n";
 
 #[test]
+fn reads_reuse_a_recent_fetch_and_writes_never_do() {
+    // BUG-008: one command per project must not fetch every inbox again.
+    let w = World::new();
+    let alpha = url(&w.root, "alpha");
+    let beta = w.cx("beta");
+    ok(commands::send(
+        &beta, "alpha", "question", "Format", QUESTION,
+    ));
+    let mut reader = w.cx("alpha").transport;
+    reader.reuse_fetch = Some(aurora_integrations::transport::REUSE_FETCH);
+    assert_eq!(reader.read_inbox("alpha", &alpha).unwrap().len(), 1);
+    // Another project writes: a read within the interval keeps the cached tip...
+    ok(commands::send(
+        &beta,
+        "alpha",
+        "notice",
+        "Second",
+        "Just so you know.\n",
+    ));
+    assert_eq!(reader.read_inbox("alpha", &alpha).unwrap().len(), 1);
+    // ...a reader that does not reuse fetches it...
+    let mut fresh = reader.clone();
+    fresh.reuse_fetch = None;
+    assert_eq!(fresh.read_inbox("alpha", &alpha).unwrap().len(), 2);
+    // ...and a write starts from the remote tip, then leaves the cache on its own commit.
+    reader
+        .write_files(
+            "alpha",
+            &alpha,
+            &[("messages/extra.md".into(), "x".into())],
+            "extra",
+        )
+        .unwrap();
+    let files = git(
+        &w.remote("alpha"),
+        &["ls-tree", "-r", "--name-only", "aurora/inbox"],
+    );
+    assert_eq!(
+        files.lines().filter(|l| l.starts_with("messages/")).count(),
+        3
+    );
+    // A lock left by a process that died does not block the next fetch for long.
+    let lock = w.root.join("cache-alpha").join("alpha.git.lock");
+    std::fs::write(&lock, "").unwrap();
+    let old = std::time::SystemTime::now() - std::time::Duration::from_secs(600);
+    std::fs::File::options()
+        .write(true)
+        .open(&lock)
+        .unwrap()
+        .set_modified(old)
+        .unwrap();
+    assert!(fresh.fetch("alpha", &alpha).unwrap().1.is_some());
+    assert!(!lock.exists());
+}
+
+#[test]
 fn transport_reads_writes_and_checks_the_format() {
     let w = World::new();
     let cx = w.cx("alpha");
@@ -169,6 +225,7 @@ fn transport_reads_writes_and_checks_the_format() {
             email: "x@example.org".into(),
         },
         tool: TOOL.into(),
+        reuse_fetch: None,
     };
     stale.fetch("alpha", &alpha).unwrap();
     ok(commands::send(

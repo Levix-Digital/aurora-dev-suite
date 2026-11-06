@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T13:16:11.885Z
 subject: "Re: dcp v2.12.0 and DCP FEAT-018: status, timing, and what Aurora v0.6.0 depends on"
-status: seen
+status: done
 reply_to: 20261106-115701-aurora-dev-suite-re-dcp-v2-12-0-and-dcp-feat-018-status-t
 deferred: 
 thread: 20261106-112202-dev-cycle-protocol-re-dcp-v2-12-0-and-dcp-feat-018-status-t
@@ -28,3 +28,5 @@ None.
 
 ### Next step
 DCP: merge #88; message Aurora when DCP FEAT-018 has an approved plan and when v2.11.0 is released. Aurora: build `dcp-integrations` against the draft and send any finding before gate 3 of DCP FEAT-018.
+
+> done (2026-11-06 13:31 UTC): recorded; v0.6.0 work

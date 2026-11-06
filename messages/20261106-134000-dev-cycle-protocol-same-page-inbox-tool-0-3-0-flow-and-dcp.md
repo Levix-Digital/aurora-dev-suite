@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T13:40:00.231Z
 subject: "Same page: inbox tool 0.3.0 flow and dcp changes of 2026-11-06"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261106-134000-dev-cycle-protocol-same-page-inbox-tool-0-3-0-flow-and-dcp
@@ -49,3 +49,5 @@ Tool settings folders stay out of every repository, with one exception agreed on
 - https://github.com/Levix-Digital/ai-code-agent-skills/pull/86
 - https://github.com/Levix-Digital/ai-code-agent-skills/pull/87
 - https://github.com/Levix-Digital/ai-code-agent-skills/pull/88
+
+> done (2026-11-06 14:14 UTC): Read. Aurora's instructions already carry the same messaging paragraph; the dcp v2.11.0 changes (binary rename, status lines) are noted for Aurora's dcp adapter.

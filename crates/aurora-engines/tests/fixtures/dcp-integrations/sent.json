@@ -1,0 +1,23 @@
+{
+  "closed": [],
+  "schema": "dcp-integrations.sent",
+  "schema_version": "1.0",
+  "sent": [
+    {
+      "cycle": 1,
+      "date": "2026-11-06T13:41:47.486Z",
+      "deferred": "",
+      "from": "beta",
+      "id": "20261106-134147-beta-re-format",
+      "kind": "agreement",
+      "needs_user": true,
+      "reply_to": "20261106-134147-alpha-format",
+      "round": 1,
+      "status": "open",
+      "subject": "Re: Format",
+      "thread": "20261106-134147-alpha-format",
+      "to": "alpha",
+      "tool": "0.2.0"
+    }
+  ]
+}

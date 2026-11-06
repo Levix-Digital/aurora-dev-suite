@@ -20,8 +20,10 @@ The Tauri 2 application: composition root, commands exposed to the interface, en
 | File | Holds |
 |---|---|
 | `src/main.rs` | start-up: logging, plugins, state, commands |
-| `src/state.rs` | `AppState`: `TomlRegistry`, `TomlSettings`, `CliProbe`, `DcpCycleSource`, `DcpConfigSource` and the last engines overview |
-| `src/commands.rs` | the commands and `CommandError { kind, message, detail, config }` (`detail` holds the `CycleError` of the `cycle` kind, `config` the `ConfigError` of the `config` kind) |
+| `src/state.rs` | `AppState`: `TomlRegistry`, `TomlSettings`, `CliProbe`, `DcpCycleSource`, `DcpConfigSource`, `ProviderMessagesSource` and the last engines overview |
+| `src/commands.rs` | the commands and `CommandError { kind, message, detail, config, messages }` (`detail` holds the `CycleError` of the `cycle` kind, `config` the `ConfigError` of the `config` kind, `messages` the `MessagesError` of the `messages` kind) |
+| `src/messages.rs` | the six messages commands, at most four provider processes at once, and the background poll |
+| `tauri.release.conf.json` | merged by the release build: `bundle.externalBin` with `binaries/dcp-integrations` |
 | `src/events.rs` | `probe_all`: one thread per engine |
 | `src/logging.rs` | the log file |
 | `tauri.conf.json` | window, content security policy, frontend location, packages (`bundle`) |
@@ -32,15 +34,17 @@ The bin is `aurora`. Without the `custom-protocol` feature it loads the interfac
 
 ## Behavior
 
-**Commands.** `list_projects`, `add_project`, `pick_and_add_project` (the system folder dialog, opened from Rust), `rename_project`, `remove_project`, `relocate_project`, `engines_overview`, `refresh_engines`, `get_settings`, `save_settings`, `project_cycle_state` (a project's cycle state through `dcp`, using the last engine probe and probing first when none ran), `project_config`, `preview_project_config` and `apply_project_config` (a project's Dev Cycle settings through `dcp config`, the same way). Each runs on Tauri's blocking pool and returns the core's types or a `CommandError`.
+**Commands.** `list_projects`, `add_project`, `pick_and_add_project` (the system folder dialog, opened from Rust), `rename_project`, `remove_project`, `relocate_project`, `engines_overview`, `refresh_engines`, `get_settings`, `save_settings`, `project_cycle_state` (a project's cycle state through `dcp`, using the last engine probe and probing first when none ran), `project_config`, `preview_project_config` and `apply_project_config` (a project's Dev Cycle settings through `dcp config`, the same way), and `messages_overview`, `messages_conversation`, `messages_record`, `messages_template`, `messages_act` and `messages_poll` (messages between projects through `dcp-integrations`, the same way; specs/008-messages/contracts/desktop-commands.md). Each runs on Tauri's blocking pool and returns the core's types or a `CommandError`.
 
 **Engines.** `engines_overview` returns the last overview, probing and waiting the first time; concurrent first calls (the Portfolio's parallel reads at start-up) wait for a single probe. `refresh_engines` returns at once and probes in the background. Each engine is probed on its own thread and emitted as `engine-report` when done; `engines-ready` carries the overview once all three finished, so a hanging engine delays only its own report.
+
+**Messages poll.** At start-up a thread waits `messages_poll_minutes` (checking the setting again every minute while it is off), then polls every registered project with the provider of the last probe, and emits `messages-news` with the projects whose inbox changed; nothing is emitted when nothing changed or no probe ran yet.
 
 **Security.** The capability file grants only Aurora's commands and event listening; no file system, shell, HTTP or dialog permission reaches the web view. The content security policy allows only the application's own scripts (plus `wasm-unsafe-eval`), styles and the IPC channel, and no remote origin.
 
 **Logging.** `tracing` writes a daily file `aurora.<date>.log` in `logs` under the user's data directory (`~/.local/share/aurora` on Linux, `%LOCALAPPDATA%\Levix\Aurora\data` on Windows), keeping five files. The level comes from `AURORA_LOG` (default `info`). When the window cannot start, the error goes to the log and standard error, with the WebKitGTK package names on Linux. A missing WebKitGTK library stops the binary before `main`, so the loader's message names the library; packages declare the dependency from v0.2.0.
 
-**Packages.** `cargo tauri build` in this crate builds the release interface (`beforeBuildCommand`), the binary with `custom-protocol` and the packages of the `bundle` section in `target/release/bundle`: `nsis/Aurora_<version>_x64-setup.exe` (installed for the current user in `%LOCALAPPDATA%\Aurora`, with a Start menu entry, an uninstaller and the WebView2 bootstrapper embedded), `deb/` (`/usr/bin/aurora`, a desktop entry and icons; depends on WebKitGTK 4.1 and GTK 3) and `appimage/` (the binary with its libraries). The version is the workspace version. Packages leave the user's configuration and data folders alone on uninstall. The release workflow builds and publishes them (ADR-0008).
+**Packages.** `cargo tauri build` in this crate builds the release interface (`beforeBuildCommand`), the binary with `custom-protocol` and the packages of the `bundle` section in `target/release/bundle`: `nsis/Aurora_<version>_x64-setup.exe` (installed for the current user in `%LOCALAPPDATA%\Aurora`, with a Start menu entry, an uninstaller and the WebView2 bootstrapper embedded), `deb/` (`/usr/bin/aurora`, a desktop entry and icons; depends on WebKitGTK 4.1 and GTK 3) and `appimage/` (the binary with its libraries). The release build first builds `dcp-integrations`, copies it as `binaries/dcp-integrations-<target triple>` and passes `--config tauri.release.conf.json`, so the packages put it next to `aurora` (ADR-0010); a plain `cargo build` needs no provider. The version is the workspace version. Packages leave the user's configuration and data folders alone on uninstall. The release workflow builds and publishes them (ADR-0008).
 
 ## Interfaces
 

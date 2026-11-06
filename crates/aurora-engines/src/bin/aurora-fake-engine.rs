@@ -13,6 +13,12 @@
 //! `config set --json [--dry-run] --dir <root> ...` with `preview.json` or `applied.json`,
 //! writing its arguments to `<file>.args` (one per line); with the modes refused and stale
 //! it answers those samples, and unsupported and invalid as above.
+//!
+//! As `dcp-integrations` it answers `--json [--dir <root>] <command> ...` with the samples
+//! in `tests/fixtures/dcp-integrations`, writing its arguments to `<file>.args` and the
+//! content of a `--body-file` to `<file>.body`; `poll` exits with 10 (news). With the
+//! modes refused and git it answers those error documents, quiet answers `poll` without
+//! news, and unsupported and invalid as above.
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -44,6 +50,8 @@ fn main() {
         Some(("config", "get" | "set"))
     );
 
+    let provider = engine == "dcp-integrations" && args.first().is_some_and(|a| a == "--json");
+
     if args == ["--sleep-forever"] {
         std::thread::sleep(Duration::from_secs(120));
         return;
@@ -72,6 +80,7 @@ fn main() {
                 .spawn();
             println!("{engine} 1.2.3");
         }
+        _ if provider => provider_reply(&exe, &mode, &args),
         _ if config && engine == "dcp" => config_reply(&exe, &mode, &args),
         _ if diagnose_root.is_some() && engine == "dcp" => {
             diagnose(&mode, diagnose_root.as_deref().unwrap_or_default());
@@ -156,6 +165,108 @@ fn config_reply(exe: &std::path::Path, mode: &str, args: &[String]) {
     println!("{reply}");
 }
 
+const INTEGRATIONS: [(&str, &str); 10] = [
+    (
+        "projects",
+        include_str!("../../tests/fixtures/dcp-integrations/projects.json"),
+    ),
+    (
+        "check",
+        include_str!("../../tests/fixtures/dcp-integrations/check.json"),
+    ),
+    (
+        "thread",
+        include_str!("../../tests/fixtures/dcp-integrations/thread.json"),
+    ),
+    (
+        "record",
+        include_str!("../../tests/fixtures/dcp-integrations/record.json"),
+    ),
+    (
+        "template",
+        include_str!("../../tests/fixtures/dcp-integrations/template.json"),
+    ),
+    (
+        "sent",
+        include_str!("../../tests/fixtures/dcp-integrations/sent.json"),
+    ),
+    (
+        "status",
+        include_str!("../../tests/fixtures/dcp-integrations/status.json"),
+    ),
+    (
+        "poll",
+        include_str!("../../tests/fixtures/dcp-integrations/poll-news.json"),
+    ),
+    (
+        "refused",
+        include_str!("../../tests/fixtures/dcp-integrations/error-refused.json"),
+    ),
+    (
+        "git",
+        include_str!("../../tests/fixtures/dcp-integrations/error-git.json"),
+    ),
+];
+
+fn integrations(name: &str) -> serde_json::Value {
+    let text = INTEGRATIONS
+        .iter()
+        .find(|(n, _)| *n == name)
+        .map(|(_, t)| *t)
+        .unwrap_or_default();
+    serde_json::from_str(text).unwrap_or_default()
+}
+
+fn provider_reply(exe: &std::path::Path, mode: &str, args: &[String]) {
+    let sibling = |ext: &str, text: &str| {
+        let mut file = exe.as_os_str().to_owned();
+        file.push(ext);
+        let _ = std::fs::write(PathBuf::from(file), text);
+    };
+    sibling(".args", &args.join("\n"));
+    if let Some(body) = args
+        .iter()
+        .position(|a| a == "--body-file")
+        .and_then(|at| args.get(at + 1))
+    {
+        sibling(".body", &std::fs::read_to_string(body).unwrap_or_default());
+    }
+    let rest: Vec<&str> = args.iter().skip(1).map(String::as_str).collect();
+    let command = match rest.as_slice() {
+        ["--dir", _, command, ..] | [command, ..] => *command,
+        [] => "",
+    };
+    let name = match command {
+        "send" | "reply" | "decide" | "guide" => "sent",
+        "status" | "defer" => "status",
+        other => other,
+    };
+    let mut reply = match mode {
+        "refused" | "git" if !matches!(name, "projects" | "check" | "template") => {
+            integrations(mode)
+        }
+        _ => integrations(name),
+    };
+    let mut code = 0;
+    match mode {
+        "unsupported" => reply["schema_version"] = "2.0".into(),
+        "invalid" => reply["conversations"] = "none".into(),
+        "quiet" if name == "poll" => {
+            reply = serde_json::json!({"schema": "dcp-integrations.poll", "schema_version": "1.0", "project": "alpha", "changed": false});
+        }
+        "refused" => code = 5,
+        "git" => code = 1,
+        _ if name == "poll" => code = 10,
+        _ => {}
+    }
+    if reply.is_null() {
+        eprintln!("error: unexpected arguments {args:?}");
+        std::process::exit(2);
+    }
+    println!("{reply}");
+    std::process::exit(code);
+}
+
 fn mode_of(exe: &std::path::Path) -> String {
     let mut mode_file = exe.as_os_str().to_owned();
     mode_file.push(".mode");
@@ -171,6 +282,7 @@ fn capabilities(engine: &str) -> String {
         "dcp" => &["diagnose", "config"],
         "gedo" => &["doctor", "radar", "scope", "stream"],
         "actx" => &["ask", "workspaces"],
+        "dcp-integrations" => &["messages"],
         _ => &[],
     };
     names

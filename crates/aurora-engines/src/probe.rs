@@ -15,17 +15,32 @@ use crate::runner::{self, CommandOutput, CommandSpec, RunError};
 pub struct CliProbe {
     /// Replaces the system search path; used by tests.
     search_path: Option<std::ffi::OsString>,
+    /// Aurora's own folder, where its packages put `dcp-integrations` (ADR-0010).
+    bundled_dir: Option<PathBuf>,
 }
 
 impl CliProbe {
+    /// Looks next to Aurora's executable for the engines it ships, then on the search path.
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            search_path: None,
+            bundled_dir: std::env::current_exe()
+                .ok()
+                .and_then(|exe| exe.parent().map(Path::to_path_buf)),
+        }
+    }
+
+    /// Looks for the engines Aurora ships in `dir` first.
+    pub fn with_bundled_dir(mut self, dir: &Path) -> Self {
+        self.bundled_dir = Some(dir.to_path_buf());
+        self
     }
 
     /// A probe that looks for engines only in `dirs` instead of the system search path.
     pub fn with_search_path(dirs: &[&Path]) -> Self {
         Self {
             search_path: std::env::join_paths(dirs).ok(),
+            bundled_dir: None,
         }
     }
 
@@ -39,6 +54,18 @@ impl CliProbe {
                     path.display()
                 ))
             };
+        }
+        if kind == EngineKind::Integrations
+            && let Some(dir) = &self.bundled_dir
+        {
+            let bundled = dir.join(format!(
+                "{}{}",
+                kind.command(),
+                std::env::consts::EXE_SUFFIX
+            ));
+            if bundled.is_file() {
+                return Ok(bundled);
+            }
         }
         let found = match &self.search_path {
             Some(dirs) => which::which_in(kind.command(), Some(dirs), "."),

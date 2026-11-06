@@ -34,6 +34,7 @@ mod tests {
             engine_status(&probe, EngineKind::AnyContext, &settings),
             engine_status(&probe, EngineKind::DevCycle, &settings),
             engine_status(&probe, EngineKind::Gedo, &settings),
+            engine_status(&probe, EngineKind::Integrations, &settings),
         ];
         let overview = overview(reports);
         let kinds: Vec<_> = overview.reports.iter().map(|r| r.kind).collect();

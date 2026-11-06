@@ -8,9 +8,10 @@ This first release lays the foundations. You open Aurora on Windows or Linux, re
 
 - **Portfolio** of the Git repositories you follow: add them from a folder dialog or a path, rename, remove and locate moved ones; the list is kept between sessions.
 - **Engines** view: whether `dcp`, `gedo` and `actx` are installed, their version and capabilities, what each one enables, what to install or update, and the last error output of an engine that failed.
+- **Messages** between your projects: the conclusions waiting for your decision first, with decide and ask for changes, every conversation with its rounds, and new conversations from templates, through `dcp-integrations`, which ships with Aurora.
 - **Light and dark** Aurora Borealis themes that follow your system, or your choice.
 - **Keyboard first**: every view and control works without the mouse.
-- **Local only**: Aurora keeps a project list and its settings on your machine, never touches your repositories, and sends nothing over the network.
+- **Local first**: Aurora keeps a project list and its settings on your machine and never changes your working trees. Messages between projects travel on each repository's `aurora/inbox` branch, through `dcp-integrations` and your own Git credentials.
 
 ## Requirements
 
@@ -55,7 +56,7 @@ cd crates/aurora-ui && trunk build --release && cd ../..
 cargo build -p aurora-desktop --release --features custom-protocol
 ```
 
-The application is `target/release/aurora` (`target\release\aurora.exe` on Windows). Copy it wherever you like. To build the packages instead, install the Tauri CLI (`cargo install tauri-cli --locked --version "^2"`) and run `cargo tauri build` in `crates/aurora-desktop`; they are written to `target/release/bundle`.
+The application is `target/release/aurora` (`target\release\aurora.exe` on Windows). Copy it wherever you like. For messages, build the provider too (`cargo build -p aurora-integrations --release`) and copy `target/release/dcp-integrations` next to `aurora`. To build the packages instead, install the Tauri CLI (`cargo install tauri-cli --locked --version "^2"`) and run `cargo tauri build` in `crates/aurora-desktop`; they are written to `target/release/bundle`.
 
 ## Quick Start
 
@@ -81,6 +82,27 @@ Its **Settings** tab shows the project's Dev Cycle settings, grouped, each with 
 
 Everything that waits for you across all projects, the most urgent first: what blocks a release (blocking bugs, release candidates with failed tests), what waits for your acceptance (release candidates to test or to release), what waits for your review (pull requests with review threads for you) and the bugs to triage. Each item shows its project and detail; **Open** shows its project. Projects that could not be read are listed under "Not read" with the reason, and **Refresh** reads them all again. It reads through the Dev Cycle Protocol (`dcp`) and, without a `dcp` that answers its JSON contract, says what to install.
 
+### Messages (Alt+5)
+
+Conversations between your projects, carried on each repository's `aurora/inbox` branch by `dcp-integrations`. The navigation shows how many conclusions wait for you.
+
+- **Waiting for you** comes first: each conclusion in full (who discussed it, rounds, cycle, conclusion, justification, positions, open points, what happens after approval) with the numbered options or a choice of your own, an optional note, and **Decide**, which asks to confirm and sends the decision to every project of the conversation. **Ask for changes** sends your request instead: the projects get up to three new rounds to take it into account and come back with a new conclusion.
+- **Conversations** lists every conversation of your projects, the most recent first, filtered by project and by state (waiting for you, no answer yet, after your requests). Open one to read every message with its sections, to **Step in** with a request at any time (a new cycle of up to three rounds), or to reply. After three rounds in a cycle, only an agreement or an impasse can be sent.
+- **New conversation** starts a question, a proposal or a notice from a project to one of its counterparts. Each kind has a template; required sections are marked, and what is missing is shown next to the form.
+- **Check now** asks every project's inbox whether something new arrived. Aurora also checks in the background every 5 minutes, and offers to show what arrived.
+
+A project takes part once it has `.aurora/integrations.json`. In its folder:
+
+```bash
+dcp-integrations init --project <slug> --name "<name>"
+dcp-integrations add <other-slug> --url <other repository URL> --name "<other name>"
+dcp-integrations validate
+```
+
+then commit `.aurora/integrations.json`. Projects that are not set up are listed under "Not taking part" with this command.
+
+The same commands work in a terminal, for you or your tools: `dcp-integrations check`, `show <id>`, `template <kind>`, `send`, `reply`, `record <thread>`, `decide <thread> --choice ...`, `guide <thread> --text ...`, `poll`; add `--json` for machine-readable answers. `dcp-integrations --help` lists them all. It is installed next to Aurora by the packages and is also published alone with each release.
+
 ### Engines (Alt+3)
 
 Each engine is shown as one of:
@@ -94,20 +116,21 @@ Each engine is shown as one of:
 
 **Refresh** checks again after you install or update an engine; there is no need to restart Aurora.
 
-### Settings (Alt+5)
+### Settings (Alt+6)
 
 The theme (follow the system, light or dark), and for each engine a location that wins over the search path and a time limit.
 
 ### Keyboard
 
-Tab moves between controls, and the focused one is always outlined. In the navigation, the Up and Down arrows move and Enter opens. Alt+1 to Alt+5 open the views from anywhere.
+Tab moves between controls, and the focused one is always outlined. In the navigation, the Up and Down arrows move and Enter opens. Alt+1 to Alt+6 open the views from anywhere.
 
 ## Configuration
 
 | Setting | Where | Default | Meaning |
 |---|---|---|---|
 | Theme | Settings view, `settings.toml` | Follow the system | Light, dark or the system's appearance |
-| Engine location | Settings view, `settings.toml` | Search path | The `dcp`, `gedo` or `actx` binary to use |
+| Engine location | Settings view, `settings.toml` | Search path (`dcp-integrations`: next to Aurora first) | The `dcp`, `gedo`, `actx` or `dcp-integrations` binary to use |
+| Messages check | `messagesPollMinutes` in `settings.toml` | 5 minutes | How often Aurora checks the inboxes in the background; 0 turns it off |
 | Engine time limit | Settings view, `settings.toml` | 10 seconds | How long Aurora waits for an engine's answer |
 | Log level | `AURORA_LOG` environment variable | `info` | `debug` adds each engine command and its duration |
 
@@ -130,6 +153,8 @@ To uninstall, use **Settings > Apps > Installed apps > Aurora > Uninstall** on W
 | "The saved project list could not be read" | The old file was kept next to the new one as `projects.toml.damaged-<timestamp>`; fix it and rename it back to `projects.toml` with Aurora closed, or start a new list |
 | "Changes to the project list will not be kept" | Aurora cannot write its configuration folder, or the list was written by a newer Aurora; check the folder's permissions, or update Aurora |
 | An engine is Missing although it is installed | Make sure its folder is on the search path of the session that starts Aurora, or set its location in Settings, then **Refresh** |
+| A project is "not reachable" in Messages | `dcp-integrations` could not read an inbox: check that `git ls-remote <url>` works in a terminal with your credentials, and the URLs in `.aurora/integrations.json` |
+| Messages says `dcp-integrations` is not available | Reinstall Aurora, or put `dcp-integrations` on the search path or set its location in Settings |
 | An engine is Degraded with "no answer" | Raise its time limit in Settings, or run `<engine> version --json` in a terminal to see what it does |
 
 Logs are in `~/.local/share/aurora/logs` on Linux and `%LOCALAPPDATA%\Levix\Aurora\data\logs` on Windows, one file per day, the last five kept.

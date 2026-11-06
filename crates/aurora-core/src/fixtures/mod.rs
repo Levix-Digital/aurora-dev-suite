@@ -17,6 +17,9 @@ use crate::ports::{
 };
 use crate::usecases;
 
+mod messages;
+pub use messages::FixtureMessages;
+
 pub const CHECKED_AT: &str = "2026-10-27T18:00:00Z";
 const REPOS: &str = "/repos";
 
@@ -250,6 +253,7 @@ pub fn sample_reports() -> Vec<EngineReport> {
             &["doctor", "radar", "scope", "stream", "check-contracts"],
         ),
         any_context,
+        ready_report(EngineKind::Integrations, &["messages"]),
     ]
 }
 

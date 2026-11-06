@@ -1,0 +1,22 @@
+{
+  "changed": {
+    "cycle": 1,
+    "date": "2026-11-06T13:41:47.346Z",
+    "deferred": "",
+    "from": "alpha",
+    "id": "20261106-134147-alpha-format",
+    "kind": "question",
+    "needs_user": false,
+    "reply_to": "",
+    "round": 1,
+    "status": "seen",
+    "subject": "Format",
+    "thread": "20261106-134147-alpha-format",
+    "to": "beta",
+    "tool": "0.2.0"
+  },
+  "message": "20261106-134147-alpha-format: seen",
+  "ok": true,
+  "schema": "dcp-integrations.status",
+  "schema_version": "1.0"
+}

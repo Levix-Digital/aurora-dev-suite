@@ -3,5 +3,6 @@
 pub mod config;
 pub mod cycle;
 pub mod engines;
+pub mod messages;
 pub mod projects;
 pub mod settings;

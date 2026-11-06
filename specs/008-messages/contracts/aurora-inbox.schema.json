@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://levix.digital/schemas/aurora/inbox-1.json",
+  "title": "inbox.json on an aurora/inbox branch (schema MAJOR 1)",
+  "description": "The format version of the branch (ADR-0010). Absent on branches written only by the provisional tool: read as 1.0. A reader refuses another MAJOR.",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version"
+  ],
+  "properties": {
+    "schema": {
+      "const": "aurora.inbox"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "writer": {
+      "type": "string",
+      "description": "Name and version of the last writer"
+    }
+  }
+}

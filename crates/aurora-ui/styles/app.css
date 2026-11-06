@@ -101,3 +101,21 @@ select:disabled, textarea:disabled, input:disabled { opacity: 0.6; }
 .settings-preview pre { max-height: 20rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .setting > input[type="checkbox"] { align-self: flex-start; }
+.nav .count { display: inline-block; min-width: 1.4em; text-align: center; border-radius: 999px; padding: 0 0.4em; border: 1px solid currentColor; color: var(--warn); font-size: 0.85em; font-weight: 600; }
+.record-fields { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; margin: 0 0 0.75rem; }
+.record-fields dt { color: var(--text); font-weight: 600; }
+.record-fields dd { margin: 0; white-space: pre-wrap; }
+.choice { display: block; margin-bottom: 0.35rem; }
+.field textarea { width: 100%; max-width: 48rem; }
+.field.missing textarea { border-color: var(--error); }
+.required { color: var(--error); }
+.conversations { list-style: none; padding-left: 0; }
+.conversation-row { padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+button.link { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; font-weight: 600; }
+.messages { list-style: none; padding-left: 0; display: grid; gap: 0.6rem; }
+.message { border-left: 3px solid var(--border); padding: 0.25rem 0.75rem; }
+.message.kind-agreement, .message.kind-impasse { border-left-color: var(--warn); }
+.message.kind-guidance, .message.kind-decision { border-left-color: var(--primary); }
+.message h4 { margin: 0.4rem 0 0.1rem; color: var(--text); font-size: 0.95rem; }
+.message pre.body { white-space: pre-wrap; font: inherit; margin: 0; }
+.section { margin-bottom: 1.5rem; }

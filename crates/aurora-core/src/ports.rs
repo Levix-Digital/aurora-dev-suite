@@ -4,9 +4,10 @@
 use std::path::Path;
 
 use crate::domain::{
-    AddOutcome, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState, EngineKind,
-    EngineReport, EngineSettings, Project, ProjectConfig, ProjectError, ProjectId, ProjectList,
-    ProjectName, Settings,
+    AddOutcome, ClosingRecord, ConfigChange, ConfigError, ConfigOutcome, Conversation, CycleError,
+    CycleState, EngineKind, EngineReport, EngineSettings, Message, MessageHeader, MessageKind,
+    MessagesError, Project, ProjectConfig, ProjectError, ProjectId, ProjectList, ProjectName,
+    Settings, TemplateSection, UserAction,
 };
 
 /// The list of projects the user follows (ADR-0004).
@@ -66,4 +67,67 @@ pub trait ConfigSource: Send + Sync {
         change: &ConfigChange,
         dry_run: bool,
     ) -> Result<ConfigOutcome, ConfigError>;
+}
+
+/// What one project's inbox holds, as `dcp-integrations check` and `projects` answer it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InboxRead {
+    pub slug: String,
+    pub counterparts: Vec<String>,
+    pub conversations: Vec<Conversation>,
+}
+
+/// Reads and writes messages between projects through `dcp-integrations` (FEAT-031,
+/// ADR-0010). `engine` is the latest report of the provider, which gives its location;
+/// `root` is the project's folder, with its `.aurora/integrations.json`. Aurora itself
+/// runs no Git.
+pub trait MessagesSource: Send + Sync {
+    fn inbox(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<InboxRead, MessagesError>;
+
+    /// Every message of a conversation, oldest first.
+    fn thread(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        thread: &str,
+    ) -> Result<Vec<Message>, MessagesError>;
+
+    fn record(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        thread: &str,
+    ) -> Result<ClosingRecord, MessagesError>;
+
+    fn template(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        kind: &MessageKind,
+    ) -> Result<Vec<TemplateSection>, MessagesError>;
+
+    /// Runs one action; the messages sent or changed.
+    fn act(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        action: &UserAction,
+    ) -> Result<Vec<MessageHeader>, MessagesError>;
+
+    /// Whether the inbox changed since the last poll, without fetching; a summary when
+    /// it did.
+    fn poll(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<Option<String>, MessagesError>;
 }

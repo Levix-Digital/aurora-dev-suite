@@ -6,15 +6,20 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use aurora_core::domain::{
-    AddOutcome, ConfigChange, ConfigOutcome, CycleState, EngineKind, EngineReport, EnginesOverview,
-    Project, ProjectConfig, ProjectError, ProjectId, ProjectList, Settings,
+    AddOutcome, ClosingRecord, ConfigChange, ConfigOutcome, CycleState, EngineKind, EngineReport,
+    EnginesOverview, Message, MessageHeader, MessageKind, PollResult, Project, ProjectConfig,
+    ProjectError, ProjectId, ProjectInbox, ProjectList, Settings, TemplateSection, UserAction,
 };
 use aurora_core::fixtures::{
-    self, FixtureConfigSource, FixtureCycleSource, MemoryRegistry, MemorySettings,
+    self, FixtureConfigSource, FixtureCycleSource, FixtureMessages, MemoryRegistry, MemorySettings,
 };
-use aurora_core::usecases::{config, cycle, engines, projects, settings};
+use aurora_core::usecases::{config, cycle, engines, messages, projects, settings};
 
-use super::{CommandError, OnReady, OnReport, Reply};
+use super::{CommandError, OnNews, OnReady, OnReport, Reply};
+
+/// The simulated background poll of the preview fires once, this long after the view
+/// subscribes.
+const POLL_DELAY: Duration = Duration::from_secs(4);
 
 const EVENT_DELAY: Duration = Duration::from_millis(350);
 
@@ -28,6 +33,7 @@ pub struct FixtureBackend {
     registry: MemoryRegistry,
     settings: MemorySettings,
     config: FixtureConfigSource,
+    messages: FixtureMessages,
     refreshes: Mutex<u32>,
     picks: Mutex<u32>,
     subscribers: Mutex<Subscribers>,
@@ -45,6 +51,7 @@ impl FixtureBackend {
             registry: fixtures::sample_registry(),
             settings: MemorySettings::default(),
             config: FixtureConfigSource::default(),
+            messages: FixtureMessages::sample(),
             refreshes: Mutex::new(0),
             picks: Mutex::new(0),
             subscribers: Mutex::new(Subscribers::default()),
@@ -200,6 +207,85 @@ impl FixtureBackend {
     }
 }
 
+/// The preview takes `dcp-integrations` as ready, as for `dcp`; the sample conversations
+/// live in memory and change with each action until the page reloads.
+impl FixtureBackend {
+    fn provider() -> EngineReport {
+        fixtures::ready_report(EngineKind::Integrations, &["messages"])
+    }
+
+    pub fn subscribe_messages(&self, on_news: OnNews) {
+        let news: Vec<PollResult> = self
+            .messages_poll()
+            .into_iter()
+            .filter(|r| r.changed)
+            .collect();
+        if !news.is_empty() {
+            leptos::prelude::set_timeout(move || on_news(news), POLL_DELAY);
+        }
+    }
+
+    pub fn messages_overview(&self) -> Vec<ProjectInbox> {
+        messages::overview(
+            &self.messages,
+            Some(&Self::provider()),
+            &self.get_settings(),
+            &self.list_projects().projects,
+        )
+    }
+
+    pub fn messages_conversation(&self, id: &str, thread: &str) -> Reply<Vec<Message>> {
+        let project = self.project(id)?;
+        Ok(messages::conversation(
+            &self.messages,
+            Some(&Self::provider()),
+            &self.get_settings(),
+            &project,
+            thread,
+        )?)
+    }
+
+    pub fn messages_record(&self, id: &str, thread: &str) -> Reply<ClosingRecord> {
+        let project = self.project(id)?;
+        Ok(messages::record(
+            &self.messages,
+            Some(&Self::provider()),
+            &self.get_settings(),
+            &project,
+            thread,
+        )?)
+    }
+
+    pub fn messages_template(&self, kind: &MessageKind) -> Reply<Vec<TemplateSection>> {
+        Ok(messages::template(
+            &self.messages,
+            Some(&Self::provider()),
+            &self.get_settings(),
+            kind,
+        )?)
+    }
+
+    pub fn messages_act(&self, id: &str, action: &UserAction) -> Reply<Vec<MessageHeader>> {
+        let project = self.project(id)?;
+        Ok(messages::act(
+            &self.messages,
+            Some(&Self::provider()),
+            &self.get_settings(),
+            &project,
+            action,
+        )?)
+    }
+
+    pub fn messages_poll(&self) -> Vec<PollResult> {
+        messages::poll(
+            &self.messages,
+            Some(&Self::provider()),
+            &self.get_settings(),
+            &self.list_projects().projects,
+        )
+    }
+}
+
 fn config_dcp() -> EngineReport {
     fixtures::ready_report(EngineKind::DevCycle, &["diagnose", "config"])
 }
@@ -246,12 +332,19 @@ mod tests {
         "project_config",
         "preview_project_config",
         "apply_project_config",
+        "messages_overview",
+        "messages_conversation",
+        "messages_record",
+        "messages_template",
+        "messages_act",
+        "messages_poll",
     ];
 
-    const CONTRACTS: [&str; 3] = [
+    const CONTRACTS: [&str; 4] = [
         include_str!("../../../../specs/001-foundations/contracts/desktop-commands.md"),
         include_str!("../../../../specs/002-dcp-adapter/contracts/desktop-commands.md"),
         include_str!("../../../../specs/007-project-settings/contracts/desktop-commands.md"),
+        include_str!("../../../../specs/008-messages/contracts/desktop-commands.md"),
     ];
 
     #[test]
@@ -355,6 +448,57 @@ mod tests {
                 .as_deref(),
             Some(ConfigError::ProjectMissing { .. })
         ));
+    }
+
+    #[test]
+    fn messages_decide_revise_and_poll_on_the_sample() {
+        use aurora_core::domain::{InboxSetup, MessageKind, UserAction};
+
+        let backend = FixtureBackend::sample();
+        let inboxes = backend.messages_overview();
+        assert!(
+            inboxes
+                .iter()
+                .any(|i| matches!(i.setup, InboxSetup::NotSetUp { .. }))
+        );
+        let ready = inboxes
+            .iter()
+            .find(|i| i.waiting_count() > 0)
+            .expect("a record waits in the preview");
+        let thread = ready.conversations[0].thread.clone();
+        let project = ready.project.0.clone();
+        let record = backend.messages_record(&project, &thread).expect("record");
+        assert_eq!(record.options.len(), 2);
+        let decided = backend
+            .messages_act(
+                &project,
+                &UserAction::Decide {
+                    thread: thread.clone(),
+                    choice: record.options[0].clone(),
+                    note: None,
+                },
+            )
+            .expect("decided");
+        assert_eq!(decided[0].kind, MessageKind::Decision);
+        let after = backend.messages_overview();
+        assert!(after.iter().all(|i| i.waiting_count() == 0));
+        let refused = backend
+            .messages_act(
+                &project,
+                &UserAction::Guide {
+                    thread,
+                    text: " ".into(),
+                },
+            )
+            .expect_err("empty request");
+        assert_eq!(refused.kind, "messages");
+        assert!(backend.messages_poll().iter().any(|r| r.changed));
+        assert!(
+            !backend
+                .messages_template(&MessageKind::Question)
+                .expect("template")
+                .is_empty()
+        );
     }
 
     #[test]

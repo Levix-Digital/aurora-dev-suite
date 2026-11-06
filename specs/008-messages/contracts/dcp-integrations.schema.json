@@ -1,0 +1,709 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://levix.digital/schemas/dcp-integrations/1.json",
+  "title": "dcp-integrations replies (schema MAJOR 1)",
+  "description": "Every document `dcp-integrations <command> --json` answers on standard output (contracts/cli.md). Unknown fields are ignored; MINOR versions only add optional fields and new kinds.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/dcp-integrations.version"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.poll"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.check"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.list"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.show"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.thread"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.template"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.sent"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.record"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.status"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.error"
+    }
+  ],
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+    },
+    "kind": {
+      "type": "string",
+      "description": "Known kinds; readers show an unknown kind as text",
+      "examples": [
+        "question",
+        "proposal",
+        "notice",
+        "answer",
+        "counter",
+        "agreement",
+        "impasse",
+        "ack",
+        "decision",
+        "guidance",
+        "message"
+      ]
+    },
+    "header": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "from",
+        "to",
+        "date",
+        "subject",
+        "status",
+        "thread",
+        "cycle",
+        "round",
+        "needs_user"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/kind"
+        },
+        "from": {
+          "$ref": "#/$defs/slug"
+        },
+        "to": {
+          "$ref": "#/$defs/slug"
+        },
+        "date": {
+          "type": "string",
+          "description": "ISO 8601 UTC, milliseconds from tool 0.3"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "seen",
+            "done"
+          ]
+        },
+        "reply_to": {
+          "type": "string"
+        },
+        "deferred": {
+          "type": "string"
+        },
+        "thread": {
+          "type": "string"
+        },
+        "cycle": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "round": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 3
+        },
+        "needs_user": {
+          "type": "boolean"
+        },
+        "tool": {
+          "type": "string"
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": [
+        "name",
+        "text"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "required": [
+        "thread",
+        "subject",
+        "projects",
+        "cycle",
+        "next_round",
+        "last",
+        "waiting_for_user"
+      ],
+      "properties": {
+        "thread": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slug"
+          }
+        },
+        "cycle": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "round": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "last": {
+          "$ref": "#/$defs/header"
+        },
+        "waiting_for_user": {
+          "type": "boolean"
+        },
+        "user_requests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "opener": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "next_round": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "messages": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "dcp-integrations.version": {
+      "type": "object",
+      "description": "`version --json`; capability `messages` with schema_major 1 covers every document of this file",
+      "required": [
+        "schema",
+        "schema_version",
+        "version",
+        "capabilities"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.version"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "version": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "schema_major"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "schema_major": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "dcp-integrations.poll": {
+      "type": "object",
+      "description": "`poll --json`; one git ls-remote, nothing fetched when changed is false",
+      "required": [
+        "schema",
+        "schema_version",
+        "project",
+        "changed"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.poll"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "project": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+        },
+        "changed": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "new": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "waiting_for_user": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "dcp-integrations.check": {
+      "type": "object",
+      "description": "`check --json`: closing records this project must present, pending received messages, sent messages still open after the stale time",
+      "required": [
+        "schema",
+        "schema_version",
+        "project",
+        "waiting_for_user",
+        "messages",
+        "unanswered_sent"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.check"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "project": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+        },
+        "waiting_for_user": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/header"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/header"
+          }
+        },
+        "unanswered_sent": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/header"
+          }
+        },
+        "conversations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/conversation"
+          }
+        }
+      }
+    },
+    "dcp-integrations.list": {
+      "type": "object",
+      "description": "`list --json` (messages) and `projects --json` (counterparts)",
+      "required": [
+        "schema",
+        "schema_version",
+        "project",
+        "items"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.list"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "project": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/header"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "slug",
+                  "url"
+                ],
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "dcp-integrations.show": {
+      "type": "object",
+      "description": "`show <id> --json`: sections in their order",
+      "required": [
+        "schema",
+        "schema_version",
+        "message",
+        "sections",
+        "body"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.show"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "message": {
+          "$ref": "#/$defs/header"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    },
+    "dcp-integrations.template": {
+      "type": "object",
+      "description": "`template <kind> --json`",
+      "required": [
+        "schema",
+        "schema_version",
+        "kind",
+        "sections",
+        "skeleton"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.template"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "kind": {
+          "$ref": "#/$defs/kind"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "hint",
+              "required"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "hint": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "skeleton": {
+          "type": "string"
+        }
+      }
+    },
+    "dcp-integrations.sent": {
+      "type": "object",
+      "description": "`send`, `reply`, `decide`, `guide` with --json",
+      "required": [
+        "schema",
+        "schema_version",
+        "sent"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.sent"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "sent": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/header"
+          }
+        },
+        "closed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ids set to done by the command (a decided or revised closing record)"
+        }
+      }
+    },
+    "dcp-integrations.record": {
+      "type": "object",
+      "description": "`record <thread> --json`: the closing report for the user (ADR-0009)",
+      "required": [
+        "schema",
+        "schema_version",
+        "thread",
+        "subject",
+        "projects",
+        "rounds",
+        "cycle",
+        "outcome",
+        "conclusion",
+        "justification",
+        "decision_needed",
+        "after_approval"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.record"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "thread": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+          }
+        },
+        "rounds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "cycle": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "outcome": {
+          "enum": [
+            "agreement",
+            "impasse"
+          ]
+        },
+        "conclusion": {
+          "type": "string"
+        },
+        "justification": {
+          "type": "string"
+        },
+        "positions": {
+          "type": "string"
+        },
+        "open_points": {
+          "type": "string"
+        },
+        "decision_needed": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The numbered lines of decision needed, in order"
+        },
+        "after_approval": {
+          "type": "string"
+        },
+        "user_requests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dcp-integrations.status": {
+      "type": "object",
+      "description": "`status`, `defer`, `init`, `add`, `validate` with --json",
+      "required": [
+        "schema",
+        "schema_version",
+        "ok",
+        "message"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.status"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "changed": {
+          "$ref": "#/$defs/header"
+        }
+      }
+    },
+    "dcp-integrations.error": {
+      "type": "object",
+      "description": "any failure with --json, exit code other than 0 and 10",
+      "required": [
+        "schema",
+        "schema_version",
+        "code",
+        "message"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.error"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "code": {
+          "enum": [
+            "not_set_up",
+            "unknown_project",
+            "unknown_id",
+            "refused",
+            "round_limit",
+            "unsupported_inbox",
+            "git",
+            "io",
+            "invalid"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "missing_sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "git_stderr": {
+          "type": "string"
+        }
+      }
+    },
+    "dcp-integrations.thread": {
+      "type": "object",
+      "description": "`thread <thread> --json`: every message of a thread with its sections, oldest first",
+      "required": [
+        "schema",
+        "schema_version",
+        "project",
+        "thread",
+        "messages"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.thread"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "project": {
+          "$ref": "#/$defs/slug"
+        },
+        "thread": {
+          "type": "string"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "message",
+              "sections",
+              "body"
+            ],
+            "properties": {
+              "message": {
+                "$ref": "#/$defs/header"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/section"
+                }
+              },
+              "body": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

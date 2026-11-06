@@ -1,0 +1,33 @@
+{
+  "kind": "question",
+  "schema": "dcp-integrations.template",
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "hint": "One or two sentences: what the receiver should do or answer.",
+      "name": "Ask",
+      "required": true
+    },
+    {
+      "hint": "Only what the receiver needs. Cite items with the owner's prefix (DCP FEAT-018, Aurora FEAT-031) and pin code with a commit or a tag, never \"latest\".",
+      "name": "Context",
+      "required": true
+    },
+    {
+      "hint": "What the sender cannot change (decided by its user, released, a standing rule).",
+      "name": "Constraints",
+      "required": false
+    },
+    {
+      "hint": "The answer or artifact that ends the conversation, checkable by both sides.",
+      "name": "Closes when",
+      "required": true
+    },
+    {
+      "hint": "What the projects may settle in the rounds, and what goes to the user.",
+      "name": "Authority",
+      "required": false
+    }
+  ],
+  "skeleton": "### Ask\nOne or two sentences: what the receiver should do or answer.\n\n### Context\nOnly what the receiver needs. Cite items with the owner's prefix (DCP FEAT-018, Aurora FEAT-031) and pin code with a commit or a tag, never \"latest\".\n\n### Constraints\nWhat the sender cannot change (decided by its user, released, a standing rule).\n\n### Closes when\nThe answer or artifact that ends the conversation, checkable by both sides.\n\n### Authority\nWhat the projects may settle in the rounds, and what goes to the user.\n"
+}

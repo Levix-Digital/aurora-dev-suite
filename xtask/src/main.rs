@@ -85,6 +85,25 @@ fn release_check(tag: Option<&str>) -> ExitCode {
         return ExitCode::FAILURE;
     };
     let version = desktop.version.to_string();
+    // The provider ships inside the packages and alone: it carries Aurora's version.
+    match metadata
+        .workspace_packages()
+        .into_iter()
+        .find(|package| package.name.as_str() == "aurora-integrations")
+    {
+        Some(provider) if provider.version.to_string() == version => {}
+        Some(provider) => {
+            eprintln!(
+                "release-check: dcp-integrations is {}, Aurora is {version}",
+                provider.version
+            );
+            return ExitCode::FAILURE;
+        }
+        None => {
+            eprintln!("aurora-integrations is not in the workspace");
+            return ExitCode::FAILURE;
+        }
+    }
     match release::check_tag(tag, &version) {
         Ok(kind) => {
             println!("release-check: {tag} is a {} of {version}", kind.label());

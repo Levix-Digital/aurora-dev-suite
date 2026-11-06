@@ -40,6 +40,7 @@ pub struct EnginesSettings {
     pub dev_cycle: EngineSettings,
     pub gedo: EngineSettings,
     pub any_context: EngineSettings,
+    pub integrations: EngineSettings,
 }
 
 impl EnginesSettings {
@@ -48,6 +49,7 @@ impl EnginesSettings {
             EngineKind::DevCycle => &self.dev_cycle,
             EngineKind::Gedo => &self.gedo,
             EngineKind::AnyContext => &self.any_context,
+            EngineKind::Integrations => &self.integrations,
         }
     }
 }
@@ -59,6 +61,12 @@ pub struct Settings {
     pub version: u32,
     pub theme: ThemeChoice,
     pub engines: EnginesSettings,
+    /// Minutes between two background polls of the projects' inboxes; 0 turns it off.
+    pub messages_poll_minutes: u32,
+}
+
+impl Settings {
+    pub const DEFAULT_POLL_MINUTES: u32 = 5;
 }
 
 impl Default for Settings {
@@ -67,6 +75,7 @@ impl Default for Settings {
             version: SETTINGS_VERSION,
             theme: ThemeChoice::System,
             engines: EnginesSettings::default(),
+            messages_poll_minutes: Settings::DEFAULT_POLL_MINUTES,
         }
     }
 }

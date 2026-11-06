@@ -1,0 +1,27 @@
+[package]
+name = "aurora-integrations"
+description = "dcp-integrations: messages between projects over each repository's aurora/inbox branch"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license-file.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "dcp-integrations"
+path = "src/bin/dcp-integrations.rs"
+
+[dependencies]
+directories.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+time.workspace = true
+
+[dev-dependencies]
+jsonschema.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

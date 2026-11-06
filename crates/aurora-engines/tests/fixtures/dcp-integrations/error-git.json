@@ -1,0 +1,7 @@
+{
+  "schema": "dcp-integrations.error",
+  "schema_version": "1.0",
+  "code": "git",
+  "message": "push to the inbox of beta failed",
+  "git_stderr": "remote: Permission to example/beta.git denied."
+}

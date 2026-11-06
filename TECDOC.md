@@ -35,6 +35,7 @@ flowchart LR
 | [Aurora Core](docs/architecture/core.md) | Domain model of the suite, the use cases and the ports every engine and surface goes through. |
 | [Desktop Shell](docs/architecture/desktop.md) | The Tauri 2 application: composition root, commands exposed to the interface, engine events, security and logging. |
 | [Engine Adapters](docs/architecture/engines.md) | Driven adapters that read the Dev Cycle, Gedo and AnyContext through their Rust binaries' versioned JSON, and store the project list and settings. |
+| [Integrations Provider](docs/architecture/integrations.md) | dcp-integrations: messages between projects over each repository's aurora/inbox branch, with its format, conversation rules, Git transport and command line. |
 | [User Interface](docs/architecture/ui.md) | The Leptos interface compiled to WebAssembly: views, navigation, the backends and the Aurora Borealis theme. |
 <!-- architecture-docs:subsystems:end -->
 

@@ -119,9 +119,20 @@ jobs:
       - name: Tests
         run: cargo test --workspace --all-features
 
+      - name: Build dcp-integrations for the packages (ADR-0010)
+        shell: bash
+        run: |
+          cargo build --release -p aurora-integrations --bin dcp-integrations
+          triple=$(rustc -vV | sed -n 's/^host: //p')
+          ext=""
+          if [ "$RUNNER_OS" = "Windows" ]; then ext=".exe"; fi
+          mkdir -p crates/aurora-desktop/binaries
+          cp "target/release/dcp-integrations$ext" "crates/aurora-desktop/binaries/dcp-integrations-$triple$ext"
+          "target/release/dcp-integrations$ext" version --json
+
       - name: Build the packages
         working-directory: crates/aurora-desktop
-        run: cargo tauri build --bundles ${{ matrix.bundles }} --ci
+        run: cargo tauri build --bundles ${{ matrix.bundles }} --config tauri.release.conf.json --ci
 
       - name: The Linux binary runs on Ubuntu 22.04 (glibc 2.35)
         if: runner.os == 'Linux'
@@ -138,11 +149,18 @@ jobs:
           mkdir -p dist
           bundle=target/release/bundle
           if [ "$RUNNER_OS" = "Windows" ]; then
+            cp target/release/dcp-integrations.exe dist/dcp-integrations-windows-x86_64.exe
             cp "$bundle"/nsis/*-setup.exe dist/
             installed=$(wc -c < target/release/aurora.exe)
             echo "Installed size (aurora.exe): $((installed / 1024)) KiB" >> "$GITHUB_STEP_SUMMARY"
           else
+            cp target/release/dcp-integrations dist/dcp-integrations-linux-x86_64
             cp "$bundle"/deb/*.deb "$bundle"/appimage/*.AppImage dist/
+            # Tauri's .deb lists "usr/bin/..." without a leading "./".
+            contents=$(dpkg-deb -c dist/*.deb)
+            if ! grep -Eq '(^|[ /])usr/bin/dcp-integrations$' <<<"$contents"; then
+              echo "::error::the .deb does not contain dcp-integrations"; exit 1
+            fi
             for deb in dist/*.deb; do
               echo "Installed size ($(basename "$deb")): $(dpkg-deb -f "$deb" Installed-Size) KiB" >> "$GITHUB_STEP_SUMMARY"
             done

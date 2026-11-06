@@ -1,0 +1,573 @@
+//! `MessagesSource` over `dcp-integrations --json` (spec 008, ADR-0010). Aurora runs no
+//! Git: the provider reads and writes the inbox branches. Message bodies go to the
+//! provider in a temporary file that is removed afterwards, and are never logged.
+
+use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
+
+use aurora_core::domain::{
+    ClosingRecord, Conversation, EngineReport, EngineSettings, Message, MessageHeader, MessageKind,
+    MessageStatus, MessagesError, Section, TemplateSection, UserAction, message_body,
+};
+use aurora_core::ports::{InboxRead, MessagesSource};
+use aurora_core::usecases::messages::SETUP_COMMAND;
+use serde::Deserialize;
+use serde::de::DeserializeOwned;
+use serde_json::Value;
+
+use crate::dcp::elapsed_ms;
+use crate::runner::{self, CommandSpec, RunError};
+
+pub const SCHEMA_MAJOR: u32 = 1;
+/// The exit code of `poll` when there is news.
+pub const NEWS: i32 = 10;
+/// Writes push to other repositories: they get at least this long.
+pub const MIN_WRITE_TIMEOUT_MS: u64 = 30_000;
+
+/// Runs `dcp-integrations` at the location of its latest report.
+#[derive(Debug, Default, Clone)]
+pub struct ProviderMessagesSource;
+
+#[derive(Deserialize)]
+struct RawHeader {
+    id: String,
+    kind: String,
+    #[serde(default)]
+    from: String,
+    #[serde(default)]
+    to: String,
+    #[serde(default)]
+    date: String,
+    #[serde(default)]
+    subject: String,
+    #[serde(default)]
+    status: String,
+    #[serde(default)]
+    reply_to: Option<String>,
+    #[serde(default)]
+    deferred: Option<String>,
+    #[serde(default)]
+    thread: String,
+    #[serde(default)]
+    cycle: Option<u32>,
+    #[serde(default)]
+    round: Option<u32>,
+    #[serde(default)]
+    needs_user: bool,
+    #[serde(default)]
+    tool: Option<String>,
+}
+
+impl From<RawHeader> for MessageHeader {
+    fn from(raw: RawHeader) -> Self {
+        MessageHeader {
+            thread: if raw.thread.is_empty() {
+                raw.id.clone()
+            } else {
+                raw.thread
+            },
+            id: raw.id,
+            kind: MessageKind::from(raw.kind),
+            from: raw.from,
+            to: raw.to,
+            date: raw.date,
+            subject: raw.subject,
+            status: match raw.status.as_str() {
+                "done" => MessageStatus::Done,
+                "seen" => MessageStatus::Seen,
+                _ => MessageStatus::Open,
+            },
+            reply_to: raw.reply_to.unwrap_or_default(),
+            deferred: raw.deferred.unwrap_or_default(),
+            cycle: raw.cycle.unwrap_or(1).max(1),
+            round: raw.round,
+            needs_user: raw.needs_user,
+            tool: raw.tool.unwrap_or_default(),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+struct RawConversation {
+    thread: String,
+    subject: String,
+    #[serde(default)]
+    projects: Vec<String>,
+    #[serde(default)]
+    opener: Option<String>,
+    cycle: u32,
+    #[serde(default)]
+    round: Option<u32>,
+    next_round: u32,
+    #[serde(default)]
+    messages: u32,
+    last: RawHeader,
+    waiting_for_user: bool,
+    #[serde(default)]
+    user_requests: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct RawCheck {
+    #[serde(default)]
+    conversations: Vec<RawConversation>,
+}
+
+#[derive(Deserialize)]
+struct RawItem {
+    #[serde(default)]
+    slug: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct RawList {
+    project: String,
+    items: Vec<RawItem>,
+}
+
+#[derive(Deserialize)]
+struct RawSection {
+    name: String,
+    text: String,
+}
+
+#[derive(Deserialize)]
+struct RawMessage {
+    message: RawHeader,
+    sections: Vec<RawSection>,
+    body: String,
+}
+
+#[derive(Deserialize)]
+struct RawThread {
+    messages: Vec<RawMessage>,
+}
+
+#[derive(Deserialize)]
+struct RawRecord {
+    thread: String,
+    subject: String,
+    projects: Vec<String>,
+    rounds: u32,
+    cycle: u32,
+    outcome: String,
+    conclusion: String,
+    justification: String,
+    #[serde(default)]
+    positions: String,
+    #[serde(default)]
+    open_points: String,
+    decision_needed: String,
+    #[serde(default)]
+    options: Vec<String>,
+    after_approval: String,
+    #[serde(default)]
+    user_requests: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct RawTemplate {
+    sections: Vec<TemplateSection>,
+}
+
+#[derive(Deserialize)]
+struct RawSent {
+    sent: Vec<RawHeader>,
+}
+
+#[derive(Deserialize)]
+struct RawStatus {
+    #[serde(default)]
+    changed: Option<RawHeader>,
+}
+
+#[derive(Deserialize)]
+struct RawPoll {
+    changed: bool,
+    #[serde(default)]
+    summary: String,
+}
+
+#[derive(Deserialize)]
+struct RawError {
+    code: String,
+    message: String,
+    #[serde(default)]
+    missing_sections: Vec<String>,
+    #[serde(default)]
+    git_stderr: Option<String>,
+}
+
+fn invalid(message: impl Into<String>) -> MessagesError {
+    MessagesError::InvalidReply {
+        message: message.into(),
+    }
+}
+
+/// The provider's error document as a `MessagesError`.
+fn from_error(raw: RawError) -> MessagesError {
+    match raw.code.as_str() {
+        "not_set_up" => MessagesError::NotSetUp {
+            command: SETUP_COMMAND.to_owned(),
+        },
+        "refused" | "round_limit" | "invalid" => MessagesError::Refused {
+            message: raw.message,
+            missing_sections: raw.missing_sections,
+        },
+        "unknown_id" | "unknown_project" => MessagesError::NotFound {
+            message: raw.message,
+        },
+        "unsupported_inbox" => MessagesError::Unsupported { found: raw.message },
+        _ => MessagesError::Git {
+            message: raw.message,
+            stderr: raw.git_stderr.unwrap_or_default(),
+        },
+    }
+}
+
+/// The reply's document once its envelope is `dcp-integrations.<name>` at MAJOR 1; the
+/// error document as its error.
+pub fn parse<T: DeserializeOwned>(bytes: &[u8], name: &str) -> Result<T, MessagesError> {
+    let value: Value =
+        serde_json::from_slice(bytes).map_err(|_| invalid("the reply is not JSON"))?;
+    let schema = value
+        .get("schema")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let version = value
+        .get("schema_version")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let major = version
+        .split('.')
+        .next()
+        .and_then(|m| m.parse::<u32>().ok());
+    if schema.is_empty() || major.is_none() {
+        return Err(invalid("the reply is not a versioned JSON envelope"));
+    }
+    if major != Some(SCHEMA_MAJOR) {
+        return Err(MessagesError::Unsupported {
+            found: version.to_owned(),
+        });
+    }
+    if schema == "dcp-integrations.error" {
+        let raw: RawError = serde_json::from_value(value)
+            .map_err(|e| invalid(format!("the error document is invalid: {e}")))?;
+        return Err(from_error(raw));
+    }
+    let expected = format!("dcp-integrations.{name}");
+    if schema != expected {
+        return Err(invalid(format!(
+            "the reply has schema `{schema}`, expected `{expected}`"
+        )));
+    }
+    serde_json::from_value(value).map_err(|e| invalid(format!("`{expected}`: {e}")))
+}
+
+/// A temporary file for a message body, removed when dropped.
+#[derive(Debug)]
+struct BodyFile(PathBuf);
+
+impl BodyFile {
+    fn new(body: &str) -> Result<BodyFile, MessagesError> {
+        let path = std::env::temp_dir().join(format!("aurora-message-{}.md", uuid::Uuid::new_v4()));
+        std::fs::write(&path, body)
+            .map_err(|e| invalid(format!("cannot write the message to a temporary file: {e}")))?;
+        Ok(BodyFile(path))
+    }
+
+    fn arg(&self) -> String {
+        self.0.to_string_lossy().into_owned()
+    }
+}
+
+impl Drop for BodyFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
+}
+
+/// The arguments of the provider for `action`, after `--json --dir <root>`; the body file
+/// when the action has one.
+pub fn act_args(
+    action: &UserAction,
+) -> Result<(Vec<String>, Option<BodyFileHandle>), MessagesError> {
+    let s = |v: &[&str]| v.iter().map(|a| (*a).to_owned()).collect::<Vec<_>>();
+    Ok(match action {
+        UserAction::Decide {
+            thread,
+            choice,
+            note,
+        } => {
+            let mut args = s(&["decide", thread, "--choice", choice]);
+            if let Some(note) = note.as_deref().filter(|n| !n.trim().is_empty()) {
+                args.extend(s(&["--note", note]));
+            }
+            (args, None)
+        }
+        UserAction::Revise { thread, text } => (s(&["decide", thread, "--revise", text]), None),
+        UserAction::Guide { thread, text } => (s(&["guide", thread, "--text", text]), None),
+        UserAction::MarkSeen { id } => (s(&["status", id, "seen"]), None),
+        UserAction::Send { draft } => {
+            let file = BodyFile::new(&message_body(&draft.sections))?;
+            let args = s(&[
+                "send",
+                "--to",
+                &draft.to,
+                "--kind",
+                draft.kind.as_str(),
+                "--subject",
+                &draft.subject,
+                "--body-file",
+                &file.arg(),
+            ]);
+            (args, Some(BodyFileHandle(file)))
+        }
+        UserAction::Reply { id, kind, sections } => {
+            let file = BodyFile::new(&message_body(sections))?;
+            let args = s(&[
+                "reply",
+                id,
+                "--kind",
+                kind.as_str(),
+                "--body-file",
+                &file.arg(),
+            ]);
+            (args, Some(BodyFileHandle(file)))
+        }
+    })
+}
+
+/// Keeps the body file of an action until the provider has run.
+#[derive(Debug)]
+pub struct BodyFileHandle(BodyFile);
+
+impl BodyFileHandle {
+    pub fn path(&self) -> &Path {
+        &self.0.0
+    }
+}
+
+impl ProviderMessagesSource {
+    fn run(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: Option<&Path>,
+        args: Vec<String>,
+        timeout_ms: u64,
+        what: &str,
+    ) -> Result<(Vec<u8>, i32), MessagesError> {
+        let Some(program) = &engine.location else {
+            return Err(MessagesError::ProviderMissing {
+                hint: "dcp-integrations was not found".to_owned(),
+            });
+        };
+        let mut all = vec!["--json".to_owned()];
+        if let Some(root) = root {
+            all.extend(["--dir".to_owned(), root.to_string_lossy().into_owned()]);
+        }
+        all.extend(args);
+        let mut spec = CommandSpec::new(
+            program,
+            &[],
+            Duration::from_millis(timeout_ms.max(settings.timeout_ms)),
+        );
+        spec.args = all;
+        spec.working_dir = root.map(Path::to_path_buf);
+        let started = Instant::now();
+        let result = runner::run(&spec);
+        let elapsed_ms = elapsed_ms(started);
+        let root_text = root.map(|r| r.display().to_string()).unwrap_or_default();
+        match result {
+            Ok(output) => {
+                let code = output.exit_code.unwrap_or(-1);
+                tracing::info!(command = what, root = %root_text, elapsed_ms, code, "dcp-integrations");
+                if output.stdout.is_empty() {
+                    return Err(MessagesError::Git {
+                        message: format!("dcp-integrations {what} failed with exit code {code}"),
+                        stderr: output.stderr,
+                    });
+                }
+                Ok((output.stdout, code))
+            }
+            Err(error) => {
+                tracing::warn!(command = what, root = %root_text, elapsed_ms, %error, "dcp-integrations failed");
+                Err(match error {
+                    RunError::TimedOut { timeout, .. } => MessagesError::Timeout {
+                        timeout_ms: u64::try_from(timeout.as_millis()).unwrap_or(u64::MAX),
+                    },
+                    RunError::TooLarge { .. } => invalid("the reply is too large"),
+                    other => MessagesError::ProviderMissing {
+                        hint: other.to_string(),
+                    },
+                })
+            }
+        }
+    }
+
+    fn read<T: DeserializeOwned>(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: Option<&Path>,
+        args: &[&str],
+        name: &str,
+    ) -> Result<T, MessagesError> {
+        let args = args.iter().map(|a| (*a).to_owned()).collect();
+        let (stdout, _) = self.run(engine, settings, root, args, 0, name)?;
+        parse(&stdout, name)
+    }
+}
+
+fn conversation(raw: RawConversation) -> Conversation {
+    Conversation {
+        thread: raw.thread,
+        subject: raw.subject,
+        projects: raw.projects,
+        opener: raw.opener,
+        cycle: raw.cycle.max(1),
+        round: raw.round,
+        next_round: raw.next_round.max(1),
+        messages: raw.messages,
+        last: raw.last.into(),
+        waiting_for_user: raw.waiting_for_user,
+        user_requests: raw.user_requests,
+    }
+}
+
+impl MessagesSource for ProviderMessagesSource {
+    fn inbox(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<InboxRead, MessagesError> {
+        let list: RawList = self.read(engine, settings, Some(root), &["projects"], "list")?;
+        let check: RawCheck = self.read(engine, settings, Some(root), &["check"], "check")?;
+        Ok(InboxRead {
+            counterparts: list
+                .items
+                .into_iter()
+                .filter_map(|i| i.slug)
+                .filter(|s| *s != list.project)
+                .collect(),
+            slug: list.project,
+            conversations: check.conversations.into_iter().map(conversation).collect(),
+        })
+    }
+
+    fn thread(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        thread: &str,
+    ) -> Result<Vec<Message>, MessagesError> {
+        let raw: RawThread =
+            self.read(engine, settings, Some(root), &["thread", thread], "thread")?;
+        Ok(raw
+            .messages
+            .into_iter()
+            .map(|m| Message {
+                header: m.message.into(),
+                sections: m
+                    .sections
+                    .into_iter()
+                    .map(|s| Section {
+                        name: s.name,
+                        text: s.text,
+                    })
+                    .collect(),
+                body: m.body,
+            })
+            .collect())
+    }
+
+    fn record(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        thread: &str,
+    ) -> Result<ClosingRecord, MessagesError> {
+        let r: RawRecord =
+            self.read(engine, settings, Some(root), &["record", thread], "record")?;
+        Ok(ClosingRecord {
+            thread: r.thread,
+            subject: r.subject,
+            projects: r.projects,
+            rounds: r.rounds,
+            cycle: r.cycle,
+            outcome: MessageKind::from(r.outcome),
+            conclusion: r.conclusion,
+            justification: r.justification,
+            positions: r.positions,
+            open_points: r.open_points,
+            decision_needed: r.decision_needed,
+            options: r.options,
+            after_approval: r.after_approval,
+            user_requests: r.user_requests,
+        })
+    }
+
+    fn template(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        kind: &MessageKind,
+    ) -> Result<Vec<TemplateSection>, MessagesError> {
+        let raw: RawTemplate = self.read(
+            engine,
+            settings,
+            None,
+            &["template", kind.as_str()],
+            "template",
+        )?;
+        Ok(raw.sections)
+    }
+
+    fn act(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+        action: &UserAction,
+    ) -> Result<Vec<MessageHeader>, MessagesError> {
+        let (args, body) = act_args(action)?;
+        let what = args.first().cloned().unwrap_or_default();
+        let (stdout, _) = self.run(
+            engine,
+            settings,
+            Some(root),
+            args,
+            MIN_WRITE_TIMEOUT_MS,
+            &what,
+        )?;
+        drop(body);
+        if matches!(action, UserAction::MarkSeen { .. }) {
+            let status: RawStatus = parse(&stdout, "status")?;
+            return Ok(status.changed.into_iter().map(Into::into).collect());
+        }
+        let sent: RawSent = parse(&stdout, "sent")?;
+        Ok(sent.sent.into_iter().map(Into::into).collect())
+    }
+
+    fn poll(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<Option<String>, MessagesError> {
+        let (stdout, code) = self.run(
+            engine,
+            settings,
+            Some(root),
+            vec!["poll".to_owned()],
+            0,
+            "poll",
+        )?;
+        let poll: RawPoll = parse(&stdout, "poll")?;
+        Ok((poll.changed || code == NEWS).then_some(poll.summary))
+    }
+}

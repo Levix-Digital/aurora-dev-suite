@@ -14,6 +14,7 @@ fn engine_mut(settings: &mut Settings, kind: EngineKind) -> &mut EngineSettings 
         EngineKind::DevCycle => &mut settings.engines.dev_cycle,
         EngineKind::Gedo => &mut settings.engines.gedo,
         EngineKind::AnyContext => &mut settings.engines.any_context,
+        EngineKind::Integrations => &mut settings.engines.integrations,
     }
 }
 

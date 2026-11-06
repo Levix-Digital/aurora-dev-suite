@@ -127,7 +127,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### ADJ-002: Messages view: From → To, states by color, inline conversation, open count
 - **Priority**: high
 - **Epic**: EPIC-010
-- **Status**: planned
+- **Status**: in_progress
 - **Found**: 2026-11-06, v0.3.0-rc.1
 - **Plan**: messages-view-adjustments
 - **Description**: Levi, 2026-11-06, testing v0.3.0-rc.1: each message and row shows sender → receiver; conversations grouped in Waiting for you, In progress and Closed (muted, collapsed), each with its color; a conversation opens right below its row, not at the bottom of the page; the navigation count shows what waits for the user plus received messages not read yet, on every screen.

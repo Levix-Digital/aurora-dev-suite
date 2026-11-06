@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Messages view adjustments
 kind: feature
 version: v0.3.0
-status: active
+status: in_progress
 author: LeviGuilherme
 created_at: '2026-11-06T16:46:02'
-updated_at: '2026-11-06T16:47:31'
+updated_at: '2026-11-06T16:49:58'
 session_id: null
 tags: []
 supersedes: null
@@ -15,6 +15,7 @@ superseded_by: null
 parent_plan_id: null
 backlog_items:
 - ADJ-002
+spec_dir: specs/009-messages-view
 milestones:
 - name: M1 Core and adapter
   done: false
@@ -31,6 +32,10 @@ status_log:
   by: LeviGuilherme
   status: active
   note: Plan written, waiting for gate 3.
+- at: '2026-11-06T16:49:58'
+  by: LeviGuilherme
+  status: in_progress
+  note: Approved by Levi at gate 3 with Spec Kit (2026-11-06).
 ---
 
 # Messages view adjustments

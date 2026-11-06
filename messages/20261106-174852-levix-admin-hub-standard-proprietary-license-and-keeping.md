@@ -7,7 +7,7 @@ date: 2026-11-06T17:48:52.764Z
 subject: "Standard proprietary LICENSE and keeping the inbox reachable after going private"
 status: seen
 reply_to: 
-deferred: 
+deferred: "Outside the work in progress (v0.3.0 messages); taken to the owner to schedule."
 thread: 20261106-174852-levix-admin-hub-standard-proprietary-license-and-keeping
 cycle: 1
 round: 1
@@ -36,3 +36,5 @@ aurora-dev-suite main carries the LICENSE with the sha256 above, and every proje
 
 ### Authority
 The license model and the repository visibility are decided by the owner and are not open for negotiation in the rounds. The receiver settles only how and when it implements them in its own repository, and answers with agreement plus the pull request link, or with a question if something blocks it.
+
+> seen (2026-11-06 19:36 UTC): deferred: Outside the work in progress (v0.3.0 messages); taken to the owner to schedule.

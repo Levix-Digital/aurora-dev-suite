@@ -36,8 +36,8 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 
 ## v0.6.0: Integrations
 - **Status**: planned
-- **Target**: after dcp v2.12.0 (DCP FEAT-018)
-- **Goal**: Projects that depend on each other learn about each other's merges and agree on integrations, approved by the user at the integration gate, through the integrations provider plugged into dcp; waits for dcp v2.12.0 with the extension point (DCP FEAT-018).
+- **Target**: after dcp v2.11.0 (DCP FEAT-018)
+- **Goal**: Projects that depend on each other learn about each other's merges and agree on integrations, approved by the user at the integration gate, through the integrations provider plugged into dcp; waits for dcp v2.11.0 with the extension point (DCP FEAT-018).
 - **Items**: FEAT-029, FEAT-030, FEAT-031, FEAT-032, FEAT-033, FEAT-034
 
 ## v1.0.0: The suite

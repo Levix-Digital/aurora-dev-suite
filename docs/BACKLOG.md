@@ -134,7 +134,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Plan**: -
-- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the integrations commands and plugs into dcp through its extension point: external subcommand, registered provider, cycle points discovery, after-merge and before-release-gate, and the integration gate (DCP FEAT-018, dcp v2.12.0). Registered at user level by Aurora's installer, it only adds items, warnings and its own gate, never weakens the protocol's gates. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing.
+- **Description**: The Rust binary shipped with Aurora (dcp-integrations) that implements the integrations commands and plugs into dcp through its extension point: external subcommand, registered provider, cycle points discovery, after-merge and before-release-gate, and the integration gate (DCP FEAT-018, dcp v2.11.0; draft contract dcp.extension 1.0 in Levix-Digital/ai-code-agent-skills pull request #86). Registered at user level by Aurora's installer, it only adds items, warnings and its own gate, never weakens the protocol's gates. It reads and writes the aurora/inbox branch with Git plumbing, without touching the working tree, and is the only writer of integration data. Without Aurora there is no provider and the step does nothing.
 
 ### FEAT-035: Signed packages
 - **Priority**: medium
@@ -328,6 +328,15 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-10-29, aurora/inbox branch of aurora-dev-suite, first message sent 2026-10-29
 - **Description**: Until the integrations provider exists, a small provisional tool kept on this repository's aurora/inbox branch (not in the product) sends free messages between Levix projects through each project's aurora/inbox branch, in the message format of ADR-0007, with the same command names and --json output the provider will have.
+
+### IMP-002: Automatic checks, rounds and templates in the provisional messages
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, Dev Cycle Protocol proposals 1/3 to 3/3 (2026-11-06), accepted with adjustments by Levi
+- **Plan**: -
+- **Closed**: 2026-11-06, inbox tool 0.2.0 on the aurora/inbox branch (837f072)
+- **Description**: Brings forward, for the provisional tool, rules of ADR-0007 without waiting for v0.6.0. (1) poll: one git ls-remote per inbox, no fetch, silent and exit 0 when nothing changed, exit 10 and one line on news, run at every touchpoint (start of work, before every gate, before opening a pull request, after a merge); an optional watch command wakes an idle project by running the user's local command in its folder; check also lists sent messages still unread after a set time. (2) Threads of at most three rounds, each side answering from its project's records without asking the user; a thread closes with an agreement or an impasse, which always needs the user, presented once by the project that opened it (record) and decided with decide, sent to every side. (3) A fixed template per kind, required sections checked on send and reply, show --json returning the sections as fields. Adjustments: watch is optional; ack, notice and decision are outside rounds and templates; the kind field takes the new values (legacy kind message is read as its own thread); and a fixed closing report for the user (projects and rounds, subject, outcome, conclusion, justification, positions, decision needed, after approval).
 
 ### FEAT-016: dcp adapter
 - **Priority**: high

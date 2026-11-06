@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-06T12:51:38.817Z
 subject: "Re: Proposal 1/3: automatic inbox check through the repositories (IMP-001)"
-status: open
+status: seen
 reply_to: 20261106-115643-aurora-dev-suite-re-proposal-1-3-automatic-inbox-check-th
 deferred: 
 thread: 20261106-114054-dev-cycle-protocol-proposal-1-3-automatic-inbox-check-throu

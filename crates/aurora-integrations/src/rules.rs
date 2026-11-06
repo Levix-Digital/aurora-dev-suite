@@ -273,9 +273,14 @@ pub fn record(thread: &str, messages: &[Message]) -> Option<Record> {
             .iter()
             .filter(|m| m.kind == Kind::Guidance)
             .map(|m| {
-                format::section(&m.sections(), "User request")
+                let text = format::section(&m.sections(), "User request")
                     .map(str::to_owned)
-                    .unwrap_or_else(|| m.body.clone())
+                    .unwrap_or_else(|| m.body.clone());
+                // Tool 0.3 wrote the cycle note inside the section.
+                match text.find("\n\nThe user stepped into this conversation.") {
+                    Some(i) => text[..i].trim().to_owned(),
+                    None => text.trim().to_owned(),
+                }
             })
             .collect(),
         messages: messages.iter().map(|m| m.id.clone()).collect(),

@@ -29,10 +29,10 @@ description: "Tasks of the Messages between projects feature (v0.3.0, FEAT-029, 
 
 ## Phase 2: Provider transport and commands (M2)
 
-- [ ] T006 [US6] Write the bare-repository tests of `transport.rs` (fetch, missing branch, write with retry on a lost race, `inbox.json` absent, 1.0, MAJOR 2 refused, commit identity from the project, `ls-remote` without fetch) and implement it
-- [ ] T007 [US6] Write the scenario tests of tool 0.3.0 (template refusal, round limit, ack outside rounds, closing record, decide, revise in cycle 2, guide, check with unanswered sent, poll exit codes, watch once) and implement `commands.rs`
-- [ ] T008 [US6] Implement the binary: arguments, `--dir`, `--json`, `--verbose`, exit codes of `contracts/cli.md`; text output equal to the provisional tool's
-- [ ] T009 [US6] Validate every `--json` reply of the scenarios against `contracts/dcp-integrations.schema.json`, and the written files against `aurora-inbox.schema.json` and `aurora-integrations.schema.json`
+- [x] T006 [US6] Write the bare-repository tests of `transport.rs` (fetch, missing branch, write with retry on a lost race, `inbox.json` absent, 1.0, MAJOR 2 refused, commit identity from the project, `ls-remote` without fetch) and implement it
+- [x] T007 [US6] Write the scenario tests of tool 0.3.0 (template refusal, round limit, ack outside rounds, closing record, decide, revise in cycle 2, guide, check with unanswered sent, poll exit codes, watch once) and implement `commands.rs`
+- [x] T008 [US6] Implement the binary: arguments, `--dir`, `--json`, `--verbose`, exit codes of `contracts/cli.md`; text output equal to the provisional tool's
+- [x] T009 [US6] Validate every `--json` reply of the scenarios against `contracts/dcp-integrations.schema.json`, and the written files against `aurora-inbox.schema.json` and `aurora-integrations.schema.json`
 
 **Checkpoint**: `cargo test -p aurora-integrations` passes on Windows and Linux in CI.
 

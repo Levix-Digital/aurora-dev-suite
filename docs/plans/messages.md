@@ -7,7 +7,7 @@ version: v0.3.0
 status: in_progress
 author: Levi
 created_at: '2026-11-06T13:13:30'
-updated_at: '2026-11-06T13:22:28'
+updated_at: '2026-11-06T13:30:56'
 session_id: null
 tags: []
 supersedes: null
@@ -26,7 +26,9 @@ milestones:
   done_at: '2026-11-06'
   by: LeviGuilherme
 - name: M2 Provider transport and commands
-  done: false
+  done: true
+  done_at: '2026-11-06'
+  by: LeviGuilherme
 - name: M3 Aurora core, adapter and desktop
   done: false
 - name: M4 Messages view
@@ -45,6 +47,9 @@ status_log:
 - at: '2026-11-06T13:22:28'
   by: LeviGuilherme
   note: Milestone 'M1 Provider format and rules' completed
+- at: '2026-11-06T13:30:56'
+  by: LeviGuilherme
+  note: Milestone 'M2 Provider transport and commands' completed
 ---
 
 # Messages between projects

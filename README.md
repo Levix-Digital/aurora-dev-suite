@@ -99,7 +99,7 @@ dcp-integrations add <other-slug> --url <other repository URL> --name "<other na
 dcp-integrations validate
 ```
 
-then commit `.aurora/integrations.json`. Projects that are not set up are listed under "Not taking part" with this command. Aurora reads the branch checked out in your clone: if the file is only on another branch (for example `dev` before a release), check out that branch instead of running `init` again.
+then commit `.aurora/integrations.json`. Projects that are not set up are listed under "Not taking part" with this command. Aurora reads the branch checked out in your clone: if the file is only on another branch (for example `dev` before a release), check out that branch instead of running `init` again. Aurora notices the file within seconds when you come back to its window, or at the next background check.
 
 The same commands work in a terminal, for you or your tools: `dcp-integrations check`, `show <id>`, `template <kind>`, `send`, `reply`, `record <thread>`, `decide <thread> --choice ...`, `guide <thread> --text ...`, `poll`; add `--json` for machine-readable answers. `dcp-integrations --help` lists them all. It is installed next to Aurora by the packages (in `/usr/bin` by the `.deb`; in `%LOCALAPPDATA%\Aurora` by the Windows installer, which adds that folder to your `PATH`; open a new terminal after installing) and is also published alone with each release. Messages shows, for each project not set up yet, the exact command to run with the full path of the provider Aurora found.
 
@@ -131,7 +131,7 @@ Tab moves between controls, and the focused one is always outlined. In the navig
 | Theme | Settings view, `settings.toml` | Follow the system | Light, dark or the system's appearance |
 | Engine location | Settings view, `settings.toml` | Search path (`dcp-integrations`: next to Aurora first) | The `dcp`, `gedo`, `actx` or `dcp-integrations` binary to use |
 | Messages check | `messagesPollMinutes` in `settings.toml` | 5 minutes | How often Aurora checks the inboxes in the background; 0 turns it off |
-| Engine time limit | Settings view, `settings.toml` | 10 seconds | How long Aurora waits for an engine's answer |
+| Engine time limit | Settings view, `settings.toml` | 10 seconds; 60 for `dcp-integrations` | How long Aurora waits for an engine's answer; the provider's first read of a project fetches every counterpart's inbox |
 | Log level | `AURORA_LOG` environment variable | `info` | `debug` adds each engine command and its duration |
 
 Aurora's files are in your configuration folder: `~/.config/aurora` on Linux, `%APPDATA%\Levix\Aurora\config` on Windows. `projects.toml` is the project list and `settings.toml` the settings. Both are plain TOML you can read, back up or delete.

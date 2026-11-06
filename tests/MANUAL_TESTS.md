@@ -554,14 +554,16 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
 
 ### MT-MSG-007: Without the provider or with a project not set up
 
-- **Covers**: capabilities and setup states (spec 008 FR-011, FR-014)
+- **Covers**: capabilities and setup states (spec 008 FR-011, FR-014), the setup noticed without reopening (IMP-004)
 - **Prerequisites**: one registered project without `.aurora/integrations.json`; a second run with `dcp-integrations` removed from Aurora's folder and from the PATH
 - **Steps**:
   1. Open Messages
-  2. Remove the provider, restart Aurora and open Messages
+  2. In a terminal, run the command shown for the project, then come back to Aurora's window
+  3. Remove the provider, restart Aurora and open Messages
 - **Expected**:
   - Step 1 lists the project as not set up with a command that runs from any folder: the full path of the provider, `--dir` with the project's folder and `init --project` with a slug from its name; the other projects work normally
-  - Step 2 says once that the provider is missing and how to install it; nothing else runs and Aurora stays responsive
+  - Step 2: within a few seconds of the window getting the focus, Messages offers to read again (or the count changes on another view); after reading again the project takes part, without restarting Aurora or reopening the view
+  - Step 3 says once that the provider is missing and how to install it; nothing else runs and Aurora stays responsive
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 

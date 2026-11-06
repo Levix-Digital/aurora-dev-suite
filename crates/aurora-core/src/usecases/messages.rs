@@ -197,14 +197,22 @@ pub fn poll(
         .iter()
         .filter_map(|project| {
             let provider = usable(provider, project).ok()?;
-            let news = source
-                .poll(provider, settings.engines.get(provider.kind), &project.root)
-                .ok()?;
-            Some(PollResult {
-                project: project.id.clone(),
-                changed: news.is_some(),
-                summary: news.unwrap_or_default(),
-            })
+            match source.poll(provider, settings.engines.get(provider.kind), &project.root) {
+                Ok(news) => Some(PollResult {
+                    project: project.id.clone(),
+                    changed: news.is_some(),
+                    summary: news.unwrap_or_default(),
+                    set_up: true,
+                }),
+                // Reported, so a file added later reads as news (IMP-004).
+                Err(MessagesError::NotSetUp { .. }) => Some(PollResult {
+                    project: project.id.clone(),
+                    changed: false,
+                    summary: String::new(),
+                    set_up: false,
+                }),
+                Err(_) => None,
+            }
         })
         .collect()
 }
@@ -339,7 +347,7 @@ mod tests {
         ];
         let first = poll(&source, Some(&p), &Settings::default(), &projects);
         assert_eq!(first.len(), 1);
-        assert!(first[0].changed && !first[0].summary.is_empty());
+        assert!(first[0].changed && !first[0].summary.is_empty() && first[0].set_up);
         let second = poll(&source, Some(&p), &Settings::default(), &projects);
         assert!(!second[0].changed);
         assert!(
@@ -347,5 +355,20 @@ mod tests {
                 .unwrap()
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn poll_reports_a_project_not_set_up() {
+        // IMP-004: reported, not skipped, so the desktop sees when the file appears.
+        let source = FixtureMessages::sample();
+        let p = provider();
+        let results = poll(
+            &source,
+            Some(&p),
+            &Settings::default(),
+            &[project("gedo", Presence::Present)],
+        );
+        assert_eq!(results.len(), 1);
+        assert!(!results[0].set_up && !results[0].changed);
     }
 }

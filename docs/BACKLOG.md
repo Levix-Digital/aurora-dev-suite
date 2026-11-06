@@ -6,29 +6,13 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
-### BUG-005: dcp-integrations is not on the PATH after the Windows install
+### BUG-008: Messages gives up on a project's first read after 10 s
 - **Severity**: medium
 - **Epic**: EPIC-010
 - **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Found**: 2026-11-06, v0.3.0-rc.2
 - **Plan**: -
-- **Description**: The Windows installer puts dcp-integrations.exe next to aurora.exe in %LOCALAPPDATA%\Aurora, which is not on the PATH, so 'dcp-integrations' is not found in a terminal (Levi, MSYS2 UCRT64, 2026-11-06). The .deb puts it in /usr/bin.
-
-### BUG-006: The setup hint in Messages shows a literal <slug> and a bare command
-- **Severity**: low
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.1
-- **Plan**: -
-- **Description**: For a project not set up, Messages shows 'dcp-integrations init --project <slug>' to run in its folder: the slug is a placeholder and the command fails when the provider is not on the PATH (Levi, 2026-11-06).
-
-### BUG-007: Messages shows No answer yet on conversations that ended with my reply
-- **Severity**: low
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.1
-- **Plan**: -
-- **Description**: A conversation of the provisional tool 0.1 format (kind 'message') whose last message is the project's own reply, marked done by the other side, shows 'No answer yet' and matches that filter, although it is Closed (Levi, 2026-11-06).
+- **Description**: The provider's first read of a project fetches the inbox branch of every counterpart into its caches, which takes more than the engines' general 10 s limit: AnyContext showed 'not reachable: dcp-integrations did not answer within 10 s' and answered from a terminal right after (Levi, 2026-11-06).
 
 ## Features
 
@@ -163,14 +147,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Description**: Messages reads .aurora/integrations.json only when the view opens, so a file added by a pull or a checkout keeps showing 'not set up'. Re-check each project's setup on every background poll and when Aurora's window gets the focus (a file check per project, no Git), instead of an operating system file watcher per platform (Levi, 2026-11-06).
 
 ## Adjustments
-
-### ADJ-003: Setup hint in Messages drops the change-the-slug note
-- **Priority**: low
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.2
-- **Plan**: -
-- **Description**: The hint already fills the slug, so '(change the slug if the project already has one)' only adds noise; it now says the project is not set up on the branch checked out (Levi, 2026-11-06).
 
 ### ADJ-004: Messages separates projects to set up from projects outside the network
 - **Priority**: low
@@ -522,3 +498,39 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: messages-view-adjustments
 - **Closed**: 2026-11-06, plan messages-view-adjustments
 - **Description**: Levi, 2026-11-06, testing v0.3.0-rc.1: each message and row shows sender → receiver; conversations grouped in Waiting for you, In progress and Closed (muted, collapsed), each with its color; a conversation opens right below its row, not at the bottom of the page; the navigation count shows what waits for the user plus received messages not read yet, on every screen.
+
+### BUG-005: dcp-integrations is not on the PATH after the Windows install
+- **Severity**: medium
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #31
+- **Description**: The Windows installer puts dcp-integrations.exe next to aurora.exe in %LOCALAPPDATA%\Aurora, which is not on the PATH, so 'dcp-integrations' is not found in a terminal (Levi, MSYS2 UCRT64, 2026-11-06). The .deb puts it in /usr/bin.
+
+### BUG-006: The setup hint in Messages shows a literal <slug> and a bare command
+- **Severity**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #31
+- **Description**: For a project not set up, Messages shows 'dcp-integrations init --project <slug>' to run in its folder: the slug is a placeholder and the command fails when the provider is not on the PATH (Levi, 2026-11-06).
+
+### BUG-007: Messages shows No answer yet on conversations that ended with my reply
+- **Severity**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.1
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #32
+- **Description**: A conversation of the provisional tool 0.1 format (kind 'message') whose last message is the project's own reply, marked done by the other side, shows 'No answer yet' and matches that filter, although it is Closed (Levi, 2026-11-06).
+
+### ADJ-003: Setup hint in Messages drops the change-the-slug note
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-06, PR #33
+- **Description**: The hint already fills the slug, so '(change the slug if the project already has one)' only adds noise; it now says the project is not set up on the branch checked out (Levi, 2026-11-06).

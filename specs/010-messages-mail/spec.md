@@ -40,7 +40,7 @@ The user opens Messages and, at a glance, sees each conversation as `opener → 
 **Acceptance**
 1. Opening the Messages view or a conversation shows content at once from the snapshot, with no provider call on the way.
 2. After a restart, the last snapshot shows at once, also without network.
-3. New messages appear by themselves: every 20 s with the window in focus, 5 min in the background, at once on focus and after each write.
+3. New messages appear by themselves: every 20 s with the window in focus, 1 min in the background, at once on focus and after each write.
 4. Writes run in order; a refused write is rolled back in the view with the provider's reason.
 
 ## Requirements
@@ -50,7 +50,7 @@ The user opens Messages and, at a glance, sees each conversation as `opener → 
 - **FR-003** The core derives the five statuses and merges a thread seen by two registered projects into one conversation.
 - **FR-004** A desktop worker owns every provider call and keeps the snapshot in memory and in `messages-snapshot.json`; the view reads only the snapshot.
 - **FR-005** Writes go through one ordered queue; each write is followed by a refresh of the projects involved.
-- **FR-006** The background interval is a setting in seconds (default 20, minimum 10, 0 off); in the background it is at least 5 min.
+- **FR-006** The background interval is a setting in seconds (default 20, minimum 10, 0 off); in the background it is at least 1 min.
 - **FR-007** Without the `export` capability, the worker builds the snapshot from `projects`, `check`, `thread` and `record`.
 
 ## Success Criteria

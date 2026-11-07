@@ -714,6 +714,75 @@ pub struct MessagesSnapshot {
     pub stale: Vec<StaleInbox>,
 }
 
+impl MessagesSnapshot {
+    /// The snapshot after a reading taken at `now`, `None` when nothing shown changed.
+    /// A project the reading could not reach keeps its last good conversations and is
+    /// listed in `stale` (IMP-007).
+    pub fn next(&self, read: Vec<ProjectInbox>, now: &str) -> Option<MessagesSnapshot> {
+        let mut stale = Vec::new();
+        let inboxes: Vec<ProjectInbox> = read
+            .into_iter()
+            .map(|inbox| {
+                let InboxSetup::Unavailable { reason } = &inbox.setup else {
+                    return inbox;
+                };
+                let previous = self
+                    .inboxes
+                    .iter()
+                    .find(|i| i.project == inbox.project && i.setup == InboxSetup::Ready);
+                match previous {
+                    Some(previous) => {
+                        let since = self
+                            .stale
+                            .iter()
+                            .find(|s| s.project == inbox.project)
+                            .map_or_else(|| now.to_owned(), |s| s.since.clone());
+                        stale.push(StaleInbox {
+                            project: inbox.project.clone(),
+                            reason: reason.clone(),
+                            since,
+                        });
+                        previous.clone()
+                    }
+                    None => inbox,
+                }
+            })
+            .collect();
+        if inboxes == self.inboxes && stale == self.stale && !self.taken_at.is_empty() {
+            return None;
+        }
+        Some(MessagesSnapshot {
+            version: self.version + 1,
+            taken_at: now.to_owned(),
+            inboxes,
+            stale,
+        })
+    }
+
+    /// What the navigation and the view learn from a new snapshot.
+    pub fn news(&self, before: &MessagesSnapshot) -> MessagesNews {
+        let (active, waiting) = self.summary();
+        MessagesNews {
+            version: self.version,
+            active,
+            waiting,
+            changes: self.changes_from(before),
+        }
+    }
+}
+
+/// The event the worker sends when the snapshot changed.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MessagesNews {
+    pub version: u64,
+    /// Conversations not closed.
+    pub active: usize,
+    /// Whether one waits for the user.
+    pub waiting: bool,
+    pub changes: Vec<PollResult>,
+}
+
 /// A project the worker could not read this time.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1242,6 +1311,34 @@ mod tests {
         assert_eq!(t.conversation.unread, 1);
         assert_eq!(t.conversation.items.len(), 1);
         assert_eq!(active_count(&views), 1);
+    }
+
+    #[test]
+    fn a_project_out_of_reach_keeps_its_last_conversations() {
+        let c = conversation("t", "d", MessageKind::Question, false, 1);
+        let first = MessagesSnapshot::default()
+            .next(
+                vec![inbox("pa", "a", vec![c.clone()])],
+                "2026-11-07T10:00:00Z",
+            )
+            .unwrap();
+        assert_eq!(first.version, 1);
+        assert!(
+            first
+                .next(vec![inbox("pa", "a", vec![c.clone()])], "later")
+                .is_none()
+        );
+        let mut down = inbox("pa", "a", vec![]);
+        down.setup = InboxSetup::Unavailable {
+            reason: "offline".into(),
+        };
+        let second = first
+            .next(vec![down.clone()], "2026-11-07T10:01:00Z")
+            .unwrap();
+        assert_eq!(second.inboxes[0].conversations, vec![c]);
+        assert_eq!(second.stale[0].since, "2026-11-07T10:01:00Z");
+        // Still down: nothing new to show, the first time it failed is kept.
+        assert!(second.next(vec![down], "2026-11-07T10:02:00Z").is_none());
     }
 
     #[test]

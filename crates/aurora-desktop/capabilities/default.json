@@ -20,11 +20,9 @@
     "allow-project-config",
     "allow-preview-project-config",
     "allow-apply-project-config",
-    "allow-messages-overview",
-    "allow-messages-conversation",
-    "allow-messages-record",
+    "allow-messages-snapshot",
+    "allow-messages-refresh",
     "allow-messages-template",
-    "allow-messages-act",
-    "allow-messages-poll"
+    "allow-messages-act"
   ]
 }

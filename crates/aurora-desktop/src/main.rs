@@ -7,6 +7,7 @@ mod events;
 mod logging;
 mod messages;
 mod state;
+mod worker;
 
 fn main() {
     let _log_guard = logging::init();
@@ -16,12 +17,13 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .manage(state::AppState::new(state::AppState::default_config_dir()))
         .setup(|app| {
-            messages::start_poll(app.handle().clone());
+            messages::start_worker(app.handle());
+            messages::start_timer(app.handle().clone());
             Ok(())
         })
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Focused(true) = event {
-                messages::on_focus(tauri::Manager::app_handle(window));
+            if let tauri::WindowEvent::Focused(focused) = event {
+                messages::on_focus(tauri::Manager::app_handle(window), *focused);
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -39,12 +41,10 @@ fn main() {
             commands::project_config,
             commands::preview_project_config,
             commands::apply_project_config,
-            messages::messages_overview,
-            messages::messages_conversation,
-            messages::messages_record,
+            messages::messages_snapshot,
+            messages::messages_refresh,
             messages::messages_template,
             messages::messages_act,
-            messages::messages_poll,
         ])
         .run(tauri::generate_context!());
 

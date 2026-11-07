@@ -116,6 +116,27 @@ pub fn read_inbox(
     settings: &Settings,
     project: &Project,
 ) -> InboxReading {
+    reading(source, provider, settings, project, false)
+}
+
+/// Reads one project's conversations with every message and closing record, or why it
+/// has none (IMP-007): what the worker keeps in its snapshot.
+pub fn export_inbox(
+    source: &dyn MessagesSource,
+    provider: Option<&EngineReport>,
+    settings: &Settings,
+    project: &Project,
+) -> InboxReading {
+    reading(source, provider, settings, project, true)
+}
+
+fn reading(
+    source: &dyn MessagesSource,
+    provider: Option<&EngineReport>,
+    settings: &Settings,
+    project: &Project,
+    full: bool,
+) -> InboxReading {
     let mut reading = InboxReading {
         inbox: ProjectInbox {
             project: project.id.clone(),
@@ -130,7 +151,12 @@ pub fn read_inbox(
         pending: None,
     };
     let read = usable(provider, project).and_then(|provider| {
-        source.inbox(provider, settings.engines.get(provider.kind), &project.root)
+        let engine = settings.engines.get(provider.kind);
+        if full {
+            source.export(provider, engine, &project.root)
+        } else {
+            source.inbox(provider, engine, &project.root)
+        }
     });
     let inbox = &mut reading.inbox;
     match read {
@@ -395,6 +421,29 @@ mod tests {
         assert!(
             matches!(none[0].setup, InboxSetup::Unavailable { ref reason } if reason.contains("dcp-integrations"))
         );
+    }
+
+    #[test]
+    fn export_reads_every_message_and_record_at_once() {
+        // IMP-007: the worker's reading, here built from the smaller readings.
+        let source = FixtureMessages::sample();
+        let p = provider();
+        let ads = project("aurora-dev-suite", Presence::Present);
+        let full = complete(vec![export_inbox(
+            &source,
+            Some(&p),
+            &Settings::default(),
+            &ads,
+        )]);
+        let conversations = &full[0].conversations;
+        assert!(conversations.iter().all(|c| !c.items.is_empty()));
+        assert!(
+            conversations
+                .iter()
+                .all(|c| c.items.len() as u32 == c.messages)
+        );
+        let waiting = conversations.iter().find(|c| c.waiting_for_user).unwrap();
+        assert!(waiting.record.is_some());
     }
 
     #[test]

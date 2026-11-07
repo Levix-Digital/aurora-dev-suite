@@ -732,3 +732,57 @@ fn sync_keeps_copies_that_cached_reads_use_without_git() {
     fresh.cache = w.root.join("cache-new");
     assert_eq!(fresh.read_inbox("alpha", &alpha).unwrap().len(), 2);
 }
+
+#[test]
+fn export_gives_conversations_with_their_messages_notes_and_records() {
+    // IMP-007: one document holds everything a reader shows for a project.
+    let w = World::new();
+    let (a, b) = (w.cx("alpha"), w.cx("beta"));
+    let q = sent_id(&ok(commands::send(
+        &b, "alpha", "question", "Format", QUESTION,
+    )));
+    let answer = sent_id(&ok(commands::reply(&a, &q, "answer", None, ANSWER)));
+    ok(commands::status(&a, &q, "done", Some("answered")));
+    let close = sent_id(&ok(commands::reply(
+        &b,
+        &answer,
+        "agreement",
+        None,
+        AGREEMENT,
+    )));
+
+    let alpha = ok(commands::export(&a)).json;
+    assert_eq!(alpha["project"], "alpha");
+    assert_eq!(alpha["items"][1]["slug"], "beta");
+    let c = &alpha["conversations"][0];
+    assert_eq!(c["thread"], q.as_str());
+    let items = c["items"].as_array().unwrap();
+    assert_eq!(items.len(), 3, "question, answer and agreement");
+    // The status note leaves the text and the sections, and stays in the body.
+    let first = &items[0];
+    assert_eq!(first["notes"][0]["status"], "done");
+    assert_eq!(first["notes"][0]["note"], "answered");
+    assert!(!first["text"].as_str().unwrap().contains("> done"));
+    assert!(first["body"].as_str().unwrap().contains("> done"));
+    assert!(
+        !first["sections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|s| s["text"].as_str().unwrap().contains("> done"))
+    );
+    // The agreement to alpha is not read yet; its record is there.
+    assert_eq!(c["unread"], 1);
+    assert_eq!(c["record"]["outcome"], "agreement");
+    assert_eq!(c["record"]["options"][0], "Adopt 1.1");
+    assert_eq!(items[2]["message"]["id"], close.as_str());
+
+    // The other side sees the same thread, with alpha's answer not read yet.
+    let beta = ok(commands::export(&b)).json;
+    assert_eq!(beta["conversations"][0]["thread"], q.as_str());
+    assert_eq!(beta["conversations"][0]["unread"], 1);
+    assert_eq!(
+        beta["conversations"][0]["items"].as_array().unwrap().len(),
+        3
+    );
+}

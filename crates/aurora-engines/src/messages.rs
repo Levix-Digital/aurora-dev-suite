@@ -7,9 +7,9 @@ use std::time::{Duration, Instant};
 
 use aurora_core::domain::{
     ClosingRecord, Conversation, EngineReport, EngineSettings, Message, MessageHeader, MessageKind,
-    MessageStatus, MessagesError, Section, TemplateSection, UserAction, message_body,
+    MessageStatus, MessagesError, Section, StatusNote, TemplateSection, UserAction, message_body,
 };
-use aurora_core::ports::{InboxRead, ListedProject, MessagesSource};
+use aurora_core::ports::{InboxRead, ListedProject, MessagesSource, export_by_parts};
 use aurora_core::usecases::messages::SETUP_COMMAND;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
@@ -154,10 +154,53 @@ struct RawSection {
 }
 
 #[derive(Deserialize)]
+struct RawNote {
+    status: String,
+    date: String,
+    #[serde(default)]
+    note: String,
+}
+
+#[derive(Deserialize)]
 struct RawMessage {
     message: RawHeader,
     sections: Vec<RawSection>,
     body: String,
+    /// The body without the status notes (schema 1.2).
+    #[serde(default)]
+    text: Option<String>,
+    #[serde(default)]
+    notes: Vec<RawNote>,
+}
+
+impl From<RawMessage> for Message {
+    fn from(m: RawMessage) -> Self {
+        let mut message = Message {
+            header: m.message.into(),
+            sections: m
+                .sections
+                .into_iter()
+                .map(|s| Section {
+                    name: s.name,
+                    text: s.text,
+                })
+                .collect(),
+            body: m.body,
+            text: m.text.unwrap_or_default(),
+            notes: m
+                .notes
+                .into_iter()
+                .map(|n| StatusNote {
+                    status: n.status,
+                    date: n.date,
+                    note: n.note,
+                })
+                .collect(),
+        };
+        // A provider before 1.2 leaves the notes in the body.
+        message.split_notes();
+        message
+    }
 }
 
 #[derive(Deserialize)]
@@ -182,9 +225,33 @@ struct RawRecord {
     decision_needed: String,
     #[serde(default)]
     options: Vec<String>,
+    #[serde(default)]
+    recommended: Option<usize>,
     after_approval: String,
     #[serde(default)]
     user_requests: Vec<String>,
+}
+
+impl From<RawRecord> for ClosingRecord {
+    fn from(r: RawRecord) -> Self {
+        ClosingRecord {
+            thread: r.thread,
+            subject: r.subject,
+            projects: r.projects,
+            rounds: r.rounds,
+            cycle: r.cycle,
+            outcome: MessageKind::from(r.outcome),
+            conclusion: r.conclusion,
+            justification: r.justification,
+            positions: r.positions,
+            open_points: r.open_points,
+            decision_needed: r.decision_needed,
+            options: r.options,
+            recommended: r.recommended,
+            after_approval: r.after_approval,
+            user_requests: r.user_requests,
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -477,6 +544,57 @@ fn conversation(raw: RawConversation) -> Conversation {
         waiting_for_user: raw.waiting_for_user,
         user_requests: raw.user_requests,
         unread: 0,
+        items: Vec::new(),
+        record: None,
+    }
+}
+
+/// The capability of a provider with `export` (IMP-007).
+pub const EXPORT_CAPABILITY: &str = "export";
+
+#[derive(Deserialize)]
+struct RawExportConversation {
+    #[serde(flatten)]
+    conversation: RawConversation,
+    #[serde(default)]
+    unread: u32,
+    #[serde(default)]
+    items: Vec<RawMessage>,
+    #[serde(default)]
+    record: Option<RawRecord>,
+}
+
+#[derive(Deserialize)]
+struct RawExport {
+    project: String,
+    #[serde(default)]
+    items: Vec<RawItem>,
+    #[serde(default)]
+    conversations: Vec<RawExportConversation>,
+}
+
+/// The registry's projects and the conversations as one reading.
+fn inbox_read(list: RawList, conversations: Vec<Conversation>) -> InboxRead {
+    InboxRead {
+        listed: list
+            .items
+            .iter()
+            .filter_map(|i| match (&i.slug, &i.url) {
+                (Some(slug), Some(url)) => Some(ListedProject {
+                    slug: slug.clone(),
+                    url: url.clone(),
+                }),
+                _ => None,
+            })
+            .collect(),
+        counterparts: list
+            .items
+            .into_iter()
+            .filter_map(|i| i.slug)
+            .filter(|s| *s != list.project)
+            .collect(),
+        slug: list.project,
+        conversations,
     }
 }
 
@@ -489,43 +607,49 @@ impl MessagesSource for ProviderMessagesSource {
     ) -> Result<InboxRead, MessagesError> {
         let list: RawList = self.read(engine, settings, Some(root), &["projects"], "list")?;
         let check: RawCheck = self.read(engine, settings, Some(root), &["check"], "check")?;
-        Ok(InboxRead {
-            listed: list
-                .items
-                .iter()
-                .filter_map(|i| match (&i.slug, &i.url) {
-                    (Some(slug), Some(url)) => Some(ListedProject {
-                        slug: slug.clone(),
-                        url: url.clone(),
-                    }),
-                    _ => None,
-                })
-                .collect(),
-            counterparts: list
-                .items
-                .into_iter()
-                .filter_map(|i| i.slug)
-                .filter(|s| *s != list.project)
-                .collect(),
-            slug: list.project,
-            conversations: {
-                let unread = unread_by_thread(&check.messages);
-                let counts: Vec<u32> = check
-                    .conversations
-                    .iter()
-                    .map(|c| unread.get(c.thread.as_str()).copied().unwrap_or(0))
-                    .collect();
-                check
-                    .conversations
-                    .into_iter()
-                    .zip(counts)
-                    .map(|(raw, unread)| Conversation {
-                        unread,
-                        ..conversation(raw)
-                    })
-                    .collect()
-            },
-        })
+        let unread = unread_by_thread(&check.messages);
+        let counts: Vec<u32> = check
+            .conversations
+            .iter()
+            .map(|c| unread.get(c.thread.as_str()).copied().unwrap_or(0))
+            .collect();
+        let conversations = check
+            .conversations
+            .into_iter()
+            .zip(counts)
+            .map(|(raw, unread)| Conversation {
+                unread,
+                ..conversation(raw)
+            })
+            .collect();
+        Ok(inbox_read(list, conversations))
+    }
+
+    fn export(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<InboxRead, MessagesError> {
+        if !engine.has_capability(EXPORT_CAPABILITY, SCHEMA_MAJOR) {
+            return export_by_parts(self, engine, settings, root);
+        }
+        let raw: RawExport = self.read(engine, settings, Some(root), &["export"], "export")?;
+        let list = RawList {
+            project: raw.project,
+            items: raw.items,
+        };
+        let conversations = raw
+            .conversations
+            .into_iter()
+            .map(|c| Conversation {
+                unread: c.unread,
+                items: c.items.into_iter().map(Message::from).collect(),
+                record: c.record.map(ClosingRecord::from),
+                ..conversation(c.conversation)
+            })
+            .collect();
+        Ok(inbox_read(list, conversations))
     }
 
     fn thread(
@@ -537,22 +661,7 @@ impl MessagesSource for ProviderMessagesSource {
     ) -> Result<Vec<Message>, MessagesError> {
         let raw: RawThread =
             self.read(engine, settings, Some(root), &["thread", thread], "thread")?;
-        Ok(raw
-            .messages
-            .into_iter()
-            .map(|m| Message {
-                header: m.message.into(),
-                sections: m
-                    .sections
-                    .into_iter()
-                    .map(|s| Section {
-                        name: s.name,
-                        text: s.text,
-                    })
-                    .collect(),
-                body: m.body,
-            })
-            .collect())
+        Ok(raw.messages.into_iter().map(Message::from).collect())
     }
 
     fn record(
@@ -564,22 +673,7 @@ impl MessagesSource for ProviderMessagesSource {
     ) -> Result<ClosingRecord, MessagesError> {
         let r: RawRecord =
             self.read(engine, settings, Some(root), &["record", thread], "record")?;
-        Ok(ClosingRecord {
-            thread: r.thread,
-            subject: r.subject,
-            projects: r.projects,
-            rounds: r.rounds,
-            cycle: r.cycle,
-            outcome: MessageKind::from(r.outcome),
-            conclusion: r.conclusion,
-            justification: r.justification,
-            positions: r.positions,
-            open_points: r.open_points,
-            decision_needed: r.decision_needed,
-            options: r.options,
-            after_approval: r.after_approval,
-            user_requests: r.user_requests,
-        })
+        Ok(r.into())
     }
 
     fn template(

@@ -4,15 +4,14 @@ Same conventions as `specs/001-foundations/contracts/desktop-commands.md`: argum
 
 | Command | Arguments | Result | Use case |
 |---|---|---|---|
-| `messages_overview` | none | `Vec<ProjectInbox>` for every registered project | `usecases::messages::overview` (FR-002) |
-| `messages_conversation` | `project`, `thread` | `Vec<Message>` oldest first | `usecases::messages::conversation` (US3) |
-| `messages_record` | `project`, `thread` | `ClosingRecord` | `usecases::messages::record` (FR-004) |
+| `messages_snapshot` | none | `MessagesSnapshot`: every registered project's conversations with their messages and closing records, from memory | the messages worker (spec 010, FR-004) |
+| `messages_refresh` | none | `Vec<PollResult>`: the projects whose conversations changed | the worker: `usecases::messages::sync` and `export_inbox` (spec 010, US4) |
 | `messages_template` | `kind` | `Vec<TemplateSection>` (name, hint, required) | `usecases::messages::template` (FR-006) |
-| `messages_act` | `project`, `action` (`UserAction`) | `Vec<MessageHeader>` sent or changed | `usecases::messages::act` (FR-004 to FR-006) |
-| `messages_poll` | none | `Vec<PollResult>` | `usecases::messages::poll` (FR-007) |
+| `messages_act` | `project`, `action` (`UserAction`) | `Vec<MessageHeader>` sent or changed | the worker's write queue: `usecases::messages::act` (FR-004 to FR-006, spec 010 FR-005) |
 
-- They use the `dcp-integrations` report of the latest engine probe, probing first when none ran.
-- They run on a blocking worker thread, at most four provider processes at once.
-- New event `messages-news` with the `Vec<PollResult>` that changed, emitted by the background poll (research R5).
+- Spec 010 (IMP-007, ADR-0012) replaced `messages_overview`, `messages_conversation`, `messages_record` and `messages_poll` with `messages_snapshot` and `messages_refresh`: the view never waits for the provider to read.
+- `messages_snapshot` answers at once; its first call probes the engines behind it and asks the worker for a reading. `messages_refresh` and `messages_act` wait for the worker.
+- The worker uses the `dcp-integrations` report of the latest engine probe and runs at most four provider processes at once.
+- Event `messages-snapshot` with `MessagesNews` (version, active conversations, whether one waits for the user, the projects that changed), emitted after each reading that changed the snapshot; it replaced `messages-news`.
 - The Tauri capability file adds only these commands and the event.
 - The browser preview answers them from `FixtureMessages`, which keeps the sample conversations in memory.

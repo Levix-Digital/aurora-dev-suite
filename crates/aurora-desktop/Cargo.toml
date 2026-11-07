@@ -25,6 +25,7 @@ aurora-engines.workspace = true
 directories.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+time.workspace = true
 tauri.workspace = true
 tauri-plugin-dialog.workspace = true
 thiserror.workspace = true

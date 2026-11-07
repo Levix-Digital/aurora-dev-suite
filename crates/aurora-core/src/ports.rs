@@ -140,6 +140,18 @@ pub trait MessagesSource: Send + Sync {
         root: &Path,
     ) -> Result<Option<String>, MessagesError>;
 
+    /// The project's inbox with every conversation's messages and closing record, in one
+    /// reading (IMP-007). The default builds it from [`MessagesSource::inbox`],
+    /// [`MessagesSource::thread`] and [`MessagesSource::record`].
+    fn export(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<InboxRead, MessagesError> {
+        export_by_parts(self, engine, settings, root)
+    }
+
     /// Brings the local copies of the project's inboxes up to date, so the reads above
     /// answer from them without the network (ADR-0011); whether anything changed. A
     /// provider that reads from the network on every call has nothing to do.
@@ -151,4 +163,27 @@ pub trait MessagesSource: Send + Sync {
     ) -> Result<bool, MessagesError> {
         Ok(false)
     }
+}
+
+/// [`MessagesSource::export`] from the smaller readings, for a provider without
+/// `export`: a conversation whose thread cannot be read keeps no messages.
+pub fn export_by_parts<S: MessagesSource + ?Sized>(
+    source: &S,
+    engine: &EngineReport,
+    settings: &EngineSettings,
+    root: &Path,
+) -> Result<InboxRead, MessagesError> {
+    let mut read = source.inbox(engine, settings, root)?;
+    for c in &mut read.conversations {
+        if let Ok(mut items) = source.thread(engine, settings, root, &c.thread) {
+            for m in &mut items {
+                m.split_notes();
+            }
+            c.items = items;
+        }
+        if c.waiting_for_user || c.items.iter().any(|m| m.header.kind.is_closing()) {
+            c.record = source.record(engine, settings, root, &c.thread).ok();
+        }
+    }
+    Ok(read)
 }

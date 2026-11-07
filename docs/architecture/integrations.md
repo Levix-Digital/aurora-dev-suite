@@ -56,6 +56,8 @@ flowchart LR
 
 **Sync.** `sync` fetches the project's inbox and every counterpart's at once, one thread per inbox, each unless fetched less than `--max-age` seconds ago (10 by default, so a sweep over projects that share counterparts fetches each inbox once), and indexes them; it reports per inbox the tip, whether it changed and why one could not be fetched. The reading commands with `--cached` then answer from the copies, and `check --cached` records the cached tip instead of running `ls-remote`. `version` declares the capability `cache` for this (ADR-0011).
 
+**Export.** `export` answers `dcp-integrations.export`: the project, the registry's projects, and every conversation as `check` gives it with all its messages and its closing record when one exists, in one process (with `--cached`, from the copies). Each message carries its sections, its text and body without the status notes, and `notes`: the `> open|seen|done (date): note` lines the receiver appended, parsed with an ISO date. A closing record whose text has a `Recommended: <n>` line, or an option ending in "(recommended)", carries `recommended`. `version` declares the capability `export`; documents are at schema 1.2 (ADR-0012).
+
 **Logs.** With `--verbose`, Git's error output goes to standard error. Bodies are never logged.
 
 **Tests.** Unit tests cover the format (samples of tool 0.1 to 0.3), the rules and the registry. `tests/scenarios.rs` runs on bare repositories in a temporary folder: the transport (missing branch, first write, identity, a lost race rebuilt, `inbox.json` MAJOR 2 refused, an unreachable remote), a whole conversation from question to decision through a revision in cycle 2, `guide`, `check` with unread sent messages, `init`, `add`, `validate`, `watch` once, and the binary's exit codes. Every `--json` reply and every written file is validated against the contracts in `specs/008-messages/contracts`.
@@ -70,4 +72,5 @@ The command line of [`contracts/cli.md`](../../specs/008-messages/contracts/cli.
 - [ADR-0009](../adr/0009-conversations-between-projects-in-rounds-that-close-with-a-r.md): conversations in rounds and cycles that close with a record for the user.
 - [ADR-0010](../adr/0010-the-integrations-provider-ships-with-aurora-and-the-inbox-br.md): the provider ships with Aurora and alone; each project lists its counterparts; the branch holds only data and its format version.
 - [ADR-0011](../adr/0011-messages-are-read-from-local-inbox-copies-kept-current-by-a.md): reads answer from local copies indexed per tip, kept current by `sync`.
+- [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): `export` gives a whole reading in one call for Aurora's messages worker.
 - [ADR-0003](../adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md): Aurora uses it only through its command line with versioned JSON.

@@ -1,22 +1,27 @@
-//! The commands of the Messages view and the background poll (spec 008,
-//! contracts/desktop-commands.md). Every provider call runs on the blocking pool, at
-//! most four at once.
+//! The commands of the Messages view, the messages worker's provider side and its timer
+//! (spec 008, spec 010, contracts/desktop-commands.md). The view reads the worker's
+//! snapshot; every provider call runs on the worker's thread, at most four at once.
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+#[cfg(test)]
+use aurora_core::domain::Settings;
 use aurora_core::domain::{
-    ClosingRecord, EngineKind, EngineReport, Message, MessageHeader, MessageKind, PollResult,
-    Project, ProjectId, ProjectInbox, Settings, TemplateSection, UserAction,
+    EngineKind, EngineReport, MessageHeader, MessageKind, MessagesNews, MessagesSnapshot,
+    PollResult, Project, ProjectId, ProjectInbox, TemplateSection, UserAction,
 };
-use aurora_core::ports::MessagesSource;
 use aurora_core::usecases::{messages, projects, settings};
 use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::commands::{CommandError, Reply, blocking, engines_overview};
 use crate::state::AppState;
+use crate::worker::{self, Worker};
 
-pub const MESSAGES_NEWS: &str = "messages-news";
+/// The event of a new snapshot, with what the navigation shows (IMP-007).
+pub const MESSAGES_SNAPSHOT: &str = "messages-snapshot";
+/// The snapshot's file in Aurora's configuration folder (ADR-0012).
+pub const SNAPSHOT_FILE: &str = "messages-snapshot.json";
 /// Provider processes at once.
 pub const PARALLEL: usize = 4;
 
@@ -57,149 +62,131 @@ fn in_parallel<T: Sync, R: Send>(items: &[T], work: impl Fn(&T) -> R + Sync) -> 
     out
 }
 
-fn overview_of(
-    source: &dyn MessagesSource,
-    provider: Option<&EngineReport>,
-    current: &Settings,
-    list: &[Project],
-) -> Vec<ProjectInbox> {
-    messages::complete(in_parallel(list, |project| {
-        messages::read_inbox(source, provider, current, project)
-    }))
-}
-
-#[tauri::command]
-pub async fn messages_overview(
+/// The worker's real side: `dcp-integrations` for every registered project, and Tauri
+/// events for the window.
+pub struct ProviderPort {
     app: AppHandle,
-    state: State<'_, AppState>,
-) -> Reply<Vec<ProjectInbox>> {
-    let app_for_sync = app.clone();
-    let provider = provider(app, &state).await?;
-    let (registry, store, source) = (
-        Arc::clone(&state.registry),
-        Arc::clone(&state.settings),
-        Arc::clone(&state.messages),
-    );
-    let setups = Arc::clone(&state.setups);
-    let inboxes = blocking(move || {
-        let list = projects::list(registry.as_ref()).projects;
-        let current = settings::get(store.as_ref());
-        let inboxes = overview_of(source.as_ref(), provider.as_ref(), &current, &list);
-        if let Ok(mut memory) = setups.lock() {
-            memory.remember(&inboxes);
-        }
-        Ok(inboxes)
-    })
-    .await;
-    // The view answered from the local copies; bring them up to date behind it, and
-    // what changed arrives as news (ADR-0011).
-    sync_in_background(&app_for_sync);
-    inboxes
 }
 
-/// Brings every project's inbox copies up to date (ADR-0011); the projects where
-/// something changed.
-fn sync_all(state: &AppState, provider: Option<&EngineReport>) -> Vec<PollResult> {
-    let list = projects::list(state.registry.as_ref()).projects;
-    let current = settings::get(state.settings.as_ref());
-    in_parallel(&list, |project| {
-        messages::sync(
+impl ProviderPort {
+    pub fn new(app: AppHandle) -> Self {
+        Self { app }
+    }
+}
+
+impl worker::Port for ProviderPort {
+    fn read(&mut self) -> Vec<ProjectInbox> {
+        let state = self.app.state::<AppState>();
+        // No provider probed yet: the view asks once the probe ran.
+        let Some(provider) = last_provider(&state) else {
+            return previous_inboxes(&state);
+        };
+        let list = projects::list(state.registry.as_ref()).projects;
+        let current = settings::get(state.settings.as_ref());
+        // Bring the local copies up to date first (ADR-0011), then read from them.
+        let _ = in_parallel(&list, |project| {
+            messages::sync(
+                state.messages.as_ref(),
+                Some(&provider),
+                &current,
+                std::slice::from_ref(project),
+            )
+        });
+        messages::complete(in_parallel(&list, |project| {
+            messages::export_inbox(state.messages.as_ref(), Some(&provider), &current, project)
+        }))
+    }
+
+    fn act(
+        &mut self,
+        project: &str,
+        action: &UserAction,
+    ) -> Result<Vec<MessageHeader>, CommandError> {
+        let state = self.app.state::<AppState>();
+        let project = project_of(&state, project)?;
+        let current = settings::get(state.settings.as_ref());
+        messages::act(
             state.messages.as_ref(),
-            provider,
+            last_provider(&state).as_ref(),
             &current,
-            std::slice::from_ref(project),
+            &project,
+            action,
         )
-    })
-    .into_iter()
-    .flatten()
-    .collect()
-}
-
-/// `sync_all` once at a time: a call while one runs does nothing.
-fn sync_once(state: &AppState, provider: Option<&EngineReport>) -> Vec<PollResult> {
-    use std::sync::atomic::Ordering;
-    if state.syncing.swap(true, Ordering::AcqRel) {
-        return Vec::new();
+        .map_err(CommandError::from)
     }
-    let started = Instant::now();
-    let changed = sync_all(state, provider);
-    state.syncing.store(false, Ordering::Release);
-    tracing::info!(
-        elapsed_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
-        changed = changed.len(),
-        "messages sync"
-    );
-    changed
-}
 
-/// Polls and synchronizes in the background, emitting `messages-news` when something
-/// changed.
-fn sync_in_background(app: &AppHandle) {
-    let app = app.clone();
-    std::thread::spawn(move || poll_and_emit(&app));
-}
-
-/// The poll's results with the sync's changes added, one entry per project.
-fn merge(mut results: Vec<PollResult>, synced: Vec<PollResult>) -> Vec<PollResult> {
-    for s in synced {
-        match results.iter_mut().find(|r| r.project == s.project) {
-            Some(r) if !r.changed => {
-                r.changed = true;
-                r.summary = s.summary;
-            }
-            Some(_) => {}
-            None => results.push(s),
+    fn emit(&mut self, news: &MessagesNews) {
+        if let Err(error) = self.app.emit(MESSAGES_SNAPSHOT, news) {
+            tracing::warn!(%error, "could not emit messages-snapshot");
         }
     }
-    results
+
+    fn now(&self) -> String {
+        time::OffsetDateTime::now_utc()
+            .format(&time::format_description::well_known::Rfc3339)
+            .unwrap_or_default()
+    }
 }
 
-#[tauri::command]
-pub async fn messages_conversation(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    project: String,
-    thread: String,
-) -> Reply<Vec<Message>> {
-    let provider = provider(app, &state).await?;
-    let project = project_of(&state, &project)?;
-    let (store, source) = (Arc::clone(&state.settings), Arc::clone(&state.messages));
-    blocking(move || {
-        let current = settings::get(store.as_ref());
-        messages::conversation(
-            source.as_ref(),
-            provider.as_ref(),
-            &current,
-            &project,
-            &thread,
-        )
-        .map_err(CommandError::from)
-    })
-    .await
+/// Without a provider the reading changes nothing.
+fn previous_inboxes(state: &AppState) -> Vec<ProjectInbox> {
+    state
+        .worker
+        .get()
+        .map(|w| w.snapshot().inboxes)
+        .unwrap_or_default()
 }
 
+fn worker_of(state: &AppState) -> Reply<Worker> {
+    state
+        .worker
+        .get()
+        .cloned()
+        .ok_or_else(|| CommandError::new("messages", "the messages worker is not running"))
+}
+
+/// Starts the worker with the snapshot saved by the last run.
+pub fn start_worker(app: &AppHandle) {
+    let state = app.state::<AppState>();
+    let file = state.config_dir.join(SNAPSHOT_FILE);
+    let worker = Worker::start(ProviderPort::new(app.clone()), Some(file));
+    if state.worker.set(worker).is_err() {
+        tracing::warn!("the messages worker was already running");
+    }
+}
+
+/// The snapshot the Messages view shows, at once (IMP-007). The first call after start
+/// probes the provider behind it and asks the worker for a reading.
 #[tauri::command]
-pub async fn messages_record(
+pub async fn messages_snapshot(
     app: AppHandle,
     state: State<'_, AppState>,
-    project: String,
-    thread: String,
-) -> Reply<ClosingRecord> {
-    let provider = provider(app, &state).await?;
-    let project = project_of(&state, &project)?;
-    let (store, source) = (Arc::clone(&state.settings), Arc::clone(&state.messages));
-    blocking(move || {
-        let current = settings::get(store.as_ref());
-        messages::record(
-            source.as_ref(),
-            provider.as_ref(),
-            &current,
-            &project,
-            &thread,
-        )
-        .map_err(CommandError::from)
-    })
-    .await
+) -> Reply<MessagesSnapshot> {
+    let worker = worker_of(&state)?;
+    let snapshot = worker.snapshot();
+    let first = !state
+        .snapshot_asked
+        .swap(true, std::sync::atomic::Ordering::AcqRel);
+    if first {
+        tauri::async_runtime::spawn(async move {
+            let state = app.state::<AppState>();
+            if provider(app.clone(), &state).await.is_ok() {
+                worker.refresh();
+            }
+        });
+    }
+    Ok(snapshot)
+}
+
+/// "Check now": reads every project again and says what changed.
+#[tauri::command]
+pub async fn messages_refresh(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Reply<Vec<PollResult>> {
+    provider(app, &state).await?;
+    let worker = worker_of(&state)?;
+    blocking(move || Ok(worker.refresh_and_wait())).await
 }
 
 #[tauri::command]
@@ -218,6 +205,7 @@ pub async fn messages_template(
     .await
 }
 
+/// A write, after the ones asked before it; a reading follows (IMP-007).
 #[tauri::command]
 pub async fn messages_act(
     app: AppHandle,
@@ -225,68 +213,10 @@ pub async fn messages_act(
     project: String,
     action: UserAction,
 ) -> Reply<Vec<MessageHeader>> {
-    let provider = provider(app, &state).await?;
-    let project = project_of(&state, &project)?;
-    let (store, source) = (Arc::clone(&state.settings), Arc::clone(&state.messages));
-    blocking(move || {
-        let current = settings::get(store.as_ref());
-        messages::act(
-            source.as_ref(),
-            provider.as_ref(),
-            &current,
-            &project,
-            &action,
-        )
-        .map_err(CommandError::from)
-    })
-    .await
+    provider(app, &state).await?;
+    let worker = worker_of(&state)?;
+    blocking(move || worker.act(project, action)).await
 }
-
-fn poll_all(state: &AppState, provider: Option<&EngineReport>) -> Vec<PollResult> {
-    let list = projects::list(state.registry.as_ref()).projects;
-    let current = settings::get(state.settings.as_ref());
-    let mut results: Vec<PollResult> = in_parallel(&list, |project| {
-        messages::poll(
-            state.messages.as_ref(),
-            provider,
-            &current,
-            std::slice::from_ref(project),
-        )
-    })
-    .into_iter()
-    .flatten()
-    .collect();
-    if let Ok(mut memory) = state.setups.lock() {
-        memory.note(&mut results);
-    }
-    results
-}
-
-#[tauri::command]
-pub async fn messages_poll(app: AppHandle, state: State<'_, AppState>) -> Reply<Vec<PollResult>> {
-    let provider = provider(app.clone(), &state).await?;
-    blocking(move || {
-        let state = app.state::<AppState>();
-        let polled = poll_all(&state, provider.as_ref());
-        Ok(merge(polled, sync_once(&state, provider.as_ref())))
-    })
-    .await
-}
-
-/// How long to wait before the next background poll; `None` when it is off.
-pub fn next_wait(settings: &Settings) -> Option<Duration> {
-    let minutes = settings.messages_poll_minutes.min(24 * 60);
-    (minutes > 0).then(|| Duration::from_secs(u64::from(minutes) * 60))
-}
-
-/// The results worth an event: only the projects whose inbox changed.
-pub fn news(results: Vec<PollResult>) -> Option<Vec<PollResult>> {
-    let changed: Vec<PollResult> = results.into_iter().filter(|r| r.changed).collect();
-    (!changed.is_empty()).then_some(changed)
-}
-
-/// While the setting is off it checks again every minute.
-const OFF_CHECK: Duration = Duration::from_secs(60);
 
 /// The provider of the last probe, without probing.
 fn last_provider(state: &AppState) -> Option<EngineReport> {
@@ -301,52 +231,56 @@ fn last_provider(state: &AppState) -> Option<EngineReport> {
     })
 }
 
-/// Polls every project and emits `messages-news` with the ones that changed: new
-/// messages, or a setup that appeared or went away (IMP-004).
-fn poll_and_emit(app: &AppHandle) {
-    let state = app.state::<AppState>();
-    let Some(provider) = last_provider(&state) else {
-        return;
-    };
-    let polled = poll_all(&state, Some(&provider));
-    let synced = sync_once(&state, Some(&provider));
-    if let Some(changed) = news(merge(polled, synced)) {
-        tracing::info!(projects = changed.len(), "messages news");
-        if let Err(error) = app.emit(MESSAGES_NEWS, &changed) {
-            tracing::warn!(%error, "could not emit messages-news");
-        }
-    }
+/// Whether a reading is due, `elapsed` after the last one, with the window focused or
+/// not; `None` interval means off.
+pub fn due(interval: Option<Duration>, elapsed: Duration) -> bool {
+    interval.is_some_and(|i| elapsed >= i)
 }
 
-/// Starts the background poll: every `messages_poll_minutes`, with the provider of the
-/// last probe, it emits `messages-news` with the projects whose inbox or setup changed.
-pub fn start_poll(app: AppHandle) {
+/// How often the timer looks at the clock and the focus.
+const TICK: Duration = Duration::from_secs(1);
+
+/// Starts the timer: a reading every `messages_poll_seconds` while the window has the
+/// focus, at least every minute while it does not (IMP-007).
+pub fn start_timer(app: AppHandle) {
     std::thread::spawn(move || {
+        let mut last = Instant::now();
         loop {
+            std::thread::sleep(TICK);
             let state = app.state::<AppState>();
-            let wait = next_wait(&settings::get(state.settings.as_ref()));
-            std::thread::sleep(wait.unwrap_or(OFF_CHECK));
-            if wait.is_some() {
-                poll_and_emit(&app);
+            let focused = state.focused.load(std::sync::atomic::Ordering::Acquire);
+            let interval = settings::get(state.settings.as_ref()).poll_interval(focused);
+            if due(interval, last.elapsed()) {
+                last = Instant::now();
+                if let Some(worker) = state.worker.get() {
+                    worker.refresh();
+                }
             }
         }
     });
 }
 
-/// The least time between two checks started by the window getting the focus.
-pub const FOCUS_INTERVAL: Duration = Duration::from_secs(30);
+/// The least time between two readings started by the window getting the focus.
+pub const FOCUS_INTERVAL: Duration = Duration::from_secs(20);
 
-/// Whether a focus at `now` starts a check, given when the last one started.
+/// Whether a focus at `now` starts a reading, given when the last one started.
 pub fn focus_check_due(last: Option<Instant>, now: Instant) -> bool {
     last.is_none_or(|last| now.saturating_duration_since(last) >= FOCUS_INTERVAL)
 }
 
-/// The window got the focus: the user may come back from a pull or a checkout, so
-/// check the projects again, at most once per `FOCUS_INTERVAL` and only while the
-/// background poll is on (IMP-004).
-pub fn on_focus(app: &AppHandle) {
+/// The window's focus changed: on getting it, the user may come back from a pull or a
+/// checkout, so read again, at most once per `FOCUS_INTERVAL` and only while the
+/// background updates are on (IMP-004, IMP-007).
+pub fn on_focus(app: &AppHandle, focused: bool) {
     let state = app.state::<AppState>();
-    if next_wait(&settings::get(state.settings.as_ref())).is_none() {
+    state
+        .focused
+        .store(focused, std::sync::atomic::Ordering::Release);
+    if !focused
+        || settings::get(state.settings.as_ref())
+            .poll_interval(true)
+            .is_none()
+    {
         return;
     }
     let now = Instant::now();
@@ -358,40 +292,31 @@ pub fn on_focus(app: &AppHandle) {
     }
     *last = Some(now);
     drop(last);
-    let app = app.clone();
-    std::thread::spawn(move || poll_and_emit(&app));
+    if let Some(worker) = state.worker.get() {
+        worker.refresh();
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn result(id: &str, changed: bool) -> PollResult {
-        PollResult {
-            project: ProjectId(id.into()),
-            changed,
-            summary: String::new(),
-            set_up: true,
-        }
+    #[test]
+    fn the_timer_follows_the_setting_and_the_focus() {
+        let s = Settings::default();
+        assert!(!due(s.poll_interval(true), Duration::from_secs(19)));
+        assert!(due(s.poll_interval(true), Duration::from_secs(20)));
+        assert!(!due(s.poll_interval(false), Duration::from_secs(59)));
+        assert!(due(s.poll_interval(false), Duration::from_secs(60)));
+        let off = Settings {
+            messages_poll_seconds: 0,
+            ..Settings::default()
+        };
+        assert!(!due(off.poll_interval(true), Duration::from_secs(3600)));
     }
 
     #[test]
-    fn the_timer_follows_the_setting_and_emits_only_changes() {
-        let mut s = Settings::default();
-        assert_eq!(next_wait(&s), Some(Duration::from_secs(60)));
-        s.messages_poll_minutes = 0;
-        assert_eq!(next_wait(&s), None);
-        s.messages_poll_minutes = 100_000;
-        assert_eq!(next_wait(&s), Some(Duration::from_secs(24 * 3600)));
-        assert_eq!(news(vec![result("a", false)]), None);
-        assert_eq!(
-            news(vec![result("a", false), result("b", true)]),
-            Some(vec![result("b", true)])
-        );
-    }
-
-    #[test]
-    fn the_focus_starts_one_check_per_interval() {
+    fn the_focus_starts_one_reading_per_interval() {
         let start = Instant::now();
         assert!(focus_check_due(None, start));
         assert!(!focus_check_due(
@@ -408,41 +333,5 @@ mod tests {
             in_parallel(&items, |n| n * 2),
             (0..10).map(|n| n * 2).collect::<Vec<_>>()
         );
-    }
-
-    #[test]
-    fn the_sync_adds_its_changes_to_the_poll() {
-        let mut synced = result("b", true);
-        synced.summary = "b: messages updated.".into();
-        let mut polled = result("a", true);
-        polled.summary = "a: 1 new".into();
-        let merged = merge(
-            vec![polled.clone(), result("b", false)],
-            vec![result("a", true), synced.clone()],
-        );
-        // The poll's own summary stays; a project only the sync saw changes is news.
-        assert_eq!(merged, vec![polled, synced]);
-        assert_eq!(merge(Vec::new(), vec![result("c", true)]).len(), 1);
-    }
-
-    #[test]
-    fn the_overview_uses_the_source_for_every_project() {
-        use aurora_core::domain::{InboxSetup, Presence, ProjectName};
-        use aurora_core::fixtures::{FixtureMessages, ready_report};
-        let source = FixtureMessages::sample();
-        let provider = ready_report(EngineKind::Integrations, &["messages"]);
-        let list: Vec<Project> = ["aurora-dev-suite", "gedo"]
-            .iter()
-            .map(|name| Project {
-                id: ProjectId((*name).into()),
-                name: ProjectName::parse(name).expect("valid"),
-                root: std::path::Path::new("/repos").join(name),
-                added_at: String::new(),
-                presence: Presence::Present,
-            })
-            .collect();
-        let inboxes = overview_of(&source, Some(&provider), &Settings::default(), &list);
-        assert_eq!(inboxes[0].setup, InboxSetup::Ready);
-        assert!(matches!(inboxes[1].setup, InboxSetup::NotSetUp { .. }));
     }
 }

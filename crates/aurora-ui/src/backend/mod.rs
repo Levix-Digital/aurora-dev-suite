@@ -8,9 +8,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use aurora_core::domain::{
-    AddOutcome, ClosingRecord, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState,
-    EngineReport, EnginesOverview, Message, MessageHeader, MessageKind, MessagesError, PollResult,
-    Project, ProjectConfig, ProjectInbox, ProjectList, Settings, TemplateSection, UserAction,
+    AddOutcome, ConfigChange, ConfigError, ConfigOutcome, CycleError, CycleState, EngineReport,
+    EnginesOverview, MessageHeader, MessageKind, MessagesError, MessagesNews, MessagesSnapshot,
+    PollResult, Project, ProjectConfig, ProjectList, Settings, TemplateSection, UserAction,
 };
 use serde::Deserialize;
 
@@ -76,7 +76,7 @@ impl From<MessagesError> for CommandError {
 }
 
 pub type Reply<T> = Result<T, CommandError>;
-pub type OnNews = Arc<dyn Fn(Vec<PollResult>) + Send + Sync>;
+pub type OnNews = Arc<dyn Fn(MessagesNews) + Send + Sync>;
 
 pub type OnReport = Arc<dyn Fn(EngineReport) + Send + Sync>;
 pub type OnReady = Arc<dyn Fn(EnginesOverview) + Send + Sync>;
@@ -216,44 +216,28 @@ impl Backend {
         }
     }
 
-    /// Follows `messages-news`: the projects whose inbox changed (spec 008 FR-007).
+    /// Follows `messages-snapshot`: a new snapshot and what the navigation shows
+    /// (spec 010, IMP-007).
     pub fn subscribe_messages(&self, on_news: OnNews) {
         match self {
             Backend::Tauri => tauri::subscribe_messages(on_news),
-            Backend::Fixture(fixture) => fixture.subscribe_messages(on_news),
+            Backend::Fixture(fixture) => FixtureBackend::subscribe_messages(fixture, on_news),
         }
     }
 
-    pub async fn messages_overview(&self) -> Reply<Vec<ProjectInbox>> {
+    /// The worker's snapshot, at once.
+    pub async fn messages_snapshot(&self) -> Reply<MessagesSnapshot> {
         match self {
-            Backend::Tauri => tauri::invoke("messages_overview", &()).await,
-            Backend::Fixture(fixture) => Ok(fixture.messages_overview()),
+            Backend::Tauri => tauri::invoke("messages_snapshot", &()).await,
+            Backend::Fixture(fixture) => Ok(fixture.messages_snapshot()),
         }
     }
 
-    pub async fn messages_conversation(
-        &self,
-        project: String,
-        thread: String,
-    ) -> Reply<Vec<Message>> {
+    /// "Check now": reads every project again; the projects that changed.
+    pub async fn messages_refresh(&self) -> Reply<Vec<PollResult>> {
         match self {
-            Backend::Tauri => {
-                tauri::invoke(
-                    "messages_conversation",
-                    &tauri::ThreadArgs { project, thread },
-                )
-                .await
-            }
-            Backend::Fixture(fixture) => fixture.messages_conversation(&project, &thread),
-        }
-    }
-
-    pub async fn messages_record(&self, project: String, thread: String) -> Reply<ClosingRecord> {
-        match self {
-            Backend::Tauri => {
-                tauri::invoke("messages_record", &tauri::ThreadArgs { project, thread }).await
-            }
-            Backend::Fixture(fixture) => fixture.messages_record(&project, &thread),
+            Backend::Tauri => tauri::invoke("messages_refresh", &()).await,
+            Backend::Fixture(fixture) => Ok(fixture.messages_refresh()),
         }
     }
 
@@ -274,13 +258,6 @@ impl Backend {
                 tauri::invoke("messages_act", &tauri::ActArgs { project, action }).await
             }
             Backend::Fixture(fixture) => fixture.messages_act(&project, &action),
-        }
-    }
-
-    pub async fn messages_poll(&self) -> Reply<Vec<PollResult>> {
-        match self {
-            Backend::Tauri => tauri::invoke("messages_poll", &()).await,
-            Backend::Fixture(fixture) => Ok(fixture.messages_poll()),
         }
     }
 

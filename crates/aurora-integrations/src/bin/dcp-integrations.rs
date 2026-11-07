@@ -13,14 +13,15 @@ const USAGE: &str =
 
 commands:
   version | init --project <slug> [--name <n>] | add <slug> --url <u> [--name <n>] | validate
-  projects | poll | sync [--max-age S] | check [--no-sent] [--stale-hours H] | list [--sent] [--all] | show <id>
+  projects | poll | sync [--max-age S] | check [--no-sent] [--stale-hours H] | export
+  list [--sent] [--all] | show <id>
   template <kind> | send --to <slug> --kind <kind> --subject <s> --body-file <f>
   reply <id> --kind <kind> [--subject <s>] --body-file <f> | thread <thread> | record <thread>
   decide <thread> (--choice <text> [--note <text>] | --revise <text>) | guide <thread> --text <text>
   status <id> open|seen|done [--note <text>] | defer <id> --reason <text>
   watch --target <slug>=<dir> [--target ...] --exec <cmd> [--interval S] [--once]
 
-The reading commands (projects, check, list, show, thread, record) take --cached: they
+The reading commands (projects, check, export, list, show, thread, record) take --cached: they
 read the local caches and fetch only an inbox never fetched before; sync updates them.";
 
 /// The arguments after the global options: positionals and `--name value` options.
@@ -184,6 +185,7 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
             &body_file(a.need("--body-file")?)?,
         ),
         "thread" => commands::thread(&reading()?, a.arg(1, "thread")?),
+        "export" => commands::export(&reading()?),
         "record" => commands::record(&reading()?, a.arg(1, "thread")?),
         "decide" => {
             let thread = a.arg(1, "thread")?;

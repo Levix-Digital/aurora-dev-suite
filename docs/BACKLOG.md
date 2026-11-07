@@ -580,3 +580,30 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-11-07, PR #39
 - **Description**: Aurora's reads went to the network once the 30 s fetch reuse expired, one inbox after another (Levi, 2026-11-07). A new provider command, sync, fetches every inbox of a project at once; Aurora runs it in the background (when the view opens, on the background poll, after a write) and every read runs with --cached, which never fetches. ADR-0011.
+
+### ADJ-006: Messages list reads like a mailbox: Active and Closed tabs, status colors, active count
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-07, v0.3.0-rc.5
+- **Plan**: messages-mailbox
+- **Closed**: 2026-11-07, plan messages-mailbox
+- **Description**: Levi, 2026-11-07: the list was noisy. Each row shows opener → counterpart (larger, accent), the subject below and one muted line 'Last: <kind> · date · who'; opened by, cycle, round, message count and No answer yet go. Active and Closed are tabs with counts. The left bar's color is the status: Waiting for you (amber), Awaiting reply (blue), Answered (purple), Deferred (gray), Closed (green, own tab); a status filter and a small legend sit next to the project filter. An unread dot marks conversations with unread messages. The navigation shows 'N active' (conversations not closed), with an amber dot when one waits for the user. Mockup: mockup-list.png.
+
+### ADJ-007: Opened conversation reads like an e-mail thread, with Handled, Next step and a decision card
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-07, v0.3.0-rc.5
+- **Plan**: messages-mailbox
+- **Closed**: 2026-11-07, plan messages-mailbox
+- **Description**: Levi, 2026-11-07: header with opener → counterpart large, the subject, the status pill, 'N messages · round R of 3' and 'Next: <latest Next step>'. Messages grouped like e-mail: the newest open, older ones collapsed to one line (from → to, kind, date, preview). The Ask section becomes the unlabelled lead sentence; Next step in an amber callout; Authority and Open points folded. The '> done (...)' notes leave the body and become one 'Handled by <project> · date' chip (Done read as the end of the conversation). Reply and Step in forms collapsed behind two buttons. A closing record shows a decision card: one button per numbered option (Recommended marked from a 'Recommended: <n>' line), sent on click with a 5 s Undo, 'Something else…' opens a text box (decide --choice) with a link to ask for rework (--revise). Mockups: mockup-conversation.png, mockup-decision-card.png.
+
+### IMP-007: Messages open like e-mail: one worker, a local snapshot and an ordered write queue
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-07, v0.3.0-rc.5
+- **Plan**: messages-mailbox
+- **Closed**: 2026-11-07, plan messages-mailbox
+- **Description**: Levi, 2026-11-07: reading and opening messages still felt slow (rc.5 predates PR #39). One worker in Aurora owns every provider call: it synchronizes in the background and reads everything at once with a new provider command, export --cached (conversations and message bodies in one JSON); the view reads only a snapshot kept in memory and on disk, so the list and a conversation show at once, also right after start; the worker sends only what changed; writes (reply, decide, mark seen, defer) go to one ordered queue, shown at once in the view and rolled back with the error if they fail. Git stays the source of truth; the snapshot is a cache (ADR-0012).

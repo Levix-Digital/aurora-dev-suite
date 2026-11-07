@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use aurora_core::domain::{EnginesOverview, SetupMemory};
+use aurora_core::domain::EnginesOverview;
 use aurora_core::ports::{
     ConfigSource, CycleSource, EngineProbe, MessagesSource, ProjectRegistry, SettingsStore,
 };
@@ -22,29 +22,36 @@ pub struct AppState {
     pub engines: Arc<Mutex<Option<EnginesOverview>>>,
     /// Held during the first probe, so concurrent first calls probe once (spec 003 FR-009).
     pub first_probe: Arc<Mutex<()>>,
-    /// Each project's setup as last seen, so a change reads as news (IMP-004).
-    pub setups: Arc<Mutex<SetupMemory>>,
-    /// When the window's focus last started a check, to keep it to one per interval.
+    /// When the window's focus last started a reading, to keep it to one per interval.
     pub last_focus_check: Arc<Mutex<Option<std::time::Instant>>>,
-    /// Set while a background sync of the inboxes runs, so only one runs at a time.
-    pub syncing: Arc<std::sync::atomic::AtomicBool>,
+    /// Whether Aurora's window has the focus: the background interval depends on it.
+    pub focused: Arc<std::sync::atomic::AtomicBool>,
+    /// The messages worker, started with the application (IMP-007).
+    pub worker: Arc<std::sync::OnceLock<crate::worker::Worker>>,
+    /// Set by the view's first snapshot request, which starts the first reading.
+    pub snapshot_asked: Arc<std::sync::atomic::AtomicBool>,
+    /// Aurora's configuration folder, where the messages snapshot is kept.
+    pub config_dir: PathBuf,
 }
 
 impl AppState {
     pub fn new(config_dir: PathBuf) -> Self {
         tracing::info!(config_dir = %config_dir.display(), "opening Aurora's files");
+        let dir = config_dir.clone();
         Self {
-            registry: Arc::new(TomlRegistry::open(&config_dir)),
-            settings: Arc::new(TomlSettings::open(&config_dir)),
+            registry: Arc::new(TomlRegistry::open(&dir)),
+            settings: Arc::new(TomlSettings::open(&dir)),
             probe: Arc::new(CliProbe::new()),
             cycle: Arc::new(DcpCycleSource::new()),
             config: Arc::new(DcpConfigSource::new()),
             messages: Arc::new(ProviderMessagesSource),
             engines: Arc::new(Mutex::new(None)),
             first_probe: Arc::new(Mutex::new(())),
-            setups: Arc::new(Mutex::new(SetupMemory::default())),
             last_focus_check: Arc::new(Mutex::new(None)),
-            syncing: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            focused: Arc::new(std::sync::atomic::AtomicBool::new(true)),
+            worker: Arc::new(std::sync::OnceLock::new()),
+            snapshot_asked: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            config_dir,
         }
     }
 

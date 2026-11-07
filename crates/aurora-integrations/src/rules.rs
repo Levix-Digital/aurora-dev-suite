@@ -61,7 +61,7 @@ const CONCLUSION: &str =
     "For the user: what was agreed, or what remains open, in two or three sentences.";
 const JUSTIFICATION: &str = "For the user: why this is the right outcome.";
 const POSITIONS: &str = "For the user: each project's position and recommendation.";
-const DECISION: &str = "For the user: the options, numbered, with the recommended one marked.";
+const DECISION: &str = "For the user: the options, numbered; end the recommended one with (recommended), or add a line Recommended: <number>.";
 const AFTER: &str = "For the user: what each project does once the user decides.";
 
 /// The skeleton of a kind, `None` for the free kinds.
@@ -221,6 +221,8 @@ pub struct Record {
     pub open_points: String,
     pub decision_needed: String,
     pub options: Vec<String>,
+    /// The recommended option, 1-based, when the record marks one.
+    pub recommended: Option<usize>,
     pub after_approval: String,
     pub user_requests: Vec<String>,
     pub messages: Vec<String>,
@@ -267,6 +269,7 @@ pub fn record(thread: &str, messages: &[Message]) -> Option<Record> {
         positions: get("Positions"),
         open_points: get("Open points"),
         options: numbered_options(&decision_needed),
+        recommended: recommended_option(&decision_needed),
         decision_needed,
         after_approval: get("After approval"),
         user_requests: messages
@@ -346,6 +349,29 @@ pub fn numbered_options(text: &str) -> Vec<String> {
                 .filter(|r| !r.is_empty())
         })
         .collect()
+}
+
+/// The recommended option of a "Decision needed" text, 1-based: a `Recommended: <n>`
+/// line, else the first option ending with "(recommended)".
+pub fn recommended_option(text: &str) -> Option<usize> {
+    let options = numbered_options(text);
+    let by_line = text.lines().find_map(|line| {
+        let line = line.trim();
+        let rest = line
+            .get(..12)
+            .filter(|h| h.eq_ignore_ascii_case("recommended:"))
+            .map(|_| line[12..].trim())?;
+        let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+        digits.parse::<usize>().ok()
+    });
+    by_line
+        .filter(|n| (1..=options.len()).contains(n))
+        .or_else(|| {
+            options
+                .iter()
+                .position(|o| o.to_lowercase().trim_end().ends_with("(recommended)"))
+                .map(|i| i + 1)
+        })
 }
 
 /// A subject without its leading `Re:`.
@@ -517,6 +543,10 @@ mod tests {
         let r = record(T, &t).unwrap();
         assert_eq!((r.cycle, r.rounds, r.subject.as_str()), (2, 1, "Test"));
         assert_eq!(r.options, ["Ship now (recommended)", "Wait"]);
+        assert_eq!(r.recommended, Some(1));
+        assert_eq!(recommended_option("1. A\n2. B\nRecommended: 2"), Some(2));
+        assert_eq!(recommended_option("1. A\n2. B\nRecommended: 7"), None);
+        assert_eq!(recommended_option("1. A\n2. B"), None);
         assert_eq!(r.user_requests, ["Use option 2."]);
         assert_eq!(r.projects, ["alpha", "beta"]);
         let text = record_text(&r);

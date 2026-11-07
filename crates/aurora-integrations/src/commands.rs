@@ -13,7 +13,7 @@ use crate::registry::{self, Registry, RegistryError};
 use crate::rules;
 use crate::transport::{Identity, Transport, TransportError};
 
-pub const SCHEMA_VERSION: &str = "1.0";
+pub const SCHEMA_VERSION: &str = "1.1";
 /// Exit code of `poll` when there is news.
 pub const NEWS: i32 = 10;
 
@@ -181,6 +181,7 @@ impl Context {
             identity: Identity::of_project(root),
             tool: tool.to_owned(),
             reuse_fetch: None,
+            cached: false,
         };
         Ok(Context {
             root: root.to_path_buf(),
@@ -405,7 +406,10 @@ pub fn version(tool: &str) -> Result<Reply> {
     ok(
         json!({
             "schema": "dcp-integrations.version", "schema_version": SCHEMA_VERSION,
-            "version": tool, "capabilities": [{ "name": "messages", "schema_major": 1 }],
+            "version": tool, "capabilities": [
+                { "name": "messages", "schema_major": 1 },
+                { "name": "cache", "schema_major": 1 },
+            ],
         }),
         format!("dcp-integrations {tool}"),
     )
@@ -573,6 +577,66 @@ pub fn poll(cx: &Context) -> Result<Reply> {
     })
 }
 
+/// One inbox's sync: its tip and whether it changed, or why it could not be fetched.
+type SyncResult = std::result::Result<(Option<String>, bool), String>;
+
+/// `sync`: fetches this project's inbox and its counterparts' at once, each unless it
+/// was fetched less than `max_age` ago, and indexes them, so reads with `--cached` find
+/// them current (IMP-006, ADR-0011). An unreachable inbox is reported, not fatal.
+pub fn sync(cx: &Context, max_age: Duration) -> Result<Reply> {
+    let slugs: Vec<String> = cx
+        .registry
+        .slugs()
+        .iter()
+        .map(|s| (*s).to_owned())
+        .collect();
+    let results: Vec<(String, SyncResult)> = std::thread::scope(|scope| {
+        let handles: Vec<_> = slugs
+            .iter()
+            .map(|slug| {
+                scope.spawn(move || {
+                    let result = match cx.url(slug) {
+                        Ok(url) => cx
+                            .transport
+                            .sync(slug, url, max_age)
+                            .map_err(|e| e.to_string()),
+                        Err(f) => Err(f.message),
+                    };
+                    (slug.clone(), result)
+                })
+            })
+            .collect();
+        handles.into_iter().filter_map(|h| h.join().ok()).collect()
+    });
+    let changed = results.iter().any(|(_, r)| matches!(r, Ok((_, true))));
+    let inboxes: Vec<Value> = results
+        .iter()
+        .map(|(slug, r)| match r {
+            Ok((tip, changed)) => json!({ "project": slug, "tip": tip, "changed": changed }),
+            Err(e) => json!({ "project": slug, "changed": false, "error": e }),
+        })
+        .collect();
+    let failed: Vec<String> = results
+        .iter()
+        .filter_map(|(slug, r)| r.as_ref().err().map(|e| format!("{slug}: {e}")))
+        .collect();
+    let mut text = format!(
+        "Synchronized {} inbox(es){}.",
+        results.len() - failed.len(),
+        if changed { ", with news" } else { "" }
+    );
+    for f in &failed {
+        text.push_str(&format!("\nnot reachable: {f}"));
+    }
+    ok(
+        doc(
+            "sync",
+            json!({ "project": cx.me(), "changed": changed, "inboxes": inboxes }),
+        ),
+        text,
+    )
+}
+
 /// What this project sent, read from its counterparts' inboxes (an unreachable one is
 /// skipped).
 fn sent_all(cx: &Context) -> Vec<Message> {
@@ -706,9 +770,14 @@ pub fn check(
     let sent = if no_sent { Vec::new() } else { sent_all(cx) };
     let stale = stale(cx, &sent, stale_hours);
     let conversations = conversations(cx, &mine, &sent, &user);
-    if let Ok(url) = cx.url(cx.me())
-        && let Ok(Some(tip)) = cx.transport.remote_tip(cx.me(), url)
-    {
+    let tip = if cx.transport.cached {
+        cx.transport.cached_tip(cx.me())
+    } else {
+        cx.url(cx.me())
+            .ok()
+            .and_then(|url| cx.transport.remote_tip(cx.me(), url).ok().flatten())
+    };
+    if let Some(tip) = tip {
         let _ = std::fs::create_dir_all(&cx.transport.cache);
         let _ = std::fs::write(tip_file(cx), tip);
     }

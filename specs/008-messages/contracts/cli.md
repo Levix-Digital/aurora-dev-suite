@@ -10,6 +10,7 @@ Same commands, arguments and text output as the provisional tool 0.3.0 (`aurora/
 | `validate` | `dcp-integrations.status` | 0; 3 invalid |
 | `projects` | `dcp-integrations.list` of counterparts | 0 |
 | `poll` | `dcp-integrations.poll` | 0 nothing new; 10 news (`--json` still answers) |
+| `sync [--max-age S]` | `dcp-integrations.sync` (schema 1.1, capability `cache`): fetches the project's inbox and its counterparts' at once, each unless fetched less than S seconds ago (default 10), and indexes them | 0 |
 | `check [--no-sent] [--stale-hours H] [--quiet]` | `dcp-integrations.check` (with `conversations`, most recent first) | 0 |
 | `list [--sent] [--all]` | `dcp-integrations.list` | 0 |
 | `show <id>` | `dcp-integrations.show` (header, sections, body); marks it seen | 0; 4 unknown id |
@@ -24,5 +25,7 @@ Same commands, arguments and text output as the provisional tool 0.3.0 (`aurora/
 | `status <id> open\|seen\|done [--note <text>]` | `dcp-integrations.status` | 0; 4 |
 | `defer <id> --reason <text>` | `dcp-integrations.status` | 0; 4 |
 | `watch --target <slug>=<dir> --exec <cmd> [--interval S] [--once]` | none (text only) | 0 |
+
+The reading commands (`projects`, `check`, `list`, `show`, `thread`, `record`) take `--cached` (capability `cache`, ADR-0011): they read the local copies and fetch only an inbox never fetched before; `sync` keeps the copies current. Writes always fetch first.
 
 Any failure with `--json` answers `dcp-integrations.error` (`code`, `message`, `missing_sections`, `git_stderr`) and exit code 1 for Git or I/O, 2 to 5 as above. Refusals name what is missing; nothing is written on a refusal.

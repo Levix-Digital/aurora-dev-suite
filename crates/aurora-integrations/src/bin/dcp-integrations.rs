@@ -13,12 +13,15 @@ const USAGE: &str =
 
 commands:
   version | init --project <slug> [--name <n>] | add <slug> --url <u> [--name <n>] | validate
-  projects | poll | check [--no-sent] [--stale-hours H] | list [--sent] [--all] | show <id>
+  projects | poll | sync [--max-age S] | check [--no-sent] [--stale-hours H] | list [--sent] [--all] | show <id>
   template <kind> | send --to <slug> --kind <kind> --subject <s> --body-file <f>
   reply <id> --kind <kind> [--subject <s>] --body-file <f> | thread <thread> | record <thread>
   decide <thread> (--choice <text> [--note <text>] | --revise <text>) | guide <thread> --text <text>
   status <id> open|seen|done [--note <text>] | defer <id> --reason <text>
-  watch --target <slug>=<dir> [--target ...] --exec <cmd> [--interval S] [--once]";
+  watch --target <slug>=<dir> [--target ...] --exec <cmd> [--interval S] [--once]
+
+The reading commands (projects, check, list, show, thread, record) take --cached: they
+read the local caches and fetch only an inbox never fetched before; sync updates them.";
 
 /// The arguments after the global options: positionals and `--name value` options.
 struct Args {
@@ -26,7 +29,14 @@ struct Args {
     options: Vec<(String, Option<String>)>,
 }
 
-const FLAGS: &[&str] = &["--no-sent", "--sent", "--all", "--once", "--quiet"];
+const FLAGS: &[&str] = &[
+    "--no-sent",
+    "--sent",
+    "--all",
+    "--once",
+    "--quiet",
+    "--cached",
+];
 
 impl Args {
     fn parse(raw: &[String]) -> Result<Args, Failure> {
@@ -110,9 +120,12 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
     let cx = || Context::open(root, cache.clone(), VERSION);
     // Read-only commands reuse a fetch of the last seconds: Aurora runs one per project
     // and each reads every counterpart's inbox (BUG-008).
+    // With --cached they never fetch an inbox fetched before: sync keeps the caches
+    // current (ADR-0011).
     let reading = || {
         cx().map(|mut c| {
             c.transport.reuse_fetch = Some(transport::REUSE_FETCH);
+            c.transport.cached = a.flag("--cached");
             c
         })
     };
@@ -129,6 +142,16 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
         "validate" => commands::validate(root),
         "projects" => commands::projects(&cx()?),
         "poll" => commands::poll(&cx()?),
+        "sync" => {
+            let max_age = match a.opt("--max-age") {
+                Some(s) => Duration::from_secs(
+                    s.parse()
+                        .map_err(|_| usage(format!("--max-age {s} is not a number of seconds")))?,
+                ),
+                None => transport::SYNC_REUSE,
+            };
+            commands::sync(&cx()?, max_age)
+        }
         "check" => {
             let hours = match a.opt("--stale-hours") {
                 Some(h) => h

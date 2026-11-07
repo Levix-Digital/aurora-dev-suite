@@ -320,6 +320,31 @@ pub fn poll(
         .collect()
 }
 
+/// Brings each project's inbox copies up to date (ADR-0011); the projects where
+/// something changed, as poll results so they read as news.
+pub fn sync(
+    source: &dyn MessagesSource,
+    provider: Option<&EngineReport>,
+    settings: &Settings,
+    projects: &[Project],
+) -> Vec<PollResult> {
+    projects
+        .iter()
+        .filter_map(|project| {
+            let provider = usable(provider, project).ok()?;
+            match source.sync(provider, settings.engines.get(provider.kind), &project.root) {
+                Ok(true) => Some(PollResult {
+                    project: project.id.clone(),
+                    changed: true,
+                    summary: format!("{}: messages updated.", project.name.as_str()),
+                    set_up: true,
+                }),
+                _ => None,
+            }
+        })
+        .collect()
+}
+
 #[cfg(all(test, feature = "fixtures"))]
 mod tests {
     use std::path::Path;

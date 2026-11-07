@@ -38,6 +38,7 @@ fn samples_follow_the_contract() {
         "sent",
         "status",
         "poll-news",
+        "sync",
         "error-refused",
         "error-git",
         "error-not-set-up",
@@ -192,6 +193,42 @@ mod fake {
                 .iter()
                 .any(|t| t.name == "Closes when" && t.required)
         );
+        assert_eq!(s.args(), ["--json", "template", "question"]);
+    }
+
+    #[test]
+    fn a_provider_with_copies_reads_them_and_syncs() {
+        // ADR-0011: --cached and sync only with the `cache` capability.
+        let s = setup("ready");
+        let settings = EngineSettings::default();
+        let source = ProviderMessagesSource;
+        let root = s.root.to_string_lossy().into_owned();
+        assert!(
+            !source
+                .sync(&s.report(), &settings, &s.root)
+                .expect("no sync"),
+            "an older provider has nothing to sync"
+        );
+        assert!(s.args().is_empty(), "nothing ran");
+        let mut report = s.report();
+        report.capabilities.push(aurora_core::domain::Capability {
+            name: "cache".into(),
+            schema_major: 1,
+        });
+        assert!(source.sync(&report, &settings, &s.root).expect("sync"));
+        assert_eq!(s.args(), ["--json", "--dir", root.as_str(), "sync"]);
+        source.inbox(&report, &settings, &s.root).expect("inbox");
+        assert_eq!(
+            s.args(),
+            ["--json", "--dir", root.as_str(), "check", "--cached"]
+        );
+        source
+            .thread(&report, &settings, &s.root, "t")
+            .expect("thread");
+        assert_eq!(s.args().last().map(String::as_str), Some("--cached"));
+        source
+            .template(&report, &settings, &MessageKind::Question)
+            .expect("template");
         assert_eq!(s.args(), ["--json", "template", "question"]);
     }
 

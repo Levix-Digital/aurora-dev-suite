@@ -11,6 +11,9 @@
       "$ref": "#/$defs/dcp-integrations.poll"
     },
     {
+      "$ref": "#/$defs/dcp-integrations.sync"
+    },
+    {
       "$ref": "#/$defs/dcp-integrations.check"
     },
     {
@@ -214,7 +217,7 @@
     },
     "dcp-integrations.version": {
       "type": "object",
-      "description": "`version --json`; capability `messages` with schema_major 1 covers every document of this file",
+      "description": "`version --json`; capability `messages` with schema_major 1 covers every document of this file; capability `cache` (schema 1.1) adds `sync` and `--cached` (ADR-0011)",
       "required": [
         "schema",
         "schema_version",
@@ -284,6 +287,61 @@
         "waiting_for_user": {
           "type": "integer",
           "minimum": 0
+        }
+      }
+    },
+    "dcp-integrations.sync": {
+      "type": "object",
+      "description": "`sync --json` (schema 1.1, capability `cache`, ADR-0011): the project's inbox and its counterparts' fetched at once, each unless fetched less than --max-age seconds ago, and indexed for `--cached` reads",
+      "required": [
+        "schema",
+        "schema_version",
+        "project",
+        "changed",
+        "inboxes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.sync"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "project": {
+          "$ref": "#/$defs/slug"
+        },
+        "changed": {
+          "type": "boolean",
+          "description": "Some inbox has another tip than before"
+        },
+        "inboxes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "project",
+              "changed"
+            ],
+            "properties": {
+              "project": {
+                "$ref": "#/$defs/slug"
+              },
+              "tip": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "null: the inbox branch does not exist yet"
+              },
+              "changed": {
+                "type": "boolean"
+              },
+              "error": {
+                "type": "string",
+                "description": "Why the inbox could not be fetched; the others are still synchronized"
+              }
+            }
+          }
         }
       }
     },

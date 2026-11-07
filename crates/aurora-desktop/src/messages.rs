@@ -73,6 +73,7 @@ pub async fn messages_overview(
     app: AppHandle,
     state: State<'_, AppState>,
 ) -> Reply<Vec<ProjectInbox>> {
+    let app_for_sync = app.clone();
     let provider = provider(app, &state).await?;
     let (registry, store, source) = (
         Arc::clone(&state.registry),
@@ -80,7 +81,7 @@ pub async fn messages_overview(
         Arc::clone(&state.messages),
     );
     let setups = Arc::clone(&state.setups);
-    blocking(move || {
+    let inboxes = blocking(move || {
         let list = projects::list(registry.as_ref()).projects;
         let current = settings::get(store.as_ref());
         let inboxes = overview_of(source.as_ref(), provider.as_ref(), &current, &list);
@@ -89,7 +90,68 @@ pub async fn messages_overview(
         }
         Ok(inboxes)
     })
-    .await
+    .await;
+    // The view answered from the local copies; bring them up to date behind it, and
+    // what changed arrives as news (ADR-0011).
+    sync_in_background(&app_for_sync);
+    inboxes
+}
+
+/// Brings every project's inbox copies up to date (ADR-0011); the projects where
+/// something changed.
+fn sync_all(state: &AppState, provider: Option<&EngineReport>) -> Vec<PollResult> {
+    let list = projects::list(state.registry.as_ref()).projects;
+    let current = settings::get(state.settings.as_ref());
+    in_parallel(&list, |project| {
+        messages::sync(
+            state.messages.as_ref(),
+            provider,
+            &current,
+            std::slice::from_ref(project),
+        )
+    })
+    .into_iter()
+    .flatten()
+    .collect()
+}
+
+/// `sync_all` once at a time: a call while one runs does nothing.
+fn sync_once(state: &AppState, provider: Option<&EngineReport>) -> Vec<PollResult> {
+    use std::sync::atomic::Ordering;
+    if state.syncing.swap(true, Ordering::AcqRel) {
+        return Vec::new();
+    }
+    let started = Instant::now();
+    let changed = sync_all(state, provider);
+    state.syncing.store(false, Ordering::Release);
+    tracing::info!(
+        elapsed_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
+        changed = changed.len(),
+        "messages sync"
+    );
+    changed
+}
+
+/// Polls and synchronizes in the background, emitting `messages-news` when something
+/// changed.
+fn sync_in_background(app: &AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || poll_and_emit(&app));
+}
+
+/// The poll's results with the sync's changes added, one entry per project.
+fn merge(mut results: Vec<PollResult>, synced: Vec<PollResult>) -> Vec<PollResult> {
+    for s in synced {
+        match results.iter_mut().find(|r| r.project == s.project) {
+            Some(r) if !r.changed => {
+                r.changed = true;
+                r.summary = s.summary;
+            }
+            Some(_) => {}
+            None => results.push(s),
+        }
+    }
+    results
 }
 
 #[tauri::command]
@@ -205,7 +267,8 @@ pub async fn messages_poll(app: AppHandle, state: State<'_, AppState>) -> Reply<
     let provider = provider(app.clone(), &state).await?;
     blocking(move || {
         let state = app.state::<AppState>();
-        Ok(poll_all(&state, provider.as_ref()))
+        let polled = poll_all(&state, provider.as_ref());
+        Ok(merge(polled, sync_once(&state, provider.as_ref())))
     })
     .await
 }
@@ -245,7 +308,9 @@ fn poll_and_emit(app: &AppHandle) {
     let Some(provider) = last_provider(&state) else {
         return;
     };
-    if let Some(changed) = news(poll_all(&state, Some(&provider))) {
+    let polled = poll_all(&state, Some(&provider));
+    let synced = sync_once(&state, Some(&provider));
+    if let Some(changed) = news(merge(polled, synced)) {
         tracing::info!(projects = changed.len(), "messages news");
         if let Err(error) = app.emit(MESSAGES_NEWS, &changed) {
             tracing::warn!(%error, "could not emit messages-news");
@@ -313,7 +378,7 @@ mod tests {
     #[test]
     fn the_timer_follows_the_setting_and_emits_only_changes() {
         let mut s = Settings::default();
-        assert_eq!(next_wait(&s), Some(Duration::from_secs(300)));
+        assert_eq!(next_wait(&s), Some(Duration::from_secs(60)));
         s.messages_poll_minutes = 0;
         assert_eq!(next_wait(&s), None);
         s.messages_poll_minutes = 100_000;
@@ -343,6 +408,21 @@ mod tests {
             in_parallel(&items, |n| n * 2),
             (0..10).map(|n| n * 2).collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn the_sync_adds_its_changes_to_the_poll() {
+        let mut synced = result("b", true);
+        synced.summary = "b: messages updated.".into();
+        let mut polled = result("a", true);
+        polled.summary = "a: 1 new".into();
+        let merged = merge(
+            vec![polled.clone(), result("b", false)],
+            vec![result("a", true), synced.clone()],
+        );
+        // The poll's own summary stays; a project only the sync saw changes is news.
+        assert_eq!(merged, vec![polled, synced]);
+        assert_eq!(merge(Vec::new(), vec![result("c", true)]).len(), 1);
     }
 
     #[test]

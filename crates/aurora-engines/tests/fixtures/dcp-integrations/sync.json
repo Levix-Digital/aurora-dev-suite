@@ -1,0 +1,18 @@
+{
+  "schema": "dcp-integrations.sync",
+  "schema_version": "1.1",
+  "project": "alpha",
+  "changed": true,
+  "inboxes": [
+    {
+      "project": "alpha",
+      "tip": "8f3c1d2e4b5a69788796a5b4c3d2e1f0a9b8c7d6",
+      "changed": true
+    },
+    {
+      "project": "beta",
+      "changed": false,
+      "error": "cannot read the inbox of beta (https://example.org/beta.git): fatal: unable to access"
+    }
+  ]
+}

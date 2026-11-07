@@ -26,6 +26,8 @@ pub struct AppState {
     pub setups: Arc<Mutex<SetupMemory>>,
     /// When the window's focus last started a check, to keep it to one per interval.
     pub last_focus_check: Arc<Mutex<Option<std::time::Instant>>>,
+    /// Set while a background sync of the inboxes runs, so only one runs at a time.
+    pub syncing: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl AppState {
@@ -42,6 +44,7 @@ impl AppState {
             first_probe: Arc::new(Mutex::new(())),
             setups: Arc::new(Mutex::new(SetupMemory::default())),
             last_focus_check: Arc::new(Mutex::new(None)),
+            syncing: Arc::new(std::sync::atomic::AtomicBool::new(false)),
         }
     }
 

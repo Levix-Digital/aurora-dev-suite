@@ -226,6 +226,7 @@ fn transport_reads_writes_and_checks_the_format() {
         },
         tool: TOOL.into(),
         reuse_fetch: None,
+        cached: false,
     };
     stale.fetch("alpha", &alpha).unwrap();
     ok(commands::send(
@@ -648,4 +649,79 @@ fn the_binary_answers_json_and_exit_codes() {
     assert_eq!((code, json["code"].as_str()), (4, Some("unknown_id")));
     let (code, _, _) = run(&["--dir", &beta, "decide", "x"]);
     assert_eq!(code, 2);
+}
+
+#[test]
+fn sync_keeps_copies_that_cached_reads_use_without_git() {
+    // IMP-005, IMP-006 (ADR-0011): sync fetches and indexes; --cached reads never fetch.
+    let w = World::new();
+    let alpha = url(&w.root, "alpha");
+    let beta = w.cx("beta");
+    ok(commands::send(
+        &beta, "alpha", "question", "Format", QUESTION,
+    ));
+    let cx = w.cx("alpha");
+    let synced = ok(commands::sync(&cx, std::time::Duration::ZERO));
+    assert_eq!(synced.json["changed"], true);
+    let inboxes = synced.json["inboxes"].as_array().unwrap();
+    assert_eq!(inboxes.len(), 2);
+    assert!(
+        inboxes.iter().all(|i| i.get("error").is_none()),
+        "{inboxes:?}"
+    );
+    let index = w
+        .root
+        .join("cache-alpha")
+        .join("alpha.git")
+        .join("aurora-index.json");
+    assert!(index.exists());
+    // Nothing new: the second sync changes nothing.
+    let again = ok(commands::sync(&cx, std::time::Duration::ZERO));
+    assert_eq!(again.json["changed"], false);
+
+    // A message arrives: a cached read keeps the copy, sync brings it.
+    ok(commands::send(
+        &beta,
+        "alpha",
+        "notice",
+        "Second",
+        "Just so you know.\n",
+    ));
+    let mut cached = w.cx("alpha");
+    cached.transport.cached = true;
+    assert_eq!(
+        cached.transport.read_inbox("alpha", &alpha).unwrap().len(),
+        1
+    );
+    let check = ok(commands::check(
+        &cached,
+        false,
+        24.0,
+        true,
+        "dcp-integrations",
+    ));
+    assert_eq!(check.json["messages"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        ok(commands::sync(&cx, std::time::Duration::ZERO)).json["changed"],
+        true
+    );
+    assert_eq!(
+        cached.transport.read_inbox("alpha", &alpha).unwrap().len(),
+        2
+    );
+
+    // The index is of a tip: with the objects gone a read of the same tip still answers
+    // from it, so no Git ran.
+    let objects = w.root.join("cache-alpha").join("alpha.git").join("objects");
+    std::fs::rename(&objects, objects.with_extension("moved")).unwrap();
+    assert_eq!(
+        cached.transport.read_inbox("alpha", &alpha).unwrap().len(),
+        2
+    );
+    std::fs::rename(objects.with_extension("moved"), &objects).unwrap();
+
+    // A copy never fetched is fetched once, even with --cached.
+    let mut fresh = cached.transport.clone();
+    fresh.cache = w.root.join("cache-new");
+    assert_eq!(fresh.read_inbox("alpha", &alpha).unwrap().len(), 2);
 }

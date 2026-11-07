@@ -126,6 +126,8 @@ fn message(
         },
         body: message_body(&sections),
         sections,
+        text: String::new(),
+        notes: Vec::new(),
     }
 }
 
@@ -539,6 +541,8 @@ impl FixtureMessages {
                         .iter()
                         .filter(|m| m.header.to == me && m.header.status == MessageStatus::Open)
                         .count() as u32,
+                    items: Vec::new(),
+                    record: None,
                 }
             })
             .collect()
@@ -716,6 +720,7 @@ impl MessagesSource for FixtureMessages {
             positions: get("Positions"),
             open_points: get("Open points"),
             options: record_options(&decision_needed),
+            recommended: None,
             decision_needed,
             after_approval: get("After approval"),
             user_requests: list

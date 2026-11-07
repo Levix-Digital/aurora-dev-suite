@@ -165,7 +165,11 @@ fn config_reply(exe: &std::path::Path, mode: &str, args: &[String]) {
     println!("{reply}");
 }
 
-const INTEGRATIONS: [(&str, &str); 11] = [
+const INTEGRATIONS: [(&str, &str); 12] = [
+    (
+        "export",
+        include_str!("../../tests/fixtures/dcp-integrations/export.json"),
+    ),
     (
         "projects",
         include_str!("../../tests/fixtures/dcp-integrations/projects.json"),
@@ -246,7 +250,7 @@ fn provider_reply(exe: &std::path::Path, mode: &str, args: &[String]) {
         other => other,
     };
     let mut reply = match mode {
-        "refused" | "git" if !matches!(name, "projects" | "check" | "template") => {
+        "refused" | "git" if !matches!(name, "projects" | "check" | "export" | "template") => {
             integrations(mode)
         }
         _ => integrations(name),

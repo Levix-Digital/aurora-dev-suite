@@ -33,6 +33,7 @@ fn samples_follow_the_contract() {
         "projects",
         "check",
         "thread",
+        "export",
         "record",
         "template",
         "sent",
@@ -194,6 +195,45 @@ mod fake {
                 .any(|t| t.name == "Closes when" && t.required)
         );
         assert_eq!(s.args(), ["--json", "template", "question"]);
+    }
+
+    #[test]
+    fn export_reads_everything_in_one_call_or_by_parts() {
+        // IMP-007: one provider process per project with `export`.
+        let s = setup("ready");
+        let settings = EngineSettings::default();
+        let source = ProviderMessagesSource;
+        let root = s.root.to_string_lossy().into_owned();
+        let mut report = s.report();
+        for name in ["cache", "export"] {
+            report.capabilities.push(aurora_core::domain::Capability {
+                name: name.into(),
+                schema_major: 1,
+            });
+        }
+        let read = source.export(&report, &settings, &s.root).expect("export");
+        assert_eq!(
+            s.args(),
+            ["--json", "--dir", root.as_str(), "export", "--cached"]
+        );
+        assert_eq!(read.slug, "alpha");
+        assert_eq!(read.counterparts, ["beta"]);
+        let c = &read.conversations[0];
+        assert_eq!((c.unread, c.items.len()), (1, 2));
+        let question = &c.items[0];
+        assert_eq!(
+            question.handled().map(|n| n.note.as_str()),
+            Some("answered")
+        );
+        assert!(!question.text.contains("> done"));
+        assert_eq!(c.record.as_ref().and_then(|r| r.recommended), Some(1));
+        // Without the capability: check, then thread and record per conversation.
+        let read = source
+            .export(&s.report(), &settings, &s.root)
+            .expect("by parts");
+        let c = &read.conversations[0];
+        assert_eq!(c.items.len(), 2);
+        assert!(c.record.is_some());
     }
 
     #[test]

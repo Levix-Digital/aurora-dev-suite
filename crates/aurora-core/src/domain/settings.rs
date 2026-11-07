@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{EngineKind, EngineSettings};
 
-pub const SETTINGS_VERSION: u32 = 2;
+pub const SETTINGS_VERSION: u32 = 3;
 
 /// The theme the user chose.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -81,12 +81,36 @@ pub struct Settings {
     pub version: u32,
     pub theme: ThemeChoice,
     pub engines: EnginesSettings,
-    /// Minutes between two background polls of the projects' inboxes; 0 turns it off.
-    pub messages_poll_minutes: u32,
+    /// Seconds between two background updates of the messages while Aurora's window has
+    /// the focus; at least [`Settings::BACKGROUND_POLL_SECONDS`] while it does not; 0
+    /// turns them off (IMP-007).
+    pub messages_poll_seconds: u32,
+    /// Version 2 kept the interval in minutes; read once by [`Settings::upgraded`].
+    #[serde(skip_serializing)]
+    pub messages_poll_minutes: Option<u32>,
 }
 
 impl Settings {
-    pub const DEFAULT_POLL_MINUTES: u32 = 1;
+    pub const DEFAULT_POLL_SECONDS: u32 = 20;
+    /// The least interval, so a typo cannot flood the inboxes' hosts.
+    pub const MIN_POLL_SECONDS: u32 = 10;
+    /// The interval while the window does not have the focus, at least.
+    pub const BACKGROUND_POLL_SECONDS: u32 = 60;
+
+    /// The interval of the background updates, `None` when they are off.
+    pub fn poll_interval(&self, focused: bool) -> Option<std::time::Duration> {
+        let seconds = self.messages_poll_seconds;
+        if seconds == 0 {
+            return None;
+        }
+        let seconds = seconds.clamp(Self::MIN_POLL_SECONDS, 24 * 60 * 60);
+        let seconds = if focused {
+            seconds
+        } else {
+            seconds.max(Self::BACKGROUND_POLL_SECONDS)
+        };
+        Some(std::time::Duration::from_secs(u64::from(seconds)))
+    }
 
     /// Brings settings saved by an older Aurora to this version: version 1 kept the
     /// provider at the general 10 s limit, raised to its own default (BUG-008); a
@@ -96,6 +120,16 @@ impl Settings {
             && self.engines.integrations.timeout_ms == EngineSettings::DEFAULT_TIMEOUT_MS
         {
             self.engines.integrations.timeout_ms = EnginesSettings::INTEGRATIONS_TIMEOUT_MS;
+        }
+        // Version 2: minutes; 1 was the default and becomes the new default (IMP-007).
+        if let Some(minutes) = self.messages_poll_minutes.take()
+            && self.version < 3
+        {
+            self.messages_poll_seconds = match minutes {
+                0 => 0,
+                1 => Self::DEFAULT_POLL_SECONDS,
+                m => m.saturating_mul(60),
+            };
         }
         self.version = SETTINGS_VERSION;
         self
@@ -108,7 +142,8 @@ impl Default for Settings {
             version: SETTINGS_VERSION,
             theme: ThemeChoice::System,
             engines: EnginesSettings::default(),
-            messages_poll_minutes: Settings::DEFAULT_POLL_MINUTES,
+            messages_poll_seconds: Settings::DEFAULT_POLL_SECONDS,
+            messages_poll_minutes: None,
         }
     }
 }
@@ -116,6 +151,44 @@ impl Default for Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_poll_interval_adapts_to_the_focus_and_old_minutes_convert() {
+        // IMP-007: 20 s with the focus, 1 min without (Levi, 2026-11-07).
+        let s = Settings::default();
+        assert_eq!(
+            s.poll_interval(true),
+            Some(std::time::Duration::from_secs(20))
+        );
+        assert_eq!(
+            s.poll_interval(false),
+            Some(std::time::Duration::from_secs(60))
+        );
+        let off = Settings {
+            messages_poll_seconds: 0,
+            ..Settings::default()
+        };
+        assert_eq!(off.poll_interval(true), None);
+        let tiny = Settings {
+            messages_poll_seconds: 1,
+            ..Settings::default()
+        };
+        assert_eq!(
+            tiny.poll_interval(true),
+            Some(std::time::Duration::from_secs(10))
+        );
+        let old = |minutes: u32| {
+            Settings {
+                version: 2,
+                messages_poll_seconds: Settings::DEFAULT_POLL_SECONDS,
+                messages_poll_minutes: Some(minutes),
+                ..Settings::default()
+            }
+            .upgraded()
+            .messages_poll_seconds
+        };
+        assert_eq!((old(0), old(1), old(5)), (0, 20, 300));
+    }
 
     #[test]
     fn the_provider_waits_longer_and_old_settings_are_raised() {

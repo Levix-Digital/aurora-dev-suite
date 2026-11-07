@@ -744,7 +744,11 @@ fn export_gives_conversations_with_their_messages_notes_and_records() {
     let answer = sent_id(&ok(commands::reply(&a, &q, "answer", None, ANSWER)));
     ok(commands::status(&a, &q, "done", Some("answered")));
     let close = sent_id(&ok(commands::reply(
-        &b, &answer, "agreement", None, AGREEMENT,
+        &b,
+        &answer,
+        "agreement",
+        None,
+        AGREEMENT,
     )));
 
     let alpha = ok(commands::export(&a)).json;

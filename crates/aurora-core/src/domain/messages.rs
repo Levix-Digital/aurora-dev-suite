@@ -155,13 +155,154 @@ impl Section {
     }
 }
 
+/// A note the receiver of a message added when it changed its status
+/// (`> done (2026-11-06 23:48 UTC): answered`), taken out of the text (ADJ-007).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StatusNote {
+    /// `open`, `seen` or `done`.
+    pub status: String,
+    /// RFC 3339 when the provider could read the stamp, else as written.
+    pub date: String,
+    pub note: String,
+}
+
+/// Sections written for the projects rather than the user: folded in the view (ADJ-007).
+pub const FOLDED_SECTIONS: [&str; 2] = ["Authority", "Open points"];
+/// The section that opens a message, shown without its name.
+pub const LEAD_SECTIONS: [&str; 2] = ["Ask", "Answer"];
+/// The section the user reads to know what comes next.
+pub const NEXT_STEP: &str = "Next step";
+
 /// A message with its sections in their order.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Message {
     pub header: MessageHeader,
+    /// The sections of [`Message::text`].
     pub sections: Vec<Section>,
+    /// The body as written, with the status notes.
     pub body: String,
+    /// The body without the status notes; empty from a provider that does not split
+    /// them, then [`Message::split_notes`] does.
+    #[serde(default)]
+    pub text: String,
+    #[serde(default)]
+    pub notes: Vec<StatusNote>,
+}
+
+impl Message {
+    fn section(&self, name: &str) -> Option<&Section> {
+        self.sections
+            .iter()
+            .find(|s| s.name.eq_ignore_ascii_case(name))
+    }
+
+    /// The section shown first and without its name: Ask, or Answer in a reply.
+    pub fn lead(&self) -> Option<&Section> {
+        LEAD_SECTIONS.iter().find_map(|name| self.section(name))
+    }
+
+    /// The text of the Next step section, when it has one.
+    pub fn next_step(&self) -> Option<&str> {
+        self.section(NEXT_STEP)
+            .map(|s| s.text.trim())
+            .filter(|t| !t.is_empty())
+    }
+
+    /// The last note that says the receiver handled the message.
+    pub fn handled(&self) -> Option<&StatusNote> {
+        self.notes.iter().rev().find(|n| n.status == "done")
+    }
+
+    /// One line for a collapsed message: the lead, else the first line of the text.
+    pub fn preview(&self) -> String {
+        let text = match self.lead() {
+            Some(lead) => lead.text.as_str(),
+            None if self.sections.is_empty() => self.text_or_body(),
+            None => self.sections[0].text.as_str(),
+        };
+        let line = text
+            .lines()
+            .map(str::trim)
+            .find(|l| !l.is_empty())
+            .unwrap_or_default();
+        if line.chars().count() > 160 {
+            let cut: String = line.chars().take(157).collect();
+            format!("{}…", cut.trim_end())
+        } else {
+            line.to_owned()
+        }
+    }
+
+    /// The text without the notes, or the body when the provider gave no text.
+    pub fn text_or_body(&self) -> &str {
+        if self.text.is_empty() {
+            &self.body
+        } else {
+            &self.text
+        }
+    }
+
+    /// For a provider before 1.2: takes the status notes out of the body and its last
+    /// section. A no-op once `text` or `notes` are set.
+    pub fn split_notes(&mut self) {
+        if !self.text.is_empty() || !self.notes.is_empty() {
+            return;
+        }
+        let (text, notes) = split_notes(&self.body);
+        if notes.is_empty() {
+            return;
+        }
+        if let Some(last) = self.sections.last_mut() {
+            last.text = split_notes(&last.text).0;
+        }
+        self.text = text;
+        self.notes = notes;
+    }
+}
+
+/// One status note line, `None` for any other line.
+fn note_line(line: &str) -> Option<StatusNote> {
+    let rest = line.trim().strip_prefix("> ")?;
+    let (status, rest) = rest.split_once(" (")?;
+    if !matches!(status, "open" | "seen" | "done") {
+        return None;
+    }
+    let (stamp, note) = rest.split_once("):")?;
+    let date = stamp
+        .strip_suffix(" UTC")
+        .and_then(|s| s.split_once(' '))
+        .filter(|(d, t)| d.len() == 10 && t.len() == 5)
+        .map_or_else(|| stamp.to_owned(), |(d, t)| format!("{d}T{t}:00Z"));
+    Some(StatusNote {
+        status: status.to_owned(),
+        date,
+        note: note.trim().to_owned(),
+    })
+}
+
+/// A text without the status notes at its end, and those notes, oldest first.
+pub fn split_notes(text: &str) -> (String, Vec<StatusNote>) {
+    let lines: Vec<&str> = text.lines().collect();
+    let mut keep = lines.len();
+    let mut notes = Vec::new();
+    while keep > 0 {
+        let line = lines[keep - 1];
+        if line.trim().is_empty() {
+            keep -= 1;
+        } else if let Some(note) = note_line(line) {
+            notes.push(note);
+            keep -= 1;
+        } else {
+            break;
+        }
+    }
+    notes.reverse();
+    if notes.is_empty() {
+        return (text.to_owned(), notes);
+    }
+    (lines[..keep].join("\n").trim_end().to_owned(), notes)
 }
 
 /// One conversation as one project sees it: what it received and what it sent.
@@ -185,33 +326,71 @@ pub struct Conversation {
     /// Received messages of this conversation not read yet by the project.
     #[serde(default)]
     pub unread: u32,
+    /// Every message, oldest first, when the reading had them (IMP-007).
+    #[serde(default)]
+    pub items: Vec<Message>,
+    /// The closing record, when the conversation has one.
+    #[serde(default)]
+    pub record: Option<ClosingRecord>,
 }
 
-/// Where a conversation stands for the user (spec 009, FR-004).
+/// Where a conversation stands for the user (spec 010, FR-003): the color of its row.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ConversationState {
     /// A closing record waits for the user's decision.
     WaitingForYou,
-    /// Rounds still running or an answer pending.
-    InProgress,
+    /// The last message asks the other side for an answer.
+    AwaitingReply,
+    /// The last message answers; the opener continues or closes.
+    Answered,
+    /// The receiver set the last message aside.
+    Deferred,
     /// Decided, or only notices and acks.
     Closed,
 }
 
 impl ConversationState {
-    /// The groups of the view, in their order.
-    pub const ALL: [ConversationState; 3] = [
+    /// The states, in the order of the legend and the filter.
+    pub const ALL: [ConversationState; 5] = [
         ConversationState::WaitingForYou,
-        ConversationState::InProgress,
+        ConversationState::AwaitingReply,
+        ConversationState::Answered,
+        ConversationState::Deferred,
         ConversationState::Closed,
     ];
+
+    pub const fn label(self) -> &'static str {
+        match self {
+            ConversationState::WaitingForYou => "Waiting for you",
+            ConversationState::AwaitingReply => "Awaiting reply",
+            ConversationState::Answered => "Answered",
+            ConversationState::Deferred => "Deferred",
+            ConversationState::Closed => "Closed",
+        }
+    }
+
+    /// The class of its color in the view.
+    pub const fn key(self) -> &'static str {
+        match self {
+            ConversationState::WaitingForYou => "waiting",
+            ConversationState::AwaitingReply => "awaiting",
+            ConversationState::Answered => "answered",
+            ConversationState::Deferred => "deferred",
+            ConversationState::Closed => "closed",
+        }
+    }
+
+    pub fn is_active(self) -> bool {
+        self != ConversationState::Closed
+    }
 }
 
 impl Conversation {
-    /// Waiting for the user first; then closed when the current cycle ended in a
-    /// decision or an ack, holds only a notice, or is a tool 0.1 message set to done;
-    /// otherwise in progress.
+    /// Waiting for the user first; closed when the current cycle ended in a decision or
+    /// an ack, holds only a notice, or is a tool 0.1 message set to done; deferred when
+    /// the receiver set the last message aside; answered after an answer or a closing
+    /// record; otherwise awaiting a reply.
     pub fn state(&self) -> ConversationState {
         if self.waiting_for_user {
             return ConversationState::WaitingForYou;
@@ -225,10 +404,44 @@ impl Conversation {
             _ => false,
         };
         if closed {
-            ConversationState::Closed
-        } else {
-            ConversationState::InProgress
+            return ConversationState::Closed;
         }
+        if !self.last.deferred.trim().is_empty() {
+            return ConversationState::Deferred;
+        }
+        match self.last.kind {
+            MessageKind::Answer | MessageKind::Agreement | MessageKind::Impasse => {
+                ConversationState::Answered
+            }
+            _ => ConversationState::AwaitingReply,
+        }
+    }
+
+    /// The project that opened it and the one it talks to (spec 010, US1).
+    pub fn route(&self) -> (String, String) {
+        let opener = self
+            .opener
+            .clone()
+            .or_else(|| self.items.first().map(|m| m.header.from.clone()))
+            .unwrap_or_else(|| self.projects.first().cloned().unwrap_or_default());
+        let other = self
+            .projects
+            .iter()
+            .find(|p| **p != opener)
+            .cloned()
+            .unwrap_or_else(|| {
+                if self.last.from == opener {
+                    self.last.to.clone()
+                } else {
+                    self.last.from.clone()
+                }
+            });
+        (opener, other)
+    }
+
+    /// The Next step of the latest message that has one.
+    pub fn next_step(&self) -> Option<&str> {
+        self.items.iter().rev().find_map(Message::next_step)
     }
 
     /// The user should look at it: a record waits, or something arrived unread.
@@ -276,8 +489,36 @@ pub struct ClosingRecord {
     pub open_points: String,
     pub decision_needed: String,
     pub options: Vec<String>,
+    /// The recommended option, 1-based.
+    #[serde(default)]
+    pub recommended: Option<usize>,
     pub after_approval: String,
     pub user_requests: Vec<String>,
+}
+
+impl ClosingRecord {
+    /// An option without its "(recommended)" mark, as the decision card shows it.
+    pub fn option_label(option: &str) -> String {
+        let trimmed = option.trim_end();
+        let lower = trimmed.to_lowercase();
+        match lower.strip_suffix("(recommended)") {
+            Some(rest) => trimmed[..rest.len()].trim_end().to_owned(),
+            None => trimmed.to_owned(),
+        }
+    }
+
+    /// The recommended option, 1-based: as given, else the first option marked
+    /// "(recommended)".
+    pub fn recommended_option(&self) -> Option<usize> {
+        self.recommended
+            .filter(|n| (1..=self.options.len()).contains(n))
+            .or_else(|| {
+                self.options
+                    .iter()
+                    .position(|o| o.to_lowercase().trim_end().ends_with("(recommended)"))
+                    .map(|i| i + 1)
+            })
+    }
 }
 
 /// The numbered lines of a "Decision needed" section, without their numbers.
@@ -373,6 +614,167 @@ pub fn order_conversations(conversations: &mut [Conversation]) {
             .cmp(&group(b))
             .then_with(|| b.last.date.cmp(&a.last.date))
     });
+}
+
+/// One conversation as the view lists it: a thread between two registered projects
+/// shows once (spec 010, FR-003), read through the project that acts in it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConversationView {
+    /// The project Aurora acts through: the receiver of the last message when it is
+    /// registered, else the project that read it.
+    pub project: ProjectId,
+    /// That project's slug.
+    pub me: String,
+    /// The reading with the most messages, its `waiting_for_user` and `unread` summed
+    /// over every project that reads it.
+    pub conversation: Conversation,
+}
+
+impl ConversationView {
+    pub fn state(&self) -> ConversationState {
+        self.conversation.state()
+    }
+
+    /// A key that changes when anything shown on the row changes.
+    pub fn row_key(&self) -> String {
+        let c = &self.conversation;
+        format!(
+            "{}|{}|{}|{}|{}|{:?}",
+            c.thread, c.last.id, c.messages, c.unread, c.waiting_for_user, c.last.status
+        )
+    }
+}
+
+/// Every conversation of the ready inboxes, once each: waiting for the user first, then
+/// the most recent first.
+pub fn conversation_views(inboxes: &[ProjectInbox]) -> Vec<ConversationView> {
+    let mut out: Vec<ConversationView> = Vec::new();
+    for inbox in inboxes.iter().filter(|i| i.setup == InboxSetup::Ready) {
+        let me = inbox.slug.clone().unwrap_or_default();
+        for c in &inbox.conversations {
+            let acts = c.last.to == me;
+            match out.iter_mut().find(|v| v.conversation.thread == c.thread) {
+                None => out.push(ConversationView {
+                    project: inbox.project.clone(),
+                    me: me.clone(),
+                    conversation: c.clone(),
+                }),
+                Some(view) => {
+                    let unread = view.conversation.unread + c.unread;
+                    let waiting = view.conversation.waiting_for_user || c.waiting_for_user;
+                    let richer = c.items.len() > view.conversation.items.len()
+                        || c.last.date > view.conversation.last.date;
+                    if richer {
+                        let mut taken = c.clone();
+                        if taken.record.is_none() {
+                            taken.record = view.conversation.record.take();
+                        }
+                        view.conversation = taken;
+                    } else if view.conversation.record.is_none() {
+                        view.conversation.record = c.record.clone();
+                    }
+                    view.conversation.unread = unread;
+                    view.conversation.waiting_for_user = waiting;
+                    if acts {
+                        view.project = inbox.project.clone();
+                        view.me = me.clone();
+                    }
+                }
+            }
+        }
+    }
+    out.sort_by(|a, b| {
+        let waiting = |v: &ConversationView| !v.conversation.waiting_for_user;
+        waiting(a)
+            .cmp(&waiting(b))
+            .then_with(|| b.conversation.last.date.cmp(&a.conversation.last.date))
+    });
+    out
+}
+
+/// Conversations not closed, for the navigation (spec 010, US1).
+pub fn active_count(views: &[ConversationView]) -> usize {
+    views.iter().filter(|v| v.state().is_active()).count()
+}
+
+/// Everything the Messages view shows, kept by the worker in memory and on disk
+/// (IMP-007, ADR-0012). The inboxes carry their conversations with every message.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MessagesSnapshot {
+    /// Grows by one with each change; 0 before the first reading.
+    pub version: u64,
+    /// RFC 3339 time of the last complete reading; empty before it.
+    pub taken_at: String,
+    pub inboxes: Vec<ProjectInbox>,
+    /// Projects whose last reading failed, with why and since when; their entry in
+    /// `inboxes` is the last good one.
+    #[serde(default)]
+    pub stale: Vec<StaleInbox>,
+}
+
+/// A project the worker could not read this time.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StaleInbox {
+    pub project: ProjectId,
+    pub reason: String,
+    pub since: String,
+}
+
+impl MessagesSnapshot {
+    pub fn views(&self) -> Vec<ConversationView> {
+        conversation_views(&self.inboxes)
+    }
+
+    /// The navigation: conversations not closed, and whether one waits for the user.
+    pub fn summary(&self) -> (usize, bool) {
+        let views = self.views();
+        (
+            active_count(&views),
+            views.iter().any(|v| v.conversation.waiting_for_user),
+        )
+    }
+
+    /// One summary per project whose conversations changed from `before`, for "Check
+    /// now" and the log.
+    pub fn changes_from(&self, before: &MessagesSnapshot) -> Vec<PollResult> {
+        self.inboxes
+            .iter()
+            .filter_map(|inbox| {
+                let old = before.inboxes.iter().find(|i| i.project == inbox.project);
+                if old == Some(inbox) {
+                    return None;
+                }
+                let old_ids: std::collections::HashSet<&str> = old
+                    .map(|o| {
+                        o.conversations
+                            .iter()
+                            .flat_map(|c| c.items.iter().map(|m| m.header.id.as_str()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let new = inbox
+                    .conversations
+                    .iter()
+                    .flat_map(|c| c.items.iter())
+                    .filter(|m| !old_ids.contains(m.header.id.as_str()))
+                    .count();
+                let summary = if new > 0 {
+                    format!("{}: {new} new message(s).", inbox.name)
+                } else {
+                    format!("{}: messages updated.", inbox.name)
+                };
+                Some(PollResult {
+                    project: inbox.project.clone(),
+                    changed: true,
+                    summary,
+                    set_up: !matches!(inbox.setup, InboxSetup::NotSetUp { .. }),
+                })
+            })
+            .collect()
+    }
 }
 
 /// A new conversation or a reply, as the user filled it.
@@ -687,6 +1089,26 @@ mod tests {
             waiting_for_user: waiting,
             user_requests: Vec::new(),
             unread: 0,
+            items: Vec::new(),
+            record: None,
+        }
+    }
+
+    fn message(id: &str, kind: MessageKind, body: &str) -> Message {
+        let sections = body
+            .split("### ")
+            .filter(|p| !p.trim().is_empty())
+            .map(|p| {
+                let (name, text) = p.split_once('\n').unwrap_or((p, ""));
+                Section::new(name.trim(), text.trim())
+            })
+            .collect();
+        Message {
+            header: header(id, kind, "b", "2026-11-06T10:00:00Z"),
+            sections,
+            body: body.into(),
+            text: String::new(),
+            notes: Vec::new(),
         }
     }
 
@@ -699,19 +1121,148 @@ mod tests {
         };
         use ConversationState::*;
         assert_eq!(state(MessageKind::Agreement, true, Some(2)), WaitingForYou);
-        assert_eq!(state(MessageKind::Question, false, Some(1)), InProgress);
-        assert_eq!(state(MessageKind::Answer, false, Some(1)), InProgress);
+        assert_eq!(state(MessageKind::Question, false, Some(1)), AwaitingReply);
+        assert_eq!(state(MessageKind::Proposal, false, Some(1)), AwaitingReply);
+        assert_eq!(state(MessageKind::Counter, false, Some(2)), AwaitingReply);
+        assert_eq!(state(MessageKind::Answer, false, Some(1)), Answered);
+        // A closing record the other project presents to its user.
+        assert_eq!(state(MessageKind::Agreement, false, Some(2)), Answered);
         assert_eq!(state(MessageKind::Decision, false, Some(2)), Closed);
         // A revision after the decision opens cycle 2.
-        assert_eq!(state(MessageKind::Guidance, false, None), InProgress);
+        assert_eq!(state(MessageKind::Guidance, false, None), AwaitingReply);
         assert_eq!(state(MessageKind::Notice, false, None), Closed);
         assert_eq!(state(MessageKind::Ack, false, None), Closed);
         // The other side acknowledges a decision: still closed.
         assert_eq!(state(MessageKind::Ack, false, Some(2)), Closed);
         let mut old = conversation("t", "d", MessageKind::Other("message".into()), false, 1);
-        assert_eq!(old.state(), InProgress);
+        assert_eq!(old.state(), AwaitingReply);
         old.last.status = MessageStatus::Done;
         assert_eq!(old.state(), Closed);
+        let mut deferred = conversation("t", "d", MessageKind::Question, false, 1);
+        deferred.last.deferred = "later".into();
+        assert_eq!(deferred.state(), Deferred);
+        assert!(
+            ConversationState::ALL
+                .iter()
+                .filter(|s| s.is_active())
+                .count()
+                == 4
+        );
+    }
+
+    #[test]
+    fn a_message_shows_its_lead_next_step_and_handled_note() {
+        // ADJ-007: Ask leads, Next step stands out, the done note leaves the text.
+        let mut q = message(
+            "q",
+            MessageKind::Question,
+            "### Ask\nCommit the file.\n### Context\nWhy.\n### Authority\nOurs.\n\n> done (2026-11-06 23:48 UTC): answered; PR #399\n",
+        );
+        q.split_notes();
+        assert_eq!(q.lead().map(|s| s.text.as_str()), Some("Commit the file."));
+        assert_eq!(q.sections.last().map(|s| s.text.as_str()), Some("Ours."));
+        assert!(!q.text.contains("> done"));
+        let handled = q.handled().unwrap();
+        assert_eq!(handled.date, "2026-11-06T23:48:00Z");
+        assert_eq!(handled.note, "answered; PR #399");
+        assert_eq!(q.preview(), "Commit the file.");
+        let a = message(
+            "a",
+            MessageKind::Answer,
+            "### Answer\nAgree.\n### Next step\nThe owner merges #399.\n",
+        );
+        assert_eq!(a.next_step(), Some("The owner merges #399."));
+        let mut c = conversation("q", "d", MessageKind::Answer, false, 1);
+        c.items = vec![q.clone(), a];
+        assert_eq!(c.next_step(), Some("The owner merges #399."));
+        assert_eq!(c.route(), ("a".to_owned(), "b".to_owned()));
+        // A quote inside the text stays.
+        let (text, notes) = split_notes("### Context\n> quoted\n");
+        assert!(notes.is_empty() && text.contains("> quoted"));
+    }
+
+    #[test]
+    fn records_mark_their_recommended_option() {
+        let mut r = ClosingRecord {
+            thread: "t".into(),
+            subject: "S".into(),
+            projects: vec![],
+            rounds: 1,
+            cycle: 1,
+            outcome: MessageKind::Agreement,
+            conclusion: String::new(),
+            justification: String::new(),
+            positions: String::new(),
+            open_points: String::new(),
+            decision_needed: String::new(),
+            options: vec!["Ship now".into(), "Wait (Recommended)".into()],
+            recommended: None,
+            after_approval: String::new(),
+            user_requests: vec![],
+        };
+        assert_eq!(r.recommended_option(), Some(2));
+        assert_eq!(ClosingRecord::option_label(&r.options[1]), "Wait");
+        r.recommended = Some(1);
+        assert_eq!(r.recommended_option(), Some(1));
+        r.recommended = Some(9);
+        assert_eq!(r.recommended_option(), Some(2));
+    }
+
+    fn inbox(project: &str, slug: &str, conversations: Vec<Conversation>) -> ProjectInbox {
+        ProjectInbox {
+            project: ProjectId(project.into()),
+            name: project.into(),
+            slug: Some(slug.into()),
+            counterparts: Vec::new(),
+            setup: InboxSetup::Ready,
+            conversations,
+        }
+    }
+
+    #[test]
+    fn a_thread_between_two_registered_projects_shows_once() {
+        // ADJ-006: today it showed once per project.
+        let mut seen_by_a =
+            conversation("t", "2026-11-06T10:00:00Z", MessageKind::Question, false, 1);
+        seen_by_a.last.from = "a".into();
+        seen_by_a.last.to = "b".into();
+        let mut seen_by_b = seen_by_a.clone();
+        seen_by_b.unread = 1;
+        seen_by_b.items = vec![message("t", MessageKind::Question, "### Ask\nX\n")];
+        let other = conversation("u", "2026-11-07T10:00:00Z", MessageKind::Decision, false, 1);
+        let views = conversation_views(&[
+            inbox("pa", "a", vec![seen_by_a, other]),
+            inbox("pb", "b", vec![seen_by_b]),
+        ]);
+        assert_eq!(views.len(), 2);
+        assert_eq!(views[0].conversation.thread, "u", "the most recent first");
+        let t = &views[1];
+        assert_eq!(t.project.0, "pb", "b received the last message: it acts");
+        assert_eq!(t.me, "b");
+        assert_eq!(t.conversation.unread, 1);
+        assert_eq!(t.conversation.items.len(), 1);
+        assert_eq!(active_count(&views), 1);
+    }
+
+    #[test]
+    fn a_snapshot_says_what_changed() {
+        let before = MessagesSnapshot {
+            version: 1,
+            inboxes: vec![inbox("pa", "a", vec![])],
+            ..MessagesSnapshot::default()
+        };
+        let mut c = conversation("t", "d", MessageKind::Question, true, 1);
+        c.items = vec![message("t", MessageKind::Question, "### Ask\nX\n")];
+        let after = MessagesSnapshot {
+            version: 2,
+            inboxes: vec![inbox("pa", "a", vec![c])],
+            ..MessagesSnapshot::default()
+        };
+        let changes = after.changes_from(&before);
+        assert_eq!(changes.len(), 1);
+        assert_eq!(changes[0].summary, "pa: 1 new message(s).");
+        assert!(after.changes_from(&after).is_empty());
+        assert_eq!(after.summary(), (1, true));
     }
 
     #[test]

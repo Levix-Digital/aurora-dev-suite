@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Messages like a mailbox
 kind: feature
 version: v0.3.0
-status: in_progress
+status: completed
 author: LeviGuilherme
 created_at: '2026-11-07T14:59:13'
-updated_at: '2026-11-07T15:14:18'
+updated_at: '2026-11-07T15:30:31'
 session_id: null
 tags: []
 supersedes: null
@@ -32,9 +32,13 @@ milestones:
   done_at: '2026-11-07'
   by: LeviGuilherme
 - name: M4 View
-  done: false
+  done: true
+  done_at: '2026-11-07'
+  by: LeviGuilherme
 - name: M5 Docs and manual tests
-  done: false
+  done: true
+  done_at: '2026-11-07'
+  by: LeviGuilherme
 status_log:
 - at: '2026-11-07T14:59:13'
   by: LeviGuilherme
@@ -53,6 +57,16 @@ status_log:
 - at: '2026-11-07T15:14:18'
   by: LeviGuilherme
   note: Milestone 'M3 Worker' completed
+- at: '2026-11-07T15:24:10'
+  by: LeviGuilherme
+  note: 'Milestone ''M4 View'' completed: Tabs, status colors, e-mail thread, Handled, Next step, decision card with Undo'
+- at: '2026-11-07T15:30:31'
+  by: LeviGuilherme
+  note: 'Milestone ''M5 Docs and manual tests'' completed: ADR-0012, architecture pages, README, manual tests'
+- at: '2026-11-07T15:30:31'
+  by: LeviGuilherme
+  status: completed
+  note: All milestones completed
 ---
 
 # Messages like a mailbox
@@ -114,7 +128,7 @@ Alternatives left out: a database such as SQLite (a second source of truth, agai
 - Engines: `export` parsed from a contract sample; the fallback without the capability.
 - Desktop: the worker's queue order, refresh merging, the snapshot written and read back, the adaptive interval.
 - View: preview screenshots of the list, the conversation and the card (fixture backend).
-- Manual tests: MT-MSG-003 and MT-MSG-005 updated; new MT-MSG-009 (open Aurora with the network off: the last snapshot shows at once) and MT-MSG-010 (decision card with Undo).
+- Manual tests: MT-MSG-001 (decision card with Undo), MT-MSG-002, MT-MSG-003, MT-MSG-005 and MT-MSG-008 updated; new MT-MSG-009 (open Aurora with the network off: the last snapshot shows at once).
 
 ## 5. Documentation (`architecture-docs`, `user-docs`)
 

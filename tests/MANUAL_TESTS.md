@@ -463,48 +463,54 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
 
 ### MT-MSG-001: Decide on a closing record
 
-- **Covers**: Messages view, waiting records (spec 008 US1, FR-001, FR-002, FR-004)
-- **Prerequisites**: a conversation between the two projects closed with an agreement (`reply <id> --kind agreement`) and no decision yet
+- **Covers**: decision card (spec 008 US1, FR-001, FR-004; spec 010 US3)
+- **Prerequisites**: a conversation between the two projects closed with an agreement (`reply <id> --kind agreement`) whose record has `Recommended: 1`, and no decision yet
 - **Steps**:
-  1. Open Messages (Alt+5)
-  2. Read the closing record at the top, pick an option and confirm
-  3. In a terminal, run `dcp-integrations check` in the other project's folder
+  1. Open Messages (Alt+5) and open the conversation marked Waiting for you
+  2. Click option 2, then press Undo within five seconds
+  3. Click option 1 and wait five seconds
+  4. In a terminal, run `dcp-integrations check` in the other project's folder
 - **Expected**:
-  - Step 1 shows the record first and apart, with projects, rounds, cycle, conclusion, justification, positions, open points and the numbered options; the navigation shows its count
-  - Step 2 asks to confirm before anything is sent, then the record leaves the waiting section and the conversation shows a decision
-  - Step 3 lists the decision as a new message for the other project
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+  - Step 1 shows the decision card at the top of the conversation: the question, the conclusion in one line, one button per option with option 1 marked Recommended, "Something else…", and the full record folded under "Conclusion, positions and what follows"
+  - Step 2 shows "sending … in 5 s" with a shrinking bar; Undo brings the options back and nothing is sent
+  - Step 3 sends option 1 without any confirmation dialog; "Decision sent" appears, the conversation leaves Waiting for you at once and the navigation count drops
+  - Step 4 lists the decision as a new message for the other project
+- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
-### MT-MSG-002: Ask for changes and step into a conversation
+### MT-MSG-002: Decide in your own words, ask for a rework and step in
 
-- **Covers**: guidance and revision (spec 008 US2, FR-005)
-- **Prerequisites**: one closing record waiting, and one other conversation open
+- **Covers**: own choice, revision and guidance (spec 008 US2, FR-005; spec 010 US2, US3)
+- **Prerequisites**: two closing records waiting, and one other conversation open
 - **Steps**:
-  1. On the record, press "Ask for changes", leave the field empty, then write a request and send it
-  2. Open the other conversation, write in its field and send
+  1. On the first record, click "Something else…", leave the box empty and try to send; then write a decision and send it
+  2. On the second record, click "Something else…", write a request and click "ask the projects to rework it"
+  3. Open the other conversation, press "Step in", write a request and send
 - **Expected**:
-  - With the field empty, sending stays disabled
-  - Step 1 removes the record from the waiting section; the conversation shows a guidance message that starts cycle 2, with the request under "User request"
-  - Step 2 adds a guidance message to that conversation; the next reply counts from round 1 of the new cycle
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+  - With the box empty, nothing is sent and the card says what is missing
+  - Step 1 sends your words as the decision (`decide --choice`) and the conversation leaves Waiting for you
+  - Step 2 sends a guidance message that starts cycle 2, with the request under "User request"; the header shows round 1 of 3
+  - Step 3: the Reply and Step in forms stay closed until their button is pressed; the request is added to the conversation and the next reply counts from round 1 of the new cycle
+- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-003: Follow and filter the conversations
 
-- **Covers**: conversation list and panel (spec 008 US3, FR-002, FR-003; spec 009 US1 to US3)
-- **Prerequisites**: across the two projects, a conversation waiting for the user, one in progress with a received message not read, one closed by a decision, and one with a message sent more than 48 hours ago and still unread
+- **Covers**: list and opened conversation (spec 010 US1, US2; ADJ-006, ADJ-007)
+- **Prerequisites**: across the two projects, a conversation waiting for the user, one awaiting a reply with a received message not read, one answered, one closed by a decision, and one message handled by its receiver (`> done (...)` note)
 - **Steps**:
-  1. Open Messages and look at the list
-  2. Open the Closed group
-  3. Click the second row of In progress, then click another row, then press Escape
-  4. Filter by one project, then by "Waiting for a project's answer"
+  1. Open Messages and look at the list and at the navigation
+  2. Open the Closed tab, then go back to Active
+  3. Click the row with an unread dot, then click another row, then press Escape
+  4. In an open conversation, click an older message, and look at the handled one
+  5. Filter by one project, then by each status
 - **Expected**:
-  - Step 1 shows the groups Waiting for you (amber), In progress and Closed (grey, folded) with their counts; each row starts with `from → to` of its last message, then the subject, who opened it, the projects and the number of messages; the unread one has "1 new", the old unsent one "No answer yet"
-  - Step 2 shows the decided conversation in grey
-  - Step 3 opens the conversation right below the clicked row (the page does not jump to the bottom), with every message oldest first, each starting with `from → to`, then kind, cycle, round, date and its sections; clicking another row closes the first and opens the second below its own row; Escape closes it and the focus is back on the row; the opened unread message becomes seen
-  - Step 4 shows only the matching conversations each time
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+  - Step 1: each conversation appears once (even when both projects are registered); each row shows `opener → counterpart` large, the subject, and one line `Last: <kind> · date · who`; the left bar is amber (Waiting for you), blue (Awaiting reply), purple (Answered) or gray (Deferred), as in the legend; the navigation shows "N active", with an amber dot when something waits for you
+  - Step 2 lists the closed conversations with a green bar; the tabs show their counts
+  - Step 3 opens the conversation below its row: route large, subject, status pill, "N messages · round R of 3" and "Next: …"; only the newest message is open, older ones are one line each (from → to, kind, date, preview); the unread dot and the count drop at once; Escape closes it and the focus is back on the row
+  - Step 4 opens the older message; the message starts with its lead sentence (no "Ask" label), Next step is an amber callout, Authority and Open points are folded, and the handled message shows "✓ Handled by <project> · date" instead of the `> done` line
+  - Step 5 shows only the matching conversations each time
+- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-004: Start a conversation and answer
@@ -524,17 +530,19 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
 
 ### MT-MSG-005: News arrives without asking
 
-- **Covers**: background poll and the navigation count (spec 008 US5, FR-001, FR-007; spec 009 US4)
-- **Prerequisites**: Aurora open on Messages, the poll interval at 1 minute in Settings
+- **Covers**: the messages worker and its interval (spec 010 US4, IMP-007, ADR-0012)
+- **Prerequisites**: Aurora open on Messages, the interval at its default of 20 seconds (`messagesPollSeconds` in `settings.toml`)
 - **Steps**:
-  1. From a terminal in the other project's folder, send a question to this project
-  2. Wait up to two minutes
-  3. In Settings, set the interval to 0 (off) and Save; send another message from the terminal and wait two minutes
+  1. Open the Reply form of a conversation and type a few words; from a terminal in the other project's folder, send a question to this project
+  2. Wait up to 30 seconds
+  3. Minimize Aurora, send another message from the terminal, wait 30 seconds and bring Aurora back
+  4. In `settings.toml`, set `messagesPollSeconds = 0` (off) and save; send another message from the terminal and wait two minutes
 - **Expected**:
-  - Step 2 shows "New messages arrived" with "Show them" and the navigation count goes up; nothing reloads by itself while a form is open
-  - Step 2 repeated with Portfolio open: the count next to Messages goes up there too, and equals the conversations waiting for the user plus those with unread messages
-  - Step 3 shows no news until "Check now" or reopening Messages
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+  - Step 2: the new conversation appears in the list by itself and the navigation count goes up; the Reply form keeps what was typed
+  - Step 2 repeated with Portfolio open: the count next to Messages goes up there too
+  - Step 3: the message appears within a few seconds of the window coming back (minimized, Aurora checks once a minute)
+  - Step 4 shows no news until "Check now"
+- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-006: The provider from a terminal
@@ -575,15 +583,32 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   1. Open Messages, leave it, wait a minute and open it again
   2. In a terminal, run `dcp-integrations sync` and then `dcp-integrations check --cached` in a project's folder
   3. From another project's folder, send a question to this project; in Aurora, press "Check now"
-  4. Open a conversation that shows "N new"
+  4. Open a conversation with an unread dot
   5. Close Aurora, reopen it and open Messages
 - **Expected**:
   - Step 1: the second opening lists the conversations within about a second; the log shows `check` with a small `elapsed_ms` and a `messages sync` line after it
   - Step 2: `sync` reports the inboxes it synchronized; `check --cached` answers at once
   - Step 3: the new question is listed after "Check now", without reopening the view
-  - Step 4: the "new" badge and the navigation count drop at once, without waiting; the conversation stays usable while it is marked
-  - Step 5: the conversation opened in step 4 no longer shows "new"
+  - Step 4: the unread dot and the navigation count drop at once, without waiting; the conversation stays usable while it is marked
+  - Step 5: the conversation opened in step 4 no longer shows the unread dot
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-009: Messages open from the last snapshot, even offline
+
+- **Covers**: the saved snapshot and the write queue (spec 010 US4, FR-005 to FR-007, ADR-0012)
+- **Prerequisites**: Messages read at least once; a way to cut the network (airplane mode, or unplug)
+- **Steps**:
+  1. Close Aurora, cut the network, open Aurora and go to Messages
+  2. Open a conversation with unread messages
+  3. Bring the network back and wait 30 seconds
+  4. Send a reply, then at once open another conversation
+- **Expected**:
+  - Step 1 lists the conversations at once from the last snapshot; projects that cannot be reached are named in a short notice, and their last known conversations stay listed
+  - Step 2 marks the conversation read at once; Aurora stays responsive
+  - Step 3: the notice goes away and the list is current, without reopening the view
+  - Step 4: the reply is listed as soon as it is written, with no reload of the page; the other conversation opens without waiting for the write
+- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Packages

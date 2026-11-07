@@ -530,7 +530,16 @@ fn init_add_validate_and_watch_once() {
         3,
         "no origin remote"
     );
+    let bare = Context::open(&fresh, w.root.join("cache-fresh"), TOOL).expect_err("no file");
+    assert_eq!((bare.code, bare.repository), ("not_set_up", None));
     git(&fresh, &["remote", "add", "origin", &url(&w.root, "fresh")]);
+    // BUG-009: "not set up" carries the origin, the key to the slug others use.
+    let not_set_up = Context::open(&fresh, w.root.join("cache-fresh"), TOOL).expect_err("no file");
+    assert_eq!(
+        not_set_up.repository.as_deref(),
+        Some(url(&w.root, "fresh").as_str())
+    );
+    valid(&not_set_up.to_json());
     // ADJ-005: init says the file is still empty and the next commands.
     let init = ok(commands::init(&fresh, "fresh", "Fresh")).text;
     assert!(init.contains("lists no other project yet"), "{init}");

@@ -34,6 +34,9 @@ pub struct Failure {
     pub message: String,
     pub missing_sections: Vec<String>,
     pub git_stderr: Option<String>,
+    /// With `not_set_up`: the folder's `origin`, so a reader can find the slug the other
+    /// projects already use for it.
+    pub repository: Option<String>,
 }
 
 impl Failure {
@@ -44,6 +47,7 @@ impl Failure {
             message: message.into(),
             missing_sections: Vec::new(),
             git_stderr: None,
+            repository: None,
         }
     }
 
@@ -57,6 +61,9 @@ impl Failure {
         }
         if let Some(stderr) = &self.git_stderr {
             v["git_stderr"] = json!(stderr);
+        }
+        if let Some(repository) = &self.repository {
+            v["repository"] = json!(repository);
         }
         v
     }
@@ -162,7 +169,13 @@ pub struct Context {
 
 impl Context {
     pub fn open(root: &Path, cache: PathBuf, tool: &str) -> Result<Context> {
-        let registry = registry::load(root)?;
+        let registry = registry::load(root).map_err(|e| match e {
+            RegistryError::NotSetUp(_) => Failure {
+                repository: origin_url(root),
+                ..Failure::from(e)
+            },
+            _ => Failure::from(e),
+        })?;
         let transport = Transport {
             cache,
             identity: Identity::of_project(root),

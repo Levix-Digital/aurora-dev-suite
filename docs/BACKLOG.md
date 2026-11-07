@@ -6,14 +6,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 
 ## Bugs
 
-### BUG-009: The setup command suggests a slug the other projects do not use
-- **Severity**: medium
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-06, v0.3.0-rc.2
-- **Plan**: -
-- **Description**: For ai-code-agent-skills Messages suggested 'init --project ai-code-agent-skills', but every other project knows it as dev-cycle-protocol, so its inbox would never be found. Suggest the slug that the other projects' .aurora/integrations.json give to the project's repository URL, and fall back to the folder name only when none does (Levi, 2026-11-06).
-
 ## Features
 
 ### FEAT-018: Inbox actions
@@ -561,3 +553,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-11-06, PR #35
 - **Description**: Messages reads .aurora/integrations.json only when the view opens, so a file added by a pull or a checkout keeps showing 'not set up'. Re-check each project's setup on every background poll and when Aurora's window gets the focus (a file check per project, no Git), instead of an operating system file watcher per platform (Levi, 2026-11-06).
+
+### BUG-009: The setup command suggests a slug the other projects do not use
+- **Severity**: medium
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-06, v0.3.0-rc.2
+- **Plan**: -
+- **Closed**: 2026-11-07, PR #38
+- **Description**: For ai-code-agent-skills Messages suggested 'init --project ai-code-agent-skills', but every other project knows it as dev-cycle-protocol, so its inbox would never be found. Suggest the slug that the other projects' .aurora/integrations.json give to the project's repository URL, and fall back to the folder name only when none does (Levi, 2026-11-06).

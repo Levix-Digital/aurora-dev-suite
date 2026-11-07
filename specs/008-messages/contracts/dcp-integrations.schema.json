@@ -652,6 +652,10 @@
         },
         "git_stderr": {
           "type": "string"
+        },
+        "repository": {
+          "type": "string",
+          "description": "with not_set_up: the folder's origin URL, when it has one"
         }
       }
     },

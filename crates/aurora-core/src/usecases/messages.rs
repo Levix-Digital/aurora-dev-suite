@@ -9,7 +9,7 @@ use crate::domain::{
     MessagesError, PollResult, Presence, Project, ProjectInbox, Settings, TemplateSection,
     UserAction, check_action, order_conversations,
 };
-use crate::ports::MessagesSource;
+use crate::ports::{ListedProject, MessagesSource};
 
 /// The command that sets up a project for messages.
 pub const SETUP_COMMAND: &str = "dcp-integrations init --project <slug>";
@@ -33,14 +33,56 @@ pub fn suggested_slug(name: &str) -> String {
 }
 
 /// The setup command for one project, runnable from any folder: the provider Aurora
-/// found, the project's folder and a slug suggested from its name.
-pub fn setup_command(provider: &std::path::Path, project: &Project) -> String {
+/// found, the project's folder and `slug`.
+pub fn setup_command(provider: &std::path::Path, project: &Project, slug: &str) -> String {
     format!(
-        "\"{}\" --dir \"{}\" init --project {}",
+        "\"{}\" --dir \"{}\" init --project {slug}",
         provider.display(),
         project.root.display(),
-        suggested_slug(project.name.as_str())
     )
+}
+
+/// A repository URL in a form that compares equal across its spellings: no scheme, user,
+/// trailing slash or `.git`, `host:owner/name` as `host/owner/name`, lowercase.
+pub fn repository_key(url: &str) -> String {
+    let mut rest = url.trim();
+    if let Some((_, after)) = rest.split_once("://") {
+        rest = after;
+    }
+    if let Some((_, after)) = rest.split_once('@') {
+        rest = after;
+    }
+    let rest = rest.trim_end_matches('/');
+    let rest = rest.strip_suffix(".git").unwrap_or(rest);
+    // `git@host:owner/name`: the first colon before any slash separates the host.
+    let rest = match (rest.find(':'), rest.find('/')) {
+        (Some(colon), Some(slash)) if colon < slash => {
+            let port = &rest[colon + 1..slash];
+            if port.chars().all(|c| c.is_ascii_digit()) && !port.is_empty() {
+                format!("{}{}", &rest[..colon], &rest[slash..])
+            } else {
+                format!("{}/{}", &rest[..colon], &rest[colon + 1..])
+            }
+        }
+        _ => rest.to_owned(),
+    };
+    rest.to_lowercase()
+}
+
+/// The slug the projects already set up give to `repository`, in the order they are
+/// read; the first one wins when they disagree.
+pub fn network_slug<'a>(
+    repository: &str,
+    listed: impl IntoIterator<Item = &'a ListedProject>,
+) -> Option<String> {
+    let key = repository_key(repository);
+    if key.is_empty() {
+        return None;
+    }
+    listed
+        .into_iter()
+        .find(|l| repository_key(&l.url) == key)
+        .map(|l| l.slug.clone())
 }
 
 fn usable<'a>(
@@ -55,37 +97,57 @@ fn usable<'a>(
     Ok(provider)
 }
 
-/// One project's conversations, or why it has none.
-pub fn project_inbox(
+/// One project's inbox as read, before the setup command of a project not set up gets
+/// the slug the other projects use for it (BUG-009). Read each project with
+/// [`read_inbox`], in any order or in parallel, then [`complete`] them together.
+#[derive(Debug, Clone)]
+pub struct InboxReading {
+    inbox: ProjectInbox,
+    project: Project,
+    listed: Vec<ListedProject>,
+    /// For a project not set up: the provider's location and the repository URL.
+    pending: Option<(Option<std::path::PathBuf>, Option<String>)>,
+}
+
+/// Reads one project's conversations, or why it has none.
+pub fn read_inbox(
     source: &dyn MessagesSource,
     provider: Option<&EngineReport>,
     settings: &Settings,
     project: &Project,
-) -> ProjectInbox {
-    let mut inbox = ProjectInbox {
-        project: project.id.clone(),
-        name: project.name.as_str().to_owned(),
-        slug: None,
-        counterparts: Vec::new(),
-        setup: InboxSetup::Ready,
-        conversations: Vec::new(),
+) -> InboxReading {
+    let mut reading = InboxReading {
+        inbox: ProjectInbox {
+            project: project.id.clone(),
+            name: project.name.as_str().to_owned(),
+            slug: None,
+            counterparts: Vec::new(),
+            setup: InboxSetup::Ready,
+            conversations: Vec::new(),
+        },
+        project: project.clone(),
+        listed: Vec::new(),
+        pending: None,
     };
     let read = usable(provider, project).and_then(|provider| {
         source.inbox(provider, settings.engines.get(provider.kind), &project.root)
     });
+    let inbox = &mut reading.inbox;
     match read {
         Ok(read) => {
             inbox.slug = Some(read.slug);
             inbox.counterparts = read.counterparts;
             inbox.conversations = read.conversations;
             order_conversations(&mut inbox.conversations);
+            reading.listed = read.listed;
         }
-        Err(MessagesError::NotSetUp { command }) => {
-            inbox.setup = InboxSetup::NotSetUp {
-                command: provider
-                    .and_then(|p| p.location.as_deref())
-                    .map_or(command, |location| setup_command(location, project)),
-            }
+        Err(MessagesError::NotSetUp {
+            command,
+            repository,
+        }) => {
+            inbox.setup = InboxSetup::NotSetUp { command };
+            let location = provider.and_then(|p| p.location.clone());
+            reading.pending = Some((location, repository));
         }
         Err(error) => {
             inbox.setup = InboxSetup::Unavailable {
@@ -93,7 +155,46 @@ pub fn project_inbox(
             }
         }
     }
+    reading
+}
+
+/// The inboxes of `readings`, in their order. A project not set up gets the setup
+/// command with the slug the projects set up already give to its repository, or with
+/// a slug from its name when none does.
+pub fn complete(readings: Vec<InboxReading>) -> Vec<ProjectInbox> {
+    let listed: Vec<ListedProject> = readings
+        .iter()
+        .flat_map(|r| r.listed.iter().cloned())
+        .collect();
+    readings
+        .into_iter()
+        .map(|reading| finish(reading, &listed))
+        .collect()
+}
+
+fn finish(reading: InboxReading, listed: &[ListedProject]) -> ProjectInbox {
+    let mut inbox = reading.inbox;
+    if let Some((Some(location), repository)) = reading.pending {
+        let slug = repository
+            .as_deref()
+            .and_then(|url| network_slug(url, listed))
+            .unwrap_or_else(|| suggested_slug(reading.project.name.as_str()));
+        inbox.setup = InboxSetup::NotSetUp {
+            command: setup_command(&location, &reading.project, &slug),
+        };
+    }
     inbox
+}
+
+/// One project's conversations, or why it has none. Without the other projects, a
+/// project not set up gets a slug from its name: [`overview`] knows better.
+pub fn project_inbox(
+    source: &dyn MessagesSource,
+    provider: Option<&EngineReport>,
+    settings: &Settings,
+    project: &Project,
+) -> ProjectInbox {
+    finish(read_inbox(source, provider, settings, project), &[])
 }
 
 /// Every project's inbox, in the registry's order.
@@ -103,10 +204,12 @@ pub fn overview(
     settings: &Settings,
     projects: &[Project],
 ) -> Vec<ProjectInbox> {
-    projects
-        .iter()
-        .map(|project| project_inbox(source, provider, settings, project))
-        .collect()
+    complete(
+        projects
+            .iter()
+            .map(|project| read_inbox(source, provider, settings, project))
+            .collect(),
+    )
 }
 
 pub fn conversation(
@@ -266,6 +369,70 @@ mod tests {
         let none = overview(&source, None, &Settings::default(), &projects[..1]);
         assert!(
             matches!(none[0].setup, InboxSetup::Unavailable { ref reason } if reason.contains("dcp-integrations"))
+        );
+    }
+
+    #[test]
+    fn a_project_not_set_up_gets_the_slug_the_network_uses() {
+        // BUG-009: a clone of Gedo in the folder levix-gedo is suggested `gedo`, the slug
+        // the projects set up give to its repository; one outside the network keeps the
+        // slug from its name.
+        let source = FixtureMessages::sample();
+        let p = provider();
+        let settings = Settings::default();
+        let projects = [
+            project("levix-gedo", Presence::Present),
+            project("aurora-dev-suite", Presence::Present),
+            project("DocMapper", Presence::Present),
+        ];
+        let slug_in = |inbox: &ProjectInbox| match &inbox.setup {
+            InboxSetup::NotSetUp { command } => command.rsplit(' ').next().map(str::to_owned),
+            _ => None,
+        };
+        let list = overview(&source, Some(&p), &settings, &projects);
+        assert_eq!(slug_in(&list[0]).as_deref(), Some("gedo"));
+        assert_eq!(list[1].setup, InboxSetup::Ready);
+        assert_eq!(slug_in(&list[2]).as_deref(), Some("docmapper"));
+        // Read one at a time, in any order, then completed together: the same result.
+        let readings = projects
+            .iter()
+            .rev()
+            .map(|project| read_inbox(&source, Some(&p), &settings, project))
+            .collect();
+        let reversed = complete(readings);
+        assert_eq!(slug_in(&reversed[2]).as_deref(), Some("gedo"));
+        // Alone, nothing tells the network's slug: the folder's name.
+        let alone = project_inbox(&source, Some(&p), &settings, &projects[0]);
+        assert_eq!(slug_in(&alone).as_deref(), Some("levix-gedo"));
+    }
+
+    #[test]
+    fn repository_urls_compare_across_spellings() {
+        let key = repository_key("https://github.com/Levix-Digital/ai-code-agent-skills.git");
+        for same in [
+            "https://github.com/Levix-Digital/ai-code-agent-skills",
+            "https://github.com/levix-digital/ai-code-agent-skills/",
+            "git@github.com:Levix-Digital/ai-code-agent-skills.git",
+            "ssh://git@github.com/Levix-Digital/ai-code-agent-skills.git",
+            "ssh://git@github.com:22/Levix-Digital/ai-code-agent-skills",
+            " https://user@github.com/Levix-Digital/ai-code-agent-skills.git\n",
+        ] {
+            assert_eq!(repository_key(same), key, "{same}");
+        }
+        assert_eq!(key, "github.com/levix-digital/ai-code-agent-skills");
+        assert_ne!(repository_key("https://github.com/Levix-Digital/gedo"), key);
+        let listed = [ListedProject {
+            slug: "dev-cycle-protocol".into(),
+            url: "https://github.com/Levix-Digital/ai-code-agent-skills.git".into(),
+        }];
+        assert_eq!(
+            network_slug("git@github.com:Levix-Digital/ai-code-agent-skills", &listed).as_deref(),
+            Some("dev-cycle-protocol")
+        );
+        assert_eq!(network_slug("", &listed), None);
+        assert_eq!(
+            network_slug("https://github.com/Levix-Digital/gedo", &listed),
+            None
         );
     }
 

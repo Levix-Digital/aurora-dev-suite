@@ -52,6 +52,8 @@ flowchart LR
 
 **Poll.** `poll` compares the inbox branch's remote tip (`ls-remote`) with the last tip seen, kept in the cache, and fetches only when it changed; it exits with 10 when there is news. `check` records the tip too, and lists the records waiting for the user, the pending messages, the sent messages still unread after the stale time and every conversation, most recent first.
 
+**Not set up.** A command on a folder without `.aurora/integrations.json` fails with `not_set_up` (exit code 3). The error document carries the folder's `origin` in `repository` when it has one, so a reader such as Aurora can find the slug the other projects already give to that repository and suggest it for `init` (BUG-009).
+
 **Logs.** With `--verbose`, Git's error output goes to standard error. Bodies are never logged.
 
 **Tests.** Unit tests cover the format (samples of tool 0.1 to 0.3), the rules and the registry. `tests/scenarios.rs` runs on bare repositories in a temporary folder: the transport (missing branch, first write, identity, a lost race rebuilt, `inbox.json` MAJOR 2 refused, an unreachable remote), a whole conversation from question to decision through a revision in cycle 2, `guide`, `check` with unread sent messages, `init`, `add`, `validate`, `watch` once, and the binary's exit codes. Every `--json` reply and every written file is validated against the contracts in `specs/008-messages/contracts`.

@@ -74,7 +74,16 @@ pub trait ConfigSource: Send + Sync {
 pub struct InboxRead {
     pub slug: String,
     pub counterparts: Vec<String>,
+    /// Every project the registry lists, this one included, with its repository URL.
+    pub listed: Vec<ListedProject>,
     pub conversations: Vec<Conversation>,
+}
+
+/// A project as one registry lists it: the slug it is known by and its repository URL.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ListedProject {
+    pub slug: String,
+    pub url: String,
 }
 
 /// Reads and writes messages between projects through `dcp-integrations` (FEAT-031,

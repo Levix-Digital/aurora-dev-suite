@@ -442,7 +442,13 @@ pub enum MessagesError {
     #[error("dcp-integrations answers schema version {found}: update Aurora or the provider")]
     Unsupported { found: String },
     #[error("this project has no .aurora/integrations.json: run `{command}` in it")]
-    NotSetUp { command: String },
+    NotSetUp {
+        command: String,
+        /// The project's repository URL (its `origin`), when the provider found it: the
+        /// key to the slug the other projects already use for it (BUG-009).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        repository: Option<String>,
+    },
     #[error("the project's folder is missing")]
     ProjectMissing,
     #[error("{message}")]

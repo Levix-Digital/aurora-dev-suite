@@ -9,7 +9,7 @@ use aurora_core::domain::{
     ClosingRecord, Conversation, EngineReport, EngineSettings, Message, MessageHeader, MessageKind,
     MessageStatus, MessagesError, Section, TemplateSection, UserAction, message_body,
 };
-use aurora_core::ports::{InboxRead, MessagesSource};
+use aurora_core::ports::{InboxRead, ListedProject, MessagesSource};
 use aurora_core::usecases::messages::SETUP_COMMAND;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
@@ -137,6 +137,8 @@ fn unread_by_thread(pending: &[RawPending]) -> std::collections::HashMap<&str, u
 struct RawItem {
     #[serde(default)]
     slug: Option<String>,
+    #[serde(default)]
+    url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -216,6 +218,8 @@ struct RawError {
     missing_sections: Vec<String>,
     #[serde(default)]
     git_stderr: Option<String>,
+    #[serde(default)]
+    repository: Option<String>,
 }
 
 fn invalid(message: impl Into<String>) -> MessagesError {
@@ -229,6 +233,7 @@ fn from_error(raw: RawError) -> MessagesError {
     match raw.code.as_str() {
         "not_set_up" => MessagesError::NotSetUp {
             command: SETUP_COMMAND.to_owned(),
+            repository: raw.repository.filter(|r| !r.is_empty()),
         },
         "refused" | "round_limit" | "invalid" => MessagesError::Refused {
             message: raw.message,
@@ -467,6 +472,17 @@ impl MessagesSource for ProviderMessagesSource {
         let list: RawList = self.read(engine, settings, Some(root), &["projects"], "list")?;
         let check: RawCheck = self.read(engine, settings, Some(root), &["check"], "check")?;
         Ok(InboxRead {
+            listed: list
+                .items
+                .iter()
+                .filter_map(|i| match (&i.slug, &i.url) {
+                    (Some(slug), Some(url)) => Some(ListedProject {
+                        slug: slug.clone(),
+                        url: url.clone(),
+                    }),
+                    _ => None,
+                })
+                .collect(),
             counterparts: list
                 .items
                 .into_iter()

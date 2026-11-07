@@ -235,7 +235,16 @@ impl Context {
             format!("messages/{}.md", m.id),
             format::render(m, &self.transport.tool),
         );
-        Ok(self.transport.write_files(slug, &url, &[file], note)?)
+        // This project's own write to its inbox is not news for its next poll, unless the
+        // poll had not seen the inbox as it was before the write.
+        let seen = std::fs::read_to_string(tip_file(self)).ok();
+        let caught_up = slug == self.me()
+            && seen.as_deref().map(str::trim) == self.transport.cached_tip(slug).as_deref();
+        self.transport.write_files(slug, &url, &[file], note)?;
+        if caught_up && let Some(tip) = self.transport.cached_tip(slug) {
+            let _ = std::fs::write(tip_file(self), tip);
+        }
+        Ok(())
     }
 
     /// Every message of a thread: what this project received and what it sent to `peers`

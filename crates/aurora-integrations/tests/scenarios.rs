@@ -720,6 +720,13 @@ fn sync_keeps_copies_that_cached_reads_use_without_git() {
     );
     std::fs::rename(objects.with_extension("moved"), &objects).unwrap();
 
+    // Marking a message seen is not news for this project's next poll.
+    ok(commands::check(&cx, false, 24.0, true, "dcp-integrations"));
+    assert_eq!(ok(commands::poll(&cx)).json["changed"], false);
+    let id = check.json["messages"][0]["id"].as_str().unwrap().to_owned();
+    ok(commands::status(&cx, &id, "seen", None));
+    assert_eq!(ok(commands::poll(&cx)).json["changed"], false);
+
     // A copy never fetched is fetched once, even with --cached.
     let mut fresh = cached.transport.clone();
     fresh.cache = w.root.join("cache-new");

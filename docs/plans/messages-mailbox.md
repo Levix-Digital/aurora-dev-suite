@@ -7,7 +7,7 @@ version: v0.3.0
 status: in_progress
 author: LeviGuilherme
 created_at: '2026-11-07T14:59:13'
-updated_at: '2026-11-07T15:00:34'
+updated_at: '2026-11-07T15:14:18'
 session_id: null
 tags: []
 supersedes: null
@@ -20,11 +20,17 @@ backlog_items:
 spec_dir: specs/010-messages-mail
 milestones:
 - name: M1 Provider
-  done: false
+  done: true
+  done_at: '2026-11-07'
+  by: LeviGuilherme
 - name: M2 Core and adapter
-  done: false
+  done: true
+  done_at: '2026-11-07'
+  by: LeviGuilherme
 - name: M3 Worker
-  done: false
+  done: true
+  done_at: '2026-11-07'
+  by: LeviGuilherme
 - name: M4 View
   done: false
 - name: M5 Docs and manual tests
@@ -38,6 +44,15 @@ status_log:
   by: LeviGuilherme
   status: in_progress
   note: Design agreed with Levi on mockups (list, conversation, decision card, worker, adaptive interval), 2026-11-07.
+- at: '2026-11-07T15:04:21'
+  by: LeviGuilherme
+  note: 'Milestone ''M1 Provider'' completed: export, notes, recommended'
+- at: '2026-11-07T15:09:39'
+  by: LeviGuilherme
+  note: Milestone 'M2 Core and adapter' completed
+- at: '2026-11-07T15:14:18'
+  by: LeviGuilherme
+  note: Milestone 'M3 Worker' completed
 ---
 
 # Messages like a mailbox

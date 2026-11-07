@@ -138,22 +138,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: A project whose file is only on its integration branch (AnyContext: on dev, not main) shows as not set up with the init command, and running init creates a second, empty file. The provider could look for the file on the other local branches and Aurora would say which branch to check out instead (Levi, 2026-11-06).
 
-### IMP-005: Messages read fast from the local inbox caches
-- **Priority**: high
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-07, v0.3.0-rc.4
-- **Plan**: -
-- **Description**: Reading messages was slow and grew with the number of messages (Levi, 2026-11-07): one check started a git process per message file of every inbox (153 for 136 messages; Aurora runs one check per project, and each git process is slow to start on Windows), and marking a message as read waited for a fetch, a commit and a push. Fix: the provider reads an inbox with one git ls-tree and one git cat-file --batch and keeps the parsed messages in an index per inbox tip, so a read with an unchanged tip starts no git process; Aurora marks a message as read in the view at once and the provider writes it in the background.
-
-### IMP-006: Messages synchronized in the background, read only from the cache
-- **Priority**: high
-- **Epic**: EPIC-010
-- **Status**: open
-- **Found**: 2026-11-07, v0.3.0-rc.4
-- **Plan**: -
-- **Description**: Aurora's reads went to the network once the 30 s fetch reuse expired, one inbox after another (Levi, 2026-11-07). A new provider command, sync, fetches every inbox of a project at once; Aurora runs it in the background (when the view opens, on the background poll, after a write) and every read runs with --cached, which never fetches. ADR-0011.
-
 ## Adjustments
 
 ### ADJ-004: Messages separates projects to set up from projects outside the network
@@ -578,3 +562,21 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Closed**: 2026-11-07, PR #38
 - **Description**: For ai-code-agent-skills Messages suggested 'init --project ai-code-agent-skills', but every other project knows it as dev-cycle-protocol, so its inbox would never be found. Suggest the slug that the other projects' .aurora/integrations.json give to the project's repository URL, and fall back to the folder name only when none does (Levi, 2026-11-06).
+
+### IMP-005: Messages read fast from the local inbox caches
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-07, v0.3.0-rc.4
+- **Plan**: -
+- **Closed**: 2026-11-07, PR #39
+- **Description**: Reading messages was slow and grew with the number of messages (Levi, 2026-11-07): one check started a git process per message file of every inbox (153 for 136 messages; Aurora runs one check per project, and each git process is slow to start on Windows), and marking a message as read waited for a fetch, a commit and a push. Fix: the provider reads an inbox with one git ls-tree and one git cat-file --batch and keeps the parsed messages in an index per inbox tip, so a read with an unchanged tip starts no git process; Aurora marks a message as read in the view at once and the provider writes it in the background.
+
+### IMP-006: Messages synchronized in the background, read only from the cache
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-07, v0.3.0-rc.4
+- **Plan**: -
+- **Closed**: 2026-11-07, PR #39
+- **Description**: Aurora's reads went to the network once the 30 s fetch reuse expired, one inbox after another (Levi, 2026-11-07). A new provider command, sync, fetches every inbox of a project at once; Aurora runs it in the background (when the view opens, on the background poll, after a write) and every read runs with --cached, which never fetches. ADR-0011.

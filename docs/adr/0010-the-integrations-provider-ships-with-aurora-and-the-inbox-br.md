@@ -8,7 +8,7 @@ subsystems: [engines, desktop]
 supersedes: []
 superseded_by: []
 amends: [7]
-amended_by: []
+amended_by: [11]
 ---
 
 # ADR-0010: The integrations provider ships with Aurora and the inbox branch holds only data

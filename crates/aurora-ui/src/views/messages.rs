@@ -4,7 +4,7 @@
 
 use aurora_core::domain::{
     ClosingRecord, Conversation, ConversationState, Draft, Feature, InboxSetup, Message,
-    MessageKind, MessagesError, ProjectInbox, Section, TemplateSection, UserAction,
+    MessageKind, MessageStatus, MessagesError, ProjectInbox, Section, TemplateSection, UserAction,
 };
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -63,6 +63,15 @@ impl Filter {
 /// received messages, across every project (spec 009, FR-006).
 pub fn open_total(inboxes: &[ProjectInbox]) -> usize {
     inboxes.iter().map(ProjectInbox::open_count).sum()
+}
+
+/// The messages of a conversation received by `me` and not read yet.
+fn unread_ids(messages: &[Message], me: &str) -> Vec<String> {
+    messages
+        .iter()
+        .filter(|m| m.header.to == me && m.header.status == MessageStatus::Open)
+        .map(|m| m.header.id.clone())
+        .collect()
 }
 
 fn short_date(date: &str) -> String {
@@ -643,6 +652,18 @@ fn ConversationRow(
             let _ = button.focus();
         }
     });
+    // Cleared as soon as the conversation opens; the provider writes it behind (IMP-005).
+    let unread = RwSignal::new(c.unread);
+    let waiting = c.waiting_for_user;
+    let ctx = expect_context::<AppContext>();
+    let on_seen = Callback::new(move |()| {
+        if unread.get_untracked() > 0 {
+            unread.set(0);
+            if !waiting {
+                ctx.messages_waiting.update(|n| *n = n.saturating_sub(1));
+            }
+        }
+    });
     view! {
         <li class="conversation-row">
             <button
@@ -666,7 +687,7 @@ fn ConversationRow(
                     )}
                 </span>
             </button>
-            {(c.unread > 0).then(|| view! { " " <span class="badge info">{format!("{} new", c.unread)}</span> })}
+            {move || (unread.get() > 0).then(|| view! { " " <span class="badge info">{format!("{} new", unread.get())}</span> })}
             {c.waiting_for_user.then(|| view! { " " <span class="badge warn">"Waiting for you"</span> })}
             {c.no_answer_yet(&me).then(|| view! { " " <span class="badge muted">"No answer yet"</span> })}
             {(c.cycle > 1).then(|| view! { " " <span class="badge info">{format!("{} request(s) of yours", c.user_requests.len())}</span> })}
@@ -676,6 +697,7 @@ fn ConversationRow(
                     conversation=conversation.clone()
                     on_close=close
                     on_done=on_done
+                    on_seen=on_seen
                 />
             })}
         </li>
@@ -788,6 +810,7 @@ fn ConversationPanel(
     conversation: Conversation,
     on_close: Callback<()>,
     on_done: Callback<String>,
+    on_seen: Callback<()>,
 ) -> impl IntoView {
     let ctx = expect_context::<AppContext>();
     let messages = RwSignal::new(None::<Result<Vec<Message>, CommandError>>);
@@ -798,14 +821,35 @@ fn ConversationPanel(
     let project = inbox.project.0.clone();
     let thread = conversation.thread.clone();
     {
-        let (project, thread) = (project.clone(), thread.clone());
+        let (project, thread, me) = (project.clone(), thread.clone(), me.clone());
         spawn_local(async move {
-            messages.set(Some(
-                ctx.backend
+            let answer = ctx
+                .backend
+                .get_value()
+                .messages_conversation(project.clone(), thread)
+                .await;
+            let unread = answer
+                .as_ref()
+                .map(|list| unread_ids(list, &me))
+                .unwrap_or_default();
+            messages.set(Some(answer));
+            if unread.is_empty() {
+                return;
+            }
+            // Read now: the view says so at once, and the provider writes it in the
+            // background without holding the conversation (IMP-005).
+            on_seen.run(());
+            for id in unread {
+                let action = UserAction::MarkSeen { id };
+                if let Err(e) = ctx
+                    .backend
                     .get_value()
-                    .messages_conversation(project, thread)
-                    .await,
-            ));
+                    .messages_act(project.clone(), action)
+                    .await
+                {
+                    leptos::logging::warn!("mark as read: {}", e.message);
+                }
+            }
         });
     }
     let kinds = conversation.reply_kinds();

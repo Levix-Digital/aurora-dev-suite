@@ -89,7 +89,7 @@ Conversations between your projects, carried on each repository's `aurora/inbox`
 - **Waiting for you** comes first: each conclusion in full (who discussed it, rounds, cycle, conclusion, justification, positions, open points, what happens after approval) with the numbered options or a choice of your own, an optional note, and **Decide**, which asks to confirm and sends the decision to every project of the conversation. **Ask for changes** sends your request instead: the projects get up to three new rounds to take it into account and come back with a new conclusion.
 - **Conversations** lists every conversation of your projects, one row per conversation starting with who sent the last message to whom (`aurora-dev-suite → gedo`), in three groups: **Waiting for you** (amber), **In progress** and **Closed** (grey, folded until you open it); filter by project and by state (waiting for you, no answer yet, after your requests). Click a row (or press Enter) to open the conversation right below it, and again or Escape to close it: every message shows `from → to` and its sections, and you can **Step in** with a request at any time (a new cycle of up to three rounds) or reply. After three rounds in a cycle, only an agreement or an impasse can be sent.
 - **New conversation** starts a question, a proposal or a notice from a project to one of its counterparts. Each kind has a template; required sections are marked, and what is missing is shown next to the form.
-- **Check now** asks every project's inbox whether something new arrived. Aurora also checks in the background every 5 minutes, and offers to show what arrived.
+- **Check now** asks every project's inbox whether something new arrived and brings Aurora's local copy of the messages up to date. Aurora also checks in the background every minute, and offers to show what arrived. The view always opens from the local copy, so it answers at once; opening a conversation marks its new messages as read.
 
 A project takes part once it has `.aurora/integrations.json`. In its folder:
 
@@ -101,7 +101,7 @@ dcp-integrations validate
 
 then commit `.aurora/integrations.json`. Projects that are not set up are listed under "Not taking part" with this command. Aurora reads the branch checked out in your clone: if the file is only on another branch (for example `dev` before a release), check out that branch instead of running `init` again. Aurora notices the file within seconds when you come back to its window, or at the next background check.
 
-The same commands work in a terminal, for you or your tools: `dcp-integrations check`, `show <id>`, `template <kind>`, `send`, `reply`, `record <thread>`, `decide <thread> --choice ...`, `guide <thread> --text ...`, `poll`; add `--json` for machine-readable answers. `dcp-integrations --help` lists them all. It is installed next to Aurora by the packages (in `/usr/bin` by the `.deb`; in `%LOCALAPPDATA%\Aurora` by the Windows installer, which adds that folder to your `PATH`; open a new terminal after installing) and is also published alone with each release. Messages shows, for each project not set up yet, the exact command to run with the full path of the provider Aurora found.
+The same commands work in a terminal, for you or your tools: `dcp-integrations check`, `show <id>`, `template <kind>`, `send`, `reply`, `record <thread>`, `decide <thread> --choice ...`, `guide <thread> --text ...`, `poll`, `sync`; add `--json` for machine-readable answers and `--cached` to read only the local copy that `sync` keeps current. `dcp-integrations --help` lists them all. It is installed next to Aurora by the packages (in `/usr/bin` by the `.deb`; in `%LOCALAPPDATA%\Aurora` by the Windows installer, which adds that folder to your `PATH`; open a new terminal after installing) and is also published alone with each release. Messages shows, for each project not set up yet, the exact command to run with the full path of the provider Aurora found.
 
 ### Engines (Alt+3)
 
@@ -130,7 +130,7 @@ Tab moves between controls, and the focused one is always outlined. In the navig
 |---|---|---|---|
 | Theme | Settings view, `settings.toml` | Follow the system | Light, dark or the system's appearance |
 | Engine location | Settings view, `settings.toml` | Search path (`dcp-integrations`: next to Aurora first) | The `dcp`, `gedo`, `actx` or `dcp-integrations` binary to use |
-| Messages check | `messagesPollMinutes` in `settings.toml` | 5 minutes | How often Aurora checks the inboxes in the background; 0 turns it off |
+| Messages check | `messagesPollMinutes` in `settings.toml` | 1 minute | How often Aurora checks the inboxes in the background; 0 turns it off |
 | Engine time limit | Settings view, `settings.toml` | 10 seconds; 60 for `dcp-integrations` | How long Aurora waits for an engine's answer; the provider's first read of a project fetches every counterpart's inbox |
 | Log level | `AURORA_LOG` environment variable | `info` | `debug` adds each engine command and its duration |
 

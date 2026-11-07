@@ -139,4 +139,16 @@ pub trait MessagesSource: Send + Sync {
         settings: &EngineSettings,
         root: &Path,
     ) -> Result<Option<String>, MessagesError>;
+
+    /// Brings the local copies of the project's inboxes up to date, so the reads above
+    /// answer from them without the network (ADR-0011); whether anything changed. A
+    /// provider that reads from the network on every call has nothing to do.
+    fn sync(
+        &self,
+        _engine: &EngineReport,
+        _settings: &EngineSettings,
+        _root: &Path,
+    ) -> Result<bool, MessagesError> {
+        Ok(false)
+    }
 }

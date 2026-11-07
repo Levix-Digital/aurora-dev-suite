@@ -548,7 +548,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
 - **Expected**:
   - Step 1 prints the version (Aurora's), then says `.aurora/integrations.json` is not found and gives the `init` command
   - Step 2 writes `.aurora/integrations.json` with the counterpart and `validate` reports it valid
-  - Step 3 answers a document with `schema` `dcp-integrations.check` and `schema_version` 1.0; `poll` exits with 10 when there is news and 0 otherwise
+  - Step 3 answers a document with `schema` `dcp-integrations.check` and `schema_version` 1.1; `poll` exits with 10 when there is news and 0 otherwise
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
@@ -564,6 +564,25 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 1 lists the project as not set up with a command that runs from any folder: the full path of the provider, `--dir` with the project's folder and `init --project` with the slug the other projects' `.aurora/integrations.json` give to its repository (for a clone of ai-code-agent-skills, `dev-cycle-protocol`), or a slug from its name when none lists it; the other projects work normally
   - Step 2: within a few seconds of the window getting the focus, Messages offers to read again (or the count changes on another view); after reading again the project takes part, without restarting Aurora or reopening the view
   - Step 3 says once that the provider is missing and how to install it; nothing else runs and Aurora stays responsive
+- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-008: Messages open fast and read conversations stop counting as new
+
+- **Covers**: reads from the local copies, background sync, mark as read (IMP-005, IMP-006, ADR-0011)
+- **Prerequisites**: several registered projects set up for messages, with a few dozen messages between them; Aurora's log open (`logs` under Aurora's data folder)
+- **Steps**:
+  1. Open Messages, leave it, wait a minute and open it again
+  2. In a terminal, run `dcp-integrations sync` and then `dcp-integrations check --cached` in a project's folder
+  3. From another project's folder, send a question to this project; in Aurora, press "Check now"
+  4. Open a conversation that shows "N new"
+  5. Close Aurora, reopen it and open Messages
+- **Expected**:
+  - Step 1: the second opening lists the conversations within about a second; the log shows `check` with a small `elapsed_ms` and a `messages sync` line after it
+  - Step 2: `sync` reports the inboxes it synchronized; `check --cached` answers at once
+  - Step 3: the new question is listed after "Check now", without reopening the view
+  - Step 4: the "new" badge and the navigation count drop at once, without waiting; the conversation stays usable while it is marked
+  - Step 5: the conversation opened in step 4 no longer shows "new"
 - **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 

@@ -88,13 +88,22 @@ pub struct Transport {
     /// that runs one command per project (Aurora) fetches each inbox once (BUG-008).
     /// `None`, the default for writes and checks before writing, always fetches.
     pub reuse_fetch: Option<Duration>,
+    /// Reads never fetch an inbox that was fetched once: `sync` keeps the caches
+    /// current in the background (`--cached`, ADR-0011). Writes still fetch.
+    pub cached: bool,
 }
 
 /// How long the read-only commands reuse a fetch.
 pub const REUSE_FETCH: Duration = Duration::from_secs(30);
 
+/// How long `sync` reuses a fetch, so a sweep over several projects that share
+/// counterparts fetches each inbox once.
+pub const SYNC_REUSE: Duration = Duration::from_secs(10);
+
 /// Written in a cache after each fetch; its modification time is the fetch's.
 const FETCHED_STAMP: &str = "aurora-fetched";
+/// The message files of the cached tip, so a read with an unchanged tip runs no Git.
+const INDEX_FILE: &str = "aurora-index.json";
 /// How long to wait for another process fetching the same cache.
 const LOCK_WAIT: Duration = Duration::from_secs(60);
 /// A lock older than this was left by a process that died.
@@ -270,7 +279,41 @@ impl Transport {
         project: &str,
         url: &str,
     ) -> Result<(PathBuf, Option<String>), TransportError> {
-        self.fetch_with(project, url, self.reuse_fetch)
+        let reuse = if self.cached {
+            Some(Duration::MAX)
+        } else {
+            self.reuse_fetch
+        };
+        self.fetch_with(project, url, reuse)
+    }
+
+    /// The tip of the last fetch of the project's inbox, without Git or network
+    /// (`None`: never fetched, or no branch).
+    pub fn cached_tip(&self, project: &str) -> Option<String> {
+        let stamp = self
+            .cache
+            .join(format!("{project}.git"))
+            .join(FETCHED_STAMP);
+        let tip = std::fs::read_to_string(stamp).ok()?;
+        let tip = tip.trim();
+        (!tip.is_empty()).then(|| tip.to_owned())
+    }
+
+    /// Fetches the project's inbox unless it was fetched less than `max_age` ago, and
+    /// indexes its messages, so the next read is local; the tip and whether it changed.
+    pub fn sync(
+        &self,
+        project: &str,
+        url: &str,
+        max_age: Duration,
+    ) -> Result<(Option<String>, bool), TransportError> {
+        let before = self.cached_tip(project);
+        let (repo, tip) = self.fetch_with(project, url, Some(max_age))?;
+        if let Some(tip) = &tip {
+            self.inbox_files(project, &repo, tip)?;
+        }
+        let changed = before != tip;
+        Ok((tip, changed))
     }
 
     fn fetch_with(
@@ -357,22 +400,86 @@ impl Transport {
         let Some(tip) = tip else {
             return Ok(Vec::new());
         };
-        self.check_format(project, &repo, &tip)?;
-        let names = self.git(
-            &repo,
-            &["ls-tree", "-r", "--name-only", &tip, "--", "messages"],
-            None,
-            None,
-        )?;
         let mut messages = Vec::new();
-        for name in names.lines().filter(|n| n.ends_with(".md")) {
-            let text = self.git(&repo, &["show", &format!("{tip}:{name}")], None, None)?;
+        for (name, text) in self.inbox_files(project, &repo, &tip)? {
             messages.push(
-                format::parse(&text, name).map_err(|e| TransportError::Parse(e.to_string()))?,
+                format::parse(&text, &name).map_err(|e| TransportError::Parse(e.to_string()))?,
             );
         }
         messages.sort_by(|a, b| a.date.cmp(&b.date).then_with(|| a.id.cmp(&b.id)));
         Ok(messages)
+    }
+
+    /// The message files of the inbox at `tip`: from the index when it is of this tip,
+    /// else read with one `ls-tree` and one `cat-file --batch` (IMP-005) and indexed.
+    fn inbox_files(
+        &self,
+        project: &str,
+        repo: &Path,
+        tip: &str,
+    ) -> Result<Vec<(String, String)>, TransportError> {
+        let index = repo.join(INDEX_FILE);
+        if let Some(files) = read_index(&index, tip) {
+            return Ok(files);
+        }
+        self.check_format(project, repo, tip)?;
+        let names = self.git(
+            repo,
+            &["ls-tree", "-r", "--name-only", tip, "--", "messages"],
+            None,
+            None,
+        )?;
+        let names: Vec<String> = names
+            .lines()
+            .filter(|n| n.ends_with(".md"))
+            .map(str::to_owned)
+            .collect();
+        let files = self.read_blobs(repo, tip, &names)?;
+        write_index(&index, tip, &files);
+        Ok(files)
+    }
+
+    /// The text of each of `names` at `tip`, with a single `git cat-file --batch`.
+    fn read_blobs(
+        &self,
+        repo: &Path,
+        tip: &str,
+        names: &[String],
+    ) -> Result<Vec<(String, String)>, TransportError> {
+        if names.is_empty() {
+            return Ok(Vec::new());
+        }
+        let input: String = names.iter().map(|n| format!("{tip}:{n}\n")).collect();
+        let mut child = Command::new("git")
+            .arg("--git-dir")
+            .arg(repo)
+            .args(["cat-file", "--batch"])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| TransportError::Io(format!("cannot run git: {e}")))?;
+        let mut stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| TransportError::Io("git cat-file has no input".into()))?;
+        // Written from another thread: git answers while it reads, and a full output
+        // pipe would otherwise block both sides.
+        let writer = thread::spawn(move || stdin.write_all(input.as_bytes()));
+        let out = child
+            .wait_with_output()
+            .map_err(|e| TransportError::Io(e.to_string()))?;
+        writer
+            .join()
+            .map_err(|_| TransportError::Io("git cat-file input failed".into()))?
+            .map_err(|e| TransportError::Io(e.to_string()))?;
+        if !out.status.success() {
+            return Err(TransportError::Git {
+                command: "cat-file --batch".into(),
+                stderr: String::from_utf8_lossy(&out.stderr).trim().to_owned(),
+            });
+        }
+        parse_batch(&out.stdout, names)
     }
 
     /// Adds or replaces files on the project's inbox branch and pushes, rebuilding on the
@@ -455,6 +562,73 @@ impl Transport {
             command: format!("push to the inbox of {project}"),
             stderr: last,
         })
+    }
+}
+
+/// Splits the output of `git cat-file --batch`: per object a `<sha> <type> <size>`
+/// line, the content and a newline.
+fn parse_batch(out: &[u8], names: &[String]) -> Result<Vec<(String, String)>, TransportError> {
+    let mut files = Vec::with_capacity(names.len());
+    let mut rest = out;
+    for name in names {
+        let end = rest
+            .iter()
+            .position(|b| *b == b'\n')
+            .ok_or_else(|| TransportError::Parse(format!("{name}: truncated git output")))?;
+        let header = String::from_utf8_lossy(&rest[..end]).into_owned();
+        rest = &rest[end + 1..];
+        let size: usize = header
+            .split_whitespace()
+            .nth(2)
+            .and_then(|s| s.parse().ok())
+            .ok_or_else(|| TransportError::Parse(format!("{name}: {header}")))?;
+        if rest.len() < size {
+            return Err(TransportError::Parse(format!(
+                "{name}: truncated git output"
+            )));
+        }
+        files.push((
+            name.clone(),
+            String::from_utf8_lossy(&rest[..size]).into_owned(),
+        ));
+        rest = rest.get(size + 1..).unwrap_or_default();
+    }
+    Ok(files)
+}
+
+/// The indexed files when the index is of `tip`.
+fn read_index(path: &Path, tip: &str) -> Option<Vec<(String, String)>> {
+    let text = std::fs::read_to_string(path).ok()?;
+    let value: serde_json::Value = serde_json::from_str(&text).ok()?;
+    if value.get("tip")?.as_str()? != tip {
+        return None;
+    }
+    value
+        .get("files")?
+        .as_array()?
+        .iter()
+        .map(|f| {
+            Some((
+                f.get("name")?.as_str()?.to_owned(),
+                f.get("text")?.as_str()?.to_owned(),
+            ))
+        })
+        .collect()
+}
+
+/// Replaces the index at once (a temporary file renamed), so a reader never sees half
+/// of it; an index that cannot be written only costs the next read a Git call.
+fn write_index(path: &Path, tip: &str, files: &[(String, String)]) {
+    let value = serde_json::json!({
+        "tip": tip,
+        "files": files
+            .iter()
+            .map(|(name, text)| serde_json::json!({ "name": name, "text": text }))
+            .collect::<Vec<_>>(),
+    });
+    let tmp = path.with_extension(format!("json.{}", std::process::id()));
+    if std::fs::write(&tmp, value.to_string()).is_ok() && std::fs::rename(&tmp, path).is_err() {
+        let _ = std::fs::remove_file(&tmp);
     }
 }
 

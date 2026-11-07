@@ -439,10 +439,28 @@ impl ProviderMessagesSource {
         args: &[&str],
         name: &str,
     ) -> Result<T, MessagesError> {
-        let args = args.iter().map(|a| (*a).to_owned()).collect();
+        let mut args: Vec<String> = args.iter().map(|a| (*a).to_owned()).collect();
+        // A provider with local copies answers from them; `sync` updates them (ADR-0011).
+        if root.is_some() && caches(engine) {
+            args.push("--cached".to_owned());
+        }
         let (stdout, _) = self.run(engine, settings, root, args, 0, name)?;
         parse(&stdout, name)
     }
+}
+
+/// The provider keeps local copies of the inboxes (`cache` capability, ADR-0011).
+pub fn caches(engine: &EngineReport) -> bool {
+    engine.has_capability(CACHE_CAPABILITY, SCHEMA_MAJOR)
+}
+
+/// The capability of a provider that answers reads from its local copies.
+pub const CACHE_CAPABILITY: &str = "cache";
+
+#[derive(Deserialize)]
+struct RawSync {
+    #[serde(default)]
+    changed: bool,
 }
 
 fn conversation(raw: RawConversation) -> Conversation {
@@ -622,6 +640,27 @@ impl MessagesSource for ProviderMessagesSource {
         )?;
         let poll: RawPoll = parse(&stdout, "poll")?;
         Ok((poll.changed || code == NEWS).then_some(poll.summary))
+    }
+
+    fn sync(
+        &self,
+        engine: &EngineReport,
+        settings: &EngineSettings,
+        root: &Path,
+    ) -> Result<bool, MessagesError> {
+        if !caches(engine) {
+            return Ok(false);
+        }
+        let (stdout, _) = self.run(
+            engine,
+            settings,
+            Some(root),
+            vec!["sync".to_owned()],
+            0,
+            "sync",
+        )?;
+        let sync: RawSync = parse(&stdout, "sync")?;
+        Ok(sync.changed)
     }
 }
 

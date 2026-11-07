@@ -86,7 +86,7 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub const DEFAULT_POLL_MINUTES: u32 = 5;
+    pub const DEFAULT_POLL_MINUTES: u32 = 1;
 
     /// Brings settings saved by an older Aurora to this version: version 1 kept the
     /// provider at the general 10 s limit, raised to its own default (BUG-008); a

@@ -165,7 +165,7 @@ fn config_reply(exe: &std::path::Path, mode: &str, args: &[String]) {
     println!("{reply}");
 }
 
-const INTEGRATIONS: [(&str, &str); 10] = [
+const INTEGRATIONS: [(&str, &str); 11] = [
     (
         "projects",
         include_str!("../../tests/fixtures/dcp-integrations/projects.json"),
@@ -197,6 +197,10 @@ const INTEGRATIONS: [(&str, &str); 10] = [
     (
         "poll",
         include_str!("../../tests/fixtures/dcp-integrations/poll-news.json"),
+    ),
+    (
+        "sync",
+        include_str!("../../tests/fixtures/dcp-integrations/sync.json"),
     ),
     (
         "refused",

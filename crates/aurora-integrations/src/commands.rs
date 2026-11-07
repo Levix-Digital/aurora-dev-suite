@@ -13,7 +13,7 @@ use crate::registry::{self, Registry, RegistryError};
 use crate::rules;
 use crate::transport::{Identity, Transport, TransportError};
 
-pub const SCHEMA_VERSION: &str = "1.1";
+pub const SCHEMA_VERSION: &str = "1.2";
 /// Exit code of `poll` when there is news.
 pub const NEWS: i32 = 10;
 
@@ -418,6 +418,7 @@ pub fn version(tool: &str) -> Result<Reply> {
             "version": tool, "capabilities": [
                 { "name": "messages", "schema_major": 1 },
                 { "name": "cache", "schema_major": 1 },
+                { "name": "export", "schema_major": 1 },
             ],
         }),
         format!("dcp-integrations {tool}"),
@@ -737,6 +738,69 @@ fn conversations(
         .collect()
 }
 
+/// One message of `thread` and `export`: its header, its sections and text without the
+/// status notes, the body as written and the notes.
+fn item(m: &Message) -> Value {
+    let (text, notes) = format::split_notes(&m.body);
+    json!({
+        "message": header(m),
+        "sections": format::sections(&text),
+        "body": m.body,
+        "text": text,
+        "notes": notes,
+    })
+}
+
+/// `export`: everything a reader such as Aurora shows for this project in one document
+/// (IMP-007): its counterparts, every conversation as `check` lists it with its unread
+/// count, its messages and its closing record.
+pub fn export(cx: &Context) -> Result<Reply> {
+    let mine = cx.mine()?;
+    let slugs = cx.registry.slugs();
+    let user = rules::waiting_for_user(cx.me(), &mine, &slugs);
+    let sent = sent_all(cx);
+    let mut all: Vec<Message> = mine.iter().chain(&sent).cloned().collect();
+    all.sort_by(|a, b| a.date.cmp(&b.date).then_with(|| a.id.cmp(&b.id)));
+    let mut conversations = conversations(cx, &mine, &sent, &user);
+    for c in &mut conversations {
+        let thread = c["thread"].as_str().unwrap_or_default().to_owned();
+        let messages: Vec<Message> = all
+            .iter()
+            .filter(|m| m.thread_id() == thread)
+            .cloned()
+            .collect();
+        let unread = messages
+            .iter()
+            .filter(|m| m.to == cx.me() && m.status == Status::Open)
+            .count();
+        c["unread"] = json!(unread);
+        c["items"] = json!(messages.iter().map(item).collect::<Vec<_>>());
+        c["record"] = rules::record(&thread, &messages)
+            .map(|r| serde_json::to_value(r).unwrap_or_default())
+            .unwrap_or(Value::Null);
+    }
+    let r = &cx.registry;
+    let mut items = vec![json!({ "slug": r.project, "name": r.name, "url": r.repository })];
+    items.extend(
+        r.counterparts
+            .iter()
+            .map(|c| json!({ "slug": c.slug, "name": c.name, "url": c.url })),
+    );
+    let text = format!(
+        "{}: {} conversation(s), {} message(s).",
+        cx.me(),
+        conversations.len(),
+        all.len()
+    );
+    ok(
+        doc(
+            "export",
+            json!({ "project": cx.me(), "items": items, "conversations": conversations }),
+        ),
+        text,
+    )
+}
+
 /// `thread <thread>`: every message of a thread with its sections, oldest first.
 pub fn thread(cx: &Context, thread: &str) -> Result<Reply> {
     let messages = cx.conversation(thread, None)?;
@@ -747,10 +811,7 @@ pub fn thread(cx: &Context, thread: &str) -> Result<Reply> {
             format!("thread {thread} is not known to {}", cx.me()),
         ));
     }
-    let items: Vec<Value> = messages
-        .iter()
-        .map(|m| json!({ "message": header(m), "sections": m.sections(), "body": m.body }))
-        .collect();
+    let items: Vec<Value> = messages.iter().map(item).collect();
     let text = messages
         .iter()
         .map(|m| format::render(m, &cx.transport.tool))

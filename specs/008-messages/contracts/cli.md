@@ -14,7 +14,8 @@ Same commands, arguments and text output as the provisional tool 0.3.0 (`aurora/
 | `check [--no-sent] [--stale-hours H] [--quiet]` | `dcp-integrations.check` (with `conversations`, most recent first) | 0 |
 | `list [--sent] [--all]` | `dcp-integrations.list` | 0 |
 | `show <id>` | `dcp-integrations.show` (header, sections, body); marks it seen | 0; 4 unknown id |
-| `thread <thread>` | `dcp-integrations.thread` (every message of the thread with its sections, oldest first) | 0; 4 unknown thread |
+| `thread <thread>` | `dcp-integrations.thread` (every message of the thread with its sections, oldest first; from 1.2 each message also has `text`, the body without the status notes, and `notes`, and its sections come from `text`) | 0; 4 unknown thread |
+| `export` | `dcp-integrations.export` (schema 1.2, capability `export`): the project's counterparts and every conversation as `check` lists it, with `unread`, its messages as in `thread` and its closing record (`null` without one) | 0 |
 | `template <kind>` | `dcp-integrations.template` | 0 |
 | `send --to <slug> --kind <kind> --subject <s> --body-file <f>` | `dcp-integrations.sent` | 0; 5 refused |
 | `reply <id> --kind <kind> [--subject <s>] --body-file <f>` | `dcp-integrations.sent` | 0; 5 refused |
@@ -26,6 +27,8 @@ Same commands, arguments and text output as the provisional tool 0.3.0 (`aurora/
 | `defer <id> --reason <text>` | `dcp-integrations.status` | 0; 4 |
 | `watch --target <slug>=<dir> --exec <cmd> [--interval S] [--once]` | none (text only) | 0 |
 
-The reading commands (`projects`, `check`, `list`, `show`, `thread`, `record`) take `--cached` (capability `cache`, ADR-0011): they read the local copies and fetch only an inbox never fetched before; `sync` keeps the copies current. Writes always fetch first.
+The reading commands (`projects`, `check`, `export`, `list`, `show`, `thread`, `record`) take `--cached` (capability `cache`, ADR-0011): they read the local copies and fetch only an inbox never fetched before; `sync` keeps the copies current. Writes always fetch first.
 
 Any failure with `--json` answers `dcp-integrations.error` (`code`, `message`, `missing_sections`, `git_stderr`) and exit code 1 for Git or I/O, 2 to 5 as above. Refusals name what is missing; nothing is written on a refusal.
+
+A closing record has `recommended` (1.2): the recommended option, 1-based, from a `Recommended: <n>` line of Decision needed or the first option that ends with "(recommended)"; `null` when none is marked.

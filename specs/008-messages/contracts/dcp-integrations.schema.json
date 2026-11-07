@@ -39,6 +39,9 @@
     },
     {
       "$ref": "#/$defs/dcp-integrations.error"
+    },
+    {
+      "$ref": "#/$defs/dcp-integrations.export"
     }
   ],
   "$defs": {
@@ -640,6 +643,14 @@
           "items": {
             "type": "string"
           }
+        },
+        "recommended": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "The recommended option, 1-based (1.2)"
         }
       }
     },
@@ -743,26 +754,247 @@
         "messages": {
           "type": "array",
           "items": {
-            "type": "object",
-            "required": [
-              "message",
-              "sections",
-              "body"
-            ],
-            "properties": {
-              "message": {
+            "$ref": "#/$defs/item"
+          }
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "description": "A status note a receiver appended to a message (`status ... --note`, `defer`)",
+      "required": [
+        "status",
+        "date",
+        "note"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "open",
+            "seen",
+            "done"
+          ]
+        },
+        "date": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": [
+        "message",
+        "sections",
+        "body"
+      ],
+      "properties": {
+        "message": {
+          "$ref": "#/$defs/header"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/section"
+          },
+          "description": "The sections of the text without the status notes"
+        },
+        "body": {
+          "type": "string",
+          "description": "The body as written, with the status notes"
+        },
+        "text": {
+          "type": "string",
+          "description": "The body without the status notes (1.2)"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/note"
+          },
+          "description": "The status notes, oldest first (1.2)"
+        }
+      }
+    },
+    "record": {
+      "type": "object",
+      "description": "A closing record inside `export` (the record document without its envelope)",
+      "required": [
+        "thread",
+        "subject",
+        "projects",
+        "rounds",
+        "cycle",
+        "outcome",
+        "conclusion",
+        "justification",
+        "decision_needed",
+        "after_approval"
+      ],
+      "properties": {
+        "thread": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+          }
+        },
+        "rounds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "cycle": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "outcome": {
+          "enum": [
+            "agreement",
+            "impasse"
+          ]
+        },
+        "conclusion": {
+          "type": "string"
+        },
+        "justification": {
+          "type": "string"
+        },
+        "positions": {
+          "type": "string"
+        },
+        "open_points": {
+          "type": "string"
+        },
+        "decision_needed": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The numbered lines of decision needed, in order"
+        },
+        "after_approval": {
+          "type": "string"
+        },
+        "user_requests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommended": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "The recommended option, 1-based (1.2)"
+        }
+      }
+    },
+    "dcp-integrations.export": {
+      "type": "object",
+      "description": "`export --json` (1.2): everything a reader shows for one project: its counterparts, every conversation with its unread count, messages and closing record (IMP-007)",
+      "required": [
+        "schema",
+        "schema_version",
+        "project",
+        "items",
+        "conversations"
+      ],
+      "properties": {
+        "schema": {
+          "const": "dcp-integrations.export"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/version"
+        },
+        "project": {
+          "$ref": "#/$defs/slug"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
                 "$ref": "#/$defs/header"
               },
-              "sections": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/$defs/section"
+              {
+                "type": "object",
+                "required": [
+                  "slug",
+                  "url"
+                ],
+                "properties": {
+                  "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]{1,39}$"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
                 }
-              },
-              "body": {
-                "type": "string"
               }
-            }
+            ]
+          }
+        },
+        "conversations": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/conversation"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "unread",
+                  "items"
+                ],
+                "properties": {
+                  "unread": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/item"
+                    }
+                  },
+                  "record": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/record"
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
           }
         }
       }

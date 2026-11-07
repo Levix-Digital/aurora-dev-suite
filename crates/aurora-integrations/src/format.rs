@@ -304,6 +304,60 @@ pub fn sections(body: &str) -> Vec<Section> {
     out
 }
 
+/// A status note a receiver appended to a message body (`> done (2026-11-06 23:48 UTC):
+/// answered`), as `status <id> ... --note` and `defer` write it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Note {
+    /// `open`, `seen` or `done`.
+    pub status: String,
+    /// ISO 8601 (`2026-11-06T23:48:00Z`) when the stamp reads as one, else as written.
+    pub date: String,
+    pub note: String,
+}
+
+/// One status note line, `None` for any other line.
+fn note_line(line: &str) -> Option<Note> {
+    let rest = line.trim().strip_prefix("> ")?;
+    let (status, rest) = rest.split_once(" (")?;
+    if !matches!(status, "open" | "seen" | "done") {
+        return None;
+    }
+    let (stamp, note) = rest.split_once("):")?;
+    let date = stamp
+        .strip_suffix(" UTC")
+        .and_then(|s| s.split_once(' '))
+        .filter(|(d, t)| d.len() == 10 && t.len() == 5)
+        .map_or_else(|| stamp.to_owned(), |(d, t)| format!("{d}T{t}:00Z"));
+    Some(Note {
+        status: status.to_owned(),
+        date,
+        note: note.trim().to_owned(),
+    })
+}
+
+/// The body without the status notes at its end, and those notes, oldest first.
+pub fn split_notes(body: &str) -> (String, Vec<Note>) {
+    let lines: Vec<&str> = body.lines().collect();
+    let mut keep = lines.len();
+    let mut notes = Vec::new();
+    while keep > 0 {
+        let line = lines[keep - 1];
+        if line.trim().is_empty() {
+            keep -= 1;
+        } else if let Some(note) = note_line(line) {
+            notes.push(note);
+            keep -= 1;
+        } else {
+            break;
+        }
+    }
+    notes.reverse();
+    if notes.is_empty() {
+        return (body.to_owned(), notes);
+    }
+    (lines[..keep].join("\n").trim_end().to_owned(), notes)
+}
+
 /// A section's text by name, ignoring case.
 pub fn section<'a>(sections: &'a [Section], name: &str) -> Option<&'a str> {
     sections
@@ -357,6 +411,21 @@ pub fn slug(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn status_notes_leave_the_body() {
+        let body = "### Ask\nDo it.\n\n> done (2026-11-06 23:48 UTC): answered; PR #399\n\n> seen (2026-11-07 01:02 UTC): deferred: later\n";
+        let (clean, notes) = super::split_notes(body);
+        assert_eq!(clean, "### Ask\nDo it.");
+        assert_eq!(notes.len(), 2);
+        assert_eq!(notes[0].status, "done");
+        assert_eq!(notes[0].date, "2026-11-06T23:48:00Z");
+        assert_eq!(notes[0].note, "answered; PR #399");
+        assert_eq!(notes[1].note, "deferred: later");
+        let quoted = "### Context\n> a quote in the text\n";
+        assert_eq!(super::split_notes(quoted).0, quoted);
+        assert!(super::split_notes(quoted).1.is_empty());
+    }
+
     use super::*;
 
     const TOOL_01: &str = "---\nid: 20261029-213000-aurora-dev-suite-settings-view\nkind: message\nfrom: aurora-dev-suite\nto: dev-cycle-protocol\ndate: 2026-10-29T21:30:00Z\nsubject: \"Settings view\"\nstatus: done\nreply_to:\ndeferred:\n---\n\n## Context\nA.\n\n## What is asked\nB.\n";

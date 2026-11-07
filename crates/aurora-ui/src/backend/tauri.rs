@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 
 use aurora_core::domain::{
-    ConfigChange, EngineReport, EnginesOverview, MessageKind, PollResult, Settings, UserAction,
+    ConfigChange, EngineReport, EnginesOverview, MessageKind, MessagesNews, Settings, UserAction,
 };
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -51,12 +51,6 @@ pub struct ChangeArgs {
 pub struct RelocateArgs {
     pub id: String,
     pub path: PathBuf,
-}
-
-#[derive(Serialize)]
-pub struct ThreadArgs {
-    pub project: String,
-    pub thread: String,
 }
 
 #[derive(Serialize)]
@@ -137,5 +131,5 @@ pub fn subscribe_engines(on_report: OnReport, on_ready: OnReady) {
 }
 
 pub fn subscribe_messages(on_news: OnNews) {
-    listen::<Vec<PollResult>>("messages-news", move |news| on_news(news));
+    listen::<MessagesNews>("messages-snapshot", move |news| on_news(news));
 }

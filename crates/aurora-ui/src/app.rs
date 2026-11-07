@@ -1,6 +1,6 @@
 //! The shell: navigation, theme, shared state and the preview banner (research R11).
 
-use aurora_core::domain::{EngineReport, EnginesOverview, Settings, Theme};
+use aurora_core::domain::{EngineReport, EnginesOverview, MessagesSnapshot, Settings, Theme};
 use leptos::ev::KeyboardEvent;
 use leptos::html;
 use leptos::prelude::*;
@@ -90,10 +90,9 @@ pub struct AppContext {
     pub project_tab: RwSignal<ProjectTab>,
     /// How many settings edits the Settings tab holds that were not applied.
     pub unsaved_settings: RwSignal<usize>,
-    /// The closing records waiting for the user, shown on the navigation (spec 008 FR-007).
-    pub messages_waiting: RwSignal<usize>,
-    /// Bumped by each `messages-news` event, so the Messages view reads again.
-    pub messages_news: RwSignal<u32>,
+    /// The messages worker's snapshot, kept while Aurora runs and replaced by each
+    /// `messages-snapshot` event (IMP-007); `None` until the first answer.
+    pub messages: RwSignal<Option<MessagesSnapshot>>,
 }
 
 /// The tabs of the Project view.
@@ -134,8 +133,7 @@ pub fn App() -> impl IntoView {
         project: RwSignal::new(None),
         project_tab: RwSignal::new(ProjectTab::Cycle),
         unsaved_settings: RwSignal::new(0),
-        messages_waiting: RwSignal::new(0),
-        messages_news: RwSignal::new(0),
+        messages: RwSignal::new(None),
     };
     provide_context(ctx);
 
@@ -161,7 +159,7 @@ pub fn App() -> impl IntoView {
         <div class="shell">
             <aside class="sidebar">
                 <div class="brand">"Aurora" <span>" Dev Suite"</span></div>
-                <Navigation view=ctx.view waiting=ctx.messages_waiting />
+                <Navigation view=ctx.view messages=ctx.messages />
                 <div class="footer">
                     {preview.then(|| view! { <p>"Preview with sample data"</p> })}
                     <p>{concat!("v", env!("CARGO_PKG_VERSION"))}</p>
@@ -191,7 +189,13 @@ pub fn App() -> impl IntoView {
 
 /// Buttons in a list; the arrow keys move between them, Enter or Space opens.
 #[component]
-fn Navigation(view: RwSignal<View>, waiting: RwSignal<usize>) -> impl IntoView {
+fn Navigation(view: RwSignal<View>, messages: RwSignal<Option<MessagesSnapshot>>) -> impl IntoView {
+    // Conversations not closed, and whether one waits for the user (spec 010, US1).
+    let summary = Memo::new(move |_| {
+        messages
+            .with(|s| s.as_ref().map(MessagesSnapshot::summary))
+            .unwrap_or((0, false))
+    });
     let buttons: [NodeRef<html::Button>; 6] = std::array::from_fn(|_| NodeRef::new());
     let on_keydown = move |ev: KeyboardEvent| {
         let step: isize = match ev.key().as_str() {
@@ -233,10 +237,21 @@ fn Navigation(view: RwSignal<View>, waiting: RwSignal<usize>) -> impl IntoView {
                                     <span>
                                         {target.label()}
                                         {move || {
-                                            let n = waiting.get();
-                                            (target == View::Messages && n > 0).then(|| view! {
+                                            let (active, waiting) = summary.get();
+                                            (target == View::Messages && active > 0).then(|| view! {
                                                 " "
-                                                <span class="count" aria-label=format!("{n} conversation(s) need you") title="Waiting for you or not read yet">{n}</span>
+                                                <span
+                                                    class="count"
+                                                    aria-label=if waiting {
+                                                        format!("{active} active conversation(s), one waits for you")
+                                                    } else {
+                                                        format!("{active} active conversation(s)")
+                                                    }
+                                                    title="Conversations between your projects not closed yet"
+                                                >
+                                                    {waiting.then(|| view! { <i class="dot waiting" aria-hidden="true"></i> })}
+                                                    {format!("{active} active")}
+                                                </span>
                                             })
                                         }}
                                     </span>
@@ -267,21 +282,24 @@ fn start(ctx: AppContext) {
             });
         }),
     );
-    let (waiting, news) = (ctx.messages_waiting, ctx.messages_news);
-    let poll_backend = backend.clone();
-    backend.subscribe_messages(Arc::new(move |_changed| {
-        news.update(|n| *n += 1);
-        let backend = poll_backend.clone();
+    // The worker's snapshot at start (the one saved by the last run), then each new one.
+    let messages = ctx.messages;
+    let news_backend = backend.clone();
+    backend.subscribe_messages(Arc::new(move |news| {
+        let backend = news_backend.clone();
         spawn_local(async move {
-            if let Ok(list) = backend.messages_overview().await {
-                waiting.set(views::messages::open_total(&list));
+            if messages.with_untracked(|s| s.as_ref().map(|s| s.version)) >= Some(news.version) {
+                return;
+            }
+            if let Ok(snapshot) = backend.messages_snapshot().await {
+                messages.set(Some(snapshot));
             }
         });
     }));
-    let count_backend = backend.clone();
+    let first_backend = backend.clone();
     spawn_local(async move {
-        if let Ok(list) = count_backend.messages_overview().await {
-            waiting.set(views::messages::open_total(&list));
+        if let Ok(snapshot) = first_backend.messages_snapshot().await {
+            messages.set(Some(snapshot));
         }
     });
     spawn_local(async move {

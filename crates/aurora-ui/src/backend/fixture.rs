@@ -2,13 +2,13 @@
 //! events simulated after a short delay (FR-017, FR-018).
 
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use aurora_core::domain::{
-    AddOutcome, ClosingRecord, ConfigChange, ConfigOutcome, CycleState, EngineKind, EngineReport,
-    EnginesOverview, Message, MessageHeader, MessageKind, PollResult, Project, ProjectConfig,
-    ProjectError, ProjectId, ProjectInbox, ProjectList, Settings, TemplateSection, UserAction,
+    AddOutcome, ConfigChange, ConfigOutcome, CycleState, EngineKind, EngineReport, EnginesOverview,
+    MessageHeader, MessageKind, MessagesSnapshot, PollResult, Project, ProjectConfig, ProjectError,
+    ProjectId, ProjectList, Settings, TemplateSection, UserAction,
 };
 use aurora_core::fixtures::{
     self, FixtureConfigSource, FixtureCycleSource, FixtureMessages, MemoryRegistry, MemorySettings,
@@ -34,6 +34,8 @@ pub struct FixtureBackend {
     settings: MemorySettings,
     config: FixtureConfigSource,
     messages: FixtureMessages,
+    /// What the worker would keep (IMP-007).
+    snapshot: Mutex<MessagesSnapshot>,
     refreshes: Mutex<u32>,
     picks: Mutex<u32>,
     subscribers: Mutex<Subscribers>,
@@ -52,6 +54,7 @@ impl FixtureBackend {
             settings: MemorySettings::default(),
             config: FixtureConfigSource::default(),
             messages: FixtureMessages::sample(),
+            snapshot: Mutex::new(MessagesSnapshot::default()),
             refreshes: Mutex::new(0),
             picks: Mutex::new(0),
             subscribers: Mutex::new(Subscribers::default()),
@@ -214,46 +217,57 @@ impl FixtureBackend {
         fixtures::ready_report(EngineKind::Integrations, &["messages"])
     }
 
-    pub fn subscribe_messages(&self, on_news: OnNews) {
-        let news: Vec<PollResult> = self
-            .messages_poll()
-            .into_iter()
-            .filter(|r| r.changed)
-            .collect();
-        if !news.is_empty() {
-            leptos::prelude::set_timeout(move || on_news(news), POLL_DELAY);
+    /// The preview's background reading fires once, a little after the view subscribes:
+    /// a new snapshot when the sample changed.
+    pub fn subscribe_messages(self: &Arc<Self>, on_news: OnNews) {
+        let backend = Arc::clone(self);
+        leptos::prelude::set_timeout(
+            move || {
+                let before = lock(&backend.snapshot).clone();
+                backend.messages_refresh();
+                let after = backend.messages_snapshot();
+                if after.version != before.version {
+                    on_news(after.news(&before));
+                }
+            },
+            POLL_DELAY,
+        );
+    }
+
+    /// Reads the sample like the worker does and keeps the result.
+    pub fn messages_refresh(&self) -> Vec<PollResult> {
+        let read = messages::complete(
+            self.list_projects()
+                .projects
+                .iter()
+                .map(|project| {
+                    messages::export_inbox(
+                        &self.messages,
+                        Some(&Self::provider()),
+                        &self.get_settings(),
+                        project,
+                    )
+                })
+                .collect(),
+        );
+        let mut current = lock(&self.snapshot);
+        match current.next(read, "2026-11-07T15:00:00Z") {
+            Some(next) => {
+                let changes = next.changes_from(&current);
+                *current = next;
+                changes
+            }
+            None => Vec::new(),
         }
     }
 
-    pub fn messages_overview(&self) -> Vec<ProjectInbox> {
-        messages::overview(
-            &self.messages,
-            Some(&Self::provider()),
-            &self.get_settings(),
-            &self.list_projects().projects,
-        )
-    }
-
-    pub fn messages_conversation(&self, id: &str, thread: &str) -> Reply<Vec<Message>> {
-        let project = self.project(id)?;
-        Ok(messages::conversation(
-            &self.messages,
-            Some(&Self::provider()),
-            &self.get_settings(),
-            &project,
-            thread,
-        )?)
-    }
-
-    pub fn messages_record(&self, id: &str, thread: &str) -> Reply<ClosingRecord> {
-        let project = self.project(id)?;
-        Ok(messages::record(
-            &self.messages,
-            Some(&Self::provider()),
-            &self.get_settings(),
-            &project,
-            thread,
-        )?)
+    /// The kept snapshot; the first call reads the sample.
+    pub fn messages_snapshot(&self) -> MessagesSnapshot {
+        let empty = lock(&self.snapshot).version == 0;
+        if empty {
+            self.messages_refresh();
+        }
+        lock(&self.snapshot).clone()
     }
 
     pub fn messages_template(&self, kind: &MessageKind) -> Reply<Vec<TemplateSection>> {
@@ -267,22 +281,16 @@ impl FixtureBackend {
 
     pub fn messages_act(&self, id: &str, action: &UserAction) -> Reply<Vec<MessageHeader>> {
         let project = self.project(id)?;
-        Ok(messages::act(
+        let sent = messages::act(
             &self.messages,
             Some(&Self::provider()),
             &self.get_settings(),
             &project,
             action,
-        )?)
-    }
-
-    pub fn messages_poll(&self) -> Vec<PollResult> {
-        messages::poll(
-            &self.messages,
-            Some(&Self::provider()),
-            &self.get_settings(),
-            &self.list_projects().projects,
-        )
+        )?;
+        // Like the worker: a reading follows each write.
+        self.messages_refresh();
+        Ok(sent)
     }
 }
 
@@ -332,12 +340,10 @@ mod tests {
         "project_config",
         "preview_project_config",
         "apply_project_config",
-        "messages_overview",
-        "messages_conversation",
-        "messages_record",
+        "messages_snapshot",
+        "messages_refresh",
         "messages_template",
         "messages_act",
-        "messages_poll",
     ];
 
     const CONTRACTS: [&str; 4] = [
@@ -451,24 +457,29 @@ mod tests {
     }
 
     #[test]
-    fn messages_decide_revise_and_poll_on_the_sample() {
+    fn messages_decide_revise_and_refresh_on_the_sample() {
         use aurora_core::domain::{InboxSetup, MessageKind, UserAction};
 
         let backend = FixtureBackend::sample();
-        let inboxes = backend.messages_overview();
+        let snapshot = backend.messages_snapshot();
+        assert_eq!(snapshot.version, 1);
         assert!(
-            inboxes
+            snapshot
+                .inboxes
                 .iter()
                 .any(|i| matches!(i.setup, InboxSetup::NotSetUp { .. }))
         );
-        let ready = inboxes
+        let views = snapshot.views();
+        let waiting = views
             .iter()
-            .find(|i| i.waiting_count() > 0)
+            .find(|v| v.conversation.waiting_for_user)
             .expect("a record waits in the preview");
-        let thread = ready.conversations[0].thread.clone();
-        let project = ready.project.0.clone();
-        let record = backend.messages_record(&project, &thread).expect("record");
+        let record = waiting.conversation.record.clone().expect("record");
         assert_eq!(record.options.len(), 2);
+        let (project, thread) = (
+            waiting.project.0.clone(),
+            waiting.conversation.thread.clone(),
+        );
         let decided = backend
             .messages_act(
                 &project,
@@ -480,8 +491,17 @@ mod tests {
             )
             .expect("decided");
         assert_eq!(decided[0].kind, MessageKind::Decision);
-        let after = backend.messages_overview();
-        assert!(after.iter().all(|i| i.waiting_count() == 0));
+        let after = backend.messages_snapshot();
+        assert!(
+            after.version > snapshot.version,
+            "a reading followed the write"
+        );
+        assert!(
+            after
+                .views()
+                .iter()
+                .all(|v| !v.conversation.waiting_for_user)
+        );
         let refused = backend
             .messages_act(
                 &project,
@@ -492,7 +512,10 @@ mod tests {
             )
             .expect_err("empty request");
         assert_eq!(refused.kind, "messages");
-        assert!(backend.messages_poll().iter().any(|r| r.changed));
+        assert!(
+            backend.messages_refresh().is_empty(),
+            "nothing changed since"
+        );
         assert!(
             !backend
                 .messages_template(&MessageKind::Question)

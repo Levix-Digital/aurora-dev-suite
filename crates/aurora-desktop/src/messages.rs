@@ -63,9 +63,9 @@ fn overview_of(
     current: &Settings,
     list: &[Project],
 ) -> Vec<ProjectInbox> {
-    in_parallel(list, |project| {
-        messages::project_inbox(source, provider, current, project)
-    })
+    messages::complete(in_parallel(list, |project| {
+        messages::read_inbox(source, provider, current, project)
+    }))
 }
 
 #[tauri::command]

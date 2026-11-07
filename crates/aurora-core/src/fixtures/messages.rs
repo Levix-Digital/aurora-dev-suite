@@ -1,6 +1,7 @@
 //! An in-memory `MessagesSource` with sample conversations, for tests and the interface
 //! preview: `aurora-dev-suite`, `any-context` and `ai-code-agent-skills` (as
-//! `dev-cycle-protocol`) are set up, `gedo` is not.
+//! `dev-cycle-protocol`) are set up, `gedo` is not. The registries also give `gedo` its
+//! repository URL, and a folder `levix-gedo` is a clone of it under another name.
 
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -12,7 +13,7 @@ use crate::domain::{
     MessageKind, MessageStatus, MessagesError, Section, TemplateSection, UserAction, message_body,
     record_options,
 };
-use crate::ports::{InboxRead, MessagesSource};
+use crate::ports::{InboxRead, ListedProject, MessagesSource};
 
 const PROJECTS: [(&str, &str); 4] = [
     ("aurora-dev-suite", "aurora-dev-suite"),
@@ -20,6 +21,19 @@ const PROJECTS: [(&str, &str); 4] = [
     ("ai-code-agent-skills", "dev-cycle-protocol"),
     ("levix-platform", "levix-platform"),
 ];
+
+/// The repository URL of the project in `folder`, as the registries list it.
+fn listed_url(folder: &str) -> String {
+    format!("https://github.com/Levix-Digital/{folder}.git")
+}
+
+/// The `origin` of a folder not set up, spelled unlike the registries on purpose.
+fn origin_of(folder: &str) -> String {
+    match folder {
+        "levix-gedo" => "git@github.com:Levix-Digital/gedo".to_owned(),
+        _ => format!("https://github.com/Levix-Digital/{folder}/"),
+    }
+}
 
 #[derive(Debug, Default)]
 struct State {
@@ -45,8 +59,9 @@ fn slug_of(root: &Path) -> Result<&'static str, MessagesError> {
         .iter()
         .find(|(folder, _)| *folder == name)
         .map(|(_, slug)| *slug)
-        .ok_or(MessagesError::NotSetUp {
+        .ok_or_else(|| MessagesError::NotSetUp {
             command: crate::usecases::messages::SETUP_COMMAND.to_owned(),
+            repository: Some(origin_of(&name)),
         })
 }
 
@@ -621,6 +636,14 @@ impl MessagesSource for FixtureMessages {
                 .iter()
                 .map(|(_, s)| (*s).to_owned())
                 .filter(|s| s != me)
+                .collect(),
+            listed: PROJECTS
+                .iter()
+                .chain([&("gedo", "gedo")])
+                .map(|(folder, slug)| ListedProject {
+                    slug: (*slug).to_owned(),
+                    url: listed_url(folder),
+                })
                 .collect(),
             conversations: Self::conversations(&state, me),
         })

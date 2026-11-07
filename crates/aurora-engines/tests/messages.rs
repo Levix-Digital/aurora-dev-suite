@@ -40,6 +40,7 @@ fn samples_follow_the_contract() {
         "poll-news",
         "error-refused",
         "error-git",
+        "error-not-set-up",
     ] {
         let problems: Vec<String> = validator
             .iter_errors(&sample(name))
@@ -77,6 +78,11 @@ fn replies_are_checked_before_they_are_read() {
     assert!(matches!(
         parse::<Value>(&bytes(&sample("error-git")), "sent"),
         Err(MessagesError::Git { stderr, .. }) if stderr.contains("denied")
+    ));
+    // BUG-009: the folder's origin travels with "not set up".
+    assert!(matches!(
+        parse::<Value>(&bytes(&sample("error-not-set-up")), "list"),
+        Err(MessagesError::NotSetUp { repository: Some(r), .. }) if r == "git@git.example.org:alpha.git"
     ));
 }
 
@@ -152,6 +158,15 @@ mod fake {
             .expect("inbox");
         assert_eq!(inbox.slug, "alpha");
         assert_eq!(inbox.counterparts, ["beta"]);
+        assert_eq!(
+            inbox
+                .listed
+                .iter()
+                .map(|l| l.slug.as_str())
+                .collect::<Vec<_>>(),
+            ["alpha", "beta"],
+            "every listed project with its URL (BUG-009)"
+        );
         assert!(inbox.conversations[0].waiting_for_user);
         assert_eq!(inbox.conversations[0].last.kind, MessageKind::Agreement);
         // The sample's received agreement is still open: one unread message.

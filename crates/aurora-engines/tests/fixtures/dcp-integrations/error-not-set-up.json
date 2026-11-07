@@ -1,0 +1,7 @@
+{
+  "schema": "dcp-integrations.error",
+  "schema_version": "1.0",
+  "code": "not_set_up",
+  "message": ".aurora/integrations.json not found in /repos/alpha: run 'dcp-integrations init --project <slug>' there",
+  "repository": "git@git.example.org:alpha.git"
+}

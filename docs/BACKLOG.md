@@ -128,6 +128,22 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: Adding a project becomes 'register the folder, click Set up, commit' (Levi, 2026-11-06). Set up asks dcp-integrations for init with the slug the network already uses for the repository (closes BUG-009) and add for every counterpart; each project that does not list the new one yet offers 'add X to Y' in one click. Aurora still runs no Git: it lists the changed files, and when Gedo is ready the commit goes through Gedo on a branch that follows each project's branching model (pull request through the cycle), otherwise by hand. Depends on Gedo's command line for the commit part.
 
+### FEAT-039: Messages as a chat between projects
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-08, v0.3.0-rc.6
+- **Plan**: -
+- **Description**: Levi, 2026-11-08: the Messages view becomes a chat between projects, like a desktop messaging app. Two columns: a narrow list of projects (avatar or logo and name, unread count, last summary) that never moves, and a wide chat of everything the selected project exchanged with the others; received bubbles on the left, sent bubbles on the right in another style, each showing a short first-person summary. A click on a bubble highlights it and a third column slides in on the right with the full message as shown today; the chat shrinks to share the space. Closing records and decisions render as special cards in the chat. The summary is written by the sender: a new optional field of send and reply in dcp-integrations; older messages fall back to the subject. Spec: specs/011-messages-chat.
+
+### FEAT-040: Gedo alerts as a chat between Gedo instances
+- **Priority**: low
+- **Epic**: EPIC-006
+- **Status**: open
+- **Found**: 2026-11-08, 2026-11-08
+- **Plan**: -
+- **Description**: Levi, 2026-11-08: later, show the alerts one Gedo publishes to another Gedo in the same chat style as Messages (FEAT-039). To be detailed when it is planned.
+
 ## Improvements
 
 ### IMP-003: Messages tells when .aurora/integrations.json is on another branch

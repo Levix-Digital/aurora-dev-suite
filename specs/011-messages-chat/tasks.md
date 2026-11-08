@@ -15,25 +15,25 @@ description: "Tasks of Messages as a chat between projects (v0.3.1, FEAT-039)"
 
 ## Phase 2: Core chat model (M2)
 
-- [ ] T004 [US2] `MessageHeader.summary`, `Draft.summary`, `UserAction::Reply.summary`; the adapter passes `--summary`
-- [ ] T005 [US1] Tests, then `chat_contacts`: last summary, time, unread, waiting, order
-- [ ] T006 [US2] [US4] Tests, then `chat_stream`: order, days, quotes, marks, record cards, decision messages hidden, subject fallback
-- [ ] T007 Fixtures with summaries for the preview
+- [x] T004 [US2] `MessageHeader.summary`, `Draft.summary`, `UserAction::Reply.summary`; the adapter passes `--summary`
+- [x] T005 [US1] Tests, then `chat_contacts`: last summary, time, unread, waiting, order
+- [x] T006 [US2] [US4] Tests, then `chat_stream`: order, days, quotes, marks, record cards, decision messages hidden, subject fallback
+- [x] T007 Fixtures with summaries for the preview
 
 ## Phase 3: Chat view (M3)
 
-- [ ] T008 [US1] Contacts column with avatar, last summary, time, unread badge, waiting dot, search
-- [ ] T009 [US2] Chat column: bubbles, day separators, quotes, marks, counterpart filter, New messages button
-- [ ] T010 [US3] Detail panel sliding in, highlight, Esc, keyboard; reuse of the message body, Reply and Step in
-- [ ] T011 [US4] Decision card in the stream, closed state after the decision
-- [ ] T012 [US5] Summary field in Reply and New conversation
-- [ ] T013 Tokens in both themes and contrast checks; preview screenshots
+- [x] T008 [US1] Contacts column with avatar, last summary, time, unread badge, waiting dot, search
+- [x] T009 [US2] Chat column: bubbles, day separators, quotes, marks, counterpart filter, New messages button
+- [x] T010 [US3] Detail panel sliding in, highlight, Esc, keyboard; reuse of the message body, Reply and Step in
+- [x] T011 [US4] Decision card in the stream, closed state after the decision
+- [x] T012 [US5] Summary field in Reply and New conversation
+- [x] T013 Tokens in both themes and contrast checks; preview screenshots
 
 ## Phase 4: Project logo (M4)
 
-- [ ] T014 [US1] `Project.logo`, `pick_project_logo`, `clear_project_logo`; Logo in the Project view; avatars use it
+- [x] T014 [US1] `Project.logo`, `pick_project_logo`, `clear_project_logo`; Logo in the Project view; avatars use it
 
 ## Phase 5: Docs and manual tests (M5)
 
-- [ ] T015 ADR-0013, architecture page, README Messages section
-- [ ] T016 Manual tests MT-MSG rewritten for the chat; validated
+- [x] T015 ADR-0013, architecture page, README Messages section
+- [x] T016 Manual tests MT-MSG rewritten for the chat; validated

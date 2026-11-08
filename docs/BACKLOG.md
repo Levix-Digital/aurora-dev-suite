@@ -128,14 +128,6 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: Adding a project becomes 'register the folder, click Set up, commit' (Levi, 2026-11-06). Set up asks dcp-integrations for init with the slug the network already uses for the repository (closes BUG-009) and add for every counterpart; each project that does not list the new one yet offers 'add X to Y' in one click. Aurora still runs no Git: it lists the changed files, and when Gedo is ready the commit goes through Gedo on a branch that follows each project's branching model (pull request through the cycle), otherwise by hand. Depends on Gedo's command line for the commit part.
 
-### FEAT-039: Messages as a chat between projects
-- **Priority**: high
-- **Epic**: EPIC-010
-- **Status**: planned
-- **Found**: 2026-11-08, v0.3.0-rc.6
-- **Plan**: messages-chat
-- **Description**: Levi, 2026-11-08: the Messages view becomes a chat between projects, like a desktop messaging app. Two columns: a narrow list of projects (avatar or logo and name, unread count, last summary) that never moves, and a wide chat of everything the selected project exchanged with the others; received bubbles on the left, sent bubbles on the right in another style, each showing a short first-person summary. A click on a bubble highlights it and a third column slides in on the right with the full message as shown today; the chat shrinks to share the space. Closing records and decisions render as special cards in the chat. The summary is written by the sender: a new optional field of send and reply in dcp-integrations; older messages fall back to the subject. Spec: specs/011-messages-chat.
-
 ### FEAT-040: Gedo alerts as a chat between Gedo instances
 - **Priority**: low
 - **Epic**: EPIC-006
@@ -623,3 +615,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: messages-mailbox
 - **Closed**: 2026-11-07, plan messages-mailbox
 - **Description**: Levi, 2026-11-07: reading and opening messages still felt slow (rc.5 predates PR #39). One worker in Aurora owns every provider call: it synchronizes in the background and reads everything at once with a new provider command, export --cached (conversations and message bodies in one JSON); the view reads only a snapshot kept in memory and on disk, so the list and a conversation show at once, also right after start; the worker sends only what changed; writes (reply, decide, mark seen, defer) go to one ordered queue, shown at once in the view and rolled back with the error if they fail. Git stays the source of truth; the snapshot is a cache (ADR-0012).
+
+### FEAT-039: Messages as a chat between projects
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: done
+- **Found**: 2026-11-08, v0.3.0-rc.6
+- **Plan**: messages-chat
+- **Closed**: 2026-11-08, plan messages-chat
+- **Description**: Levi, 2026-11-08: the Messages view becomes a chat between projects, like a desktop messaging app. Two columns: a narrow list of projects (avatar or logo and name, unread count, last summary) that never moves, and a wide chat of everything the selected project exchanged with the others; received bubbles on the left, sent bubbles on the right in another style, each showing a short first-person summary. A click on a bubble highlights it and a third column slides in on the right with the full message as shown today; the chat shrinks to share the space. Closing records and decisions render as special cards in the chat. The summary is written by the sender: a new optional field of send and reply in dcp-integrations; older messages fall back to the subject. Spec: specs/011-messages-chat.

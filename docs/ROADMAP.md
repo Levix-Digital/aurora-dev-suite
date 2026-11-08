@@ -25,7 +25,7 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Items**: FEAT-027, BUG-004, ADJ-001, FEAT-029, FEAT-031, FEAT-032, FEAT-033, FEAT-034, BUG-005, BUG-006, ADJ-002, BUG-007, ADJ-003, BUG-008, IMP-004, BUG-009, ADJ-005, IMP-005, IMP-006
 
 ## v0.3.1: Messages as a chat
-- **Status**: planned
+- **Status**: in_progress
 - **Target**: right after v0.3.0 final (Levi, 2026-11-08)
 - **Goal**: The Messages view reads like a chat between projects: projects as contacts, bubbles with the sender's first-person summary, the full message in a panel that slides in on the right.
 - **Items**: FEAT-039

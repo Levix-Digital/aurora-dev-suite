@@ -461,71 +461,77 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 
 These tests need two projects registered in Aurora, each with `.aurora/integrations.json` listing the other (`dcp-integrations init` and `add`), and push access to both repositories. A conversation can be prepared from a terminal with `dcp-integrations` in either folder.
 
-### MT-MSG-001: Decide on a closing record
+### MT-MSG-001: Decide on a closing record in the chat
 
-- **Covers**: decision card (spec 008 US1, FR-001, FR-004; spec 010 US3)
+- **Covers**: decision card in the stream (spec 008 US1, FR-001, FR-004; spec 010 US3; spec 011 US4)
 - **Prerequisites**: a conversation between the two projects closed with an agreement (`reply <id> --kind agreement`) whose record has `Recommended: 1`, and no decision yet
 - **Steps**:
-  1. Open Messages (Alt+5) and open the conversation marked Waiting for you
+  1. Open Messages (Alt+5) and pick the project that opened the conversation (amber dot on its row)
   2. Click option 2, then press Undo within five seconds
   3. Click option 1 and wait five seconds
-  4. In a terminal, run `dcp-integrations check` in the other project's folder
+  4. Pick the other project; in a terminal, run `dcp-integrations check` in its folder
 - **Expected**:
-  - Step 1 shows the decision card at the top of the conversation: the question, the conclusion in one line, one button per option with option 1 marked Recommended, "Something else…", and the full record folded under "Conclusion, positions and what follows"
+  - Step 1 shows, right after the agreement bubble, the decision card centered in the chat: "Your decision · <subject> · agreement", the question, one button per option with option 1 marked Recommended, "Something else…", and the record folded under "Conclusion, positions and what follows"
   - Step 2 shows "sending … in 5 s" with a shrinking bar; Undo brings the options back and nothing is sent
-  - Step 3 sends option 1 without any confirmation dialog; "Decision sent" appears, the conversation leaves Waiting for you at once and the navigation count drops
-  - Step 4 lists the decision as a new message for the other project
-- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
+  - Step 3 sends option 1 without any confirmation dialog; "Decision sent" appears, the card closes in green with the choice, the amber dot leaves the row and the navigation count drops; no separate bubble for the decision message appears
+  - Step 4: the other project's chat shows the record closed with the same choice; `check` lists the decision as a new message
+- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-002: Decide in your own words, ask for a rework and step in
 
-- **Covers**: own choice, revision and guidance (spec 008 US2, FR-005; spec 010 US2, US3)
+- **Covers**: own choice, revision and guidance (spec 008 US2, FR-005; spec 010 US2, US3; spec 011 US3, US4)
 - **Prerequisites**: two closing records waiting, and one other conversation open
 - **Steps**:
-  1. On the first record, click "Something else…", leave the box empty and try to send; then write a decision and send it
-  2. On the second record, click "Something else…", write a request and click "ask the projects to rework it"
-  3. Open the other conversation, press "Step in", write a request and send
+  1. On the first card, click "Something else…", leave the box empty and try to send; then write a decision and send it
+  2. On the second card, click "Something else…", write a request and click "ask the projects to rework it"
+  3. Click a bubble of the other conversation, press "Step in" in the panel on the right, write a request and send
 - **Expected**:
   - With the box empty, nothing is sent and the card says what is missing
-  - Step 1 sends your words as the decision (`decide --choice`) and the conversation leaves Waiting for you
-  - Step 2 sends a guidance message that starts cycle 2, with the request under "User request"; the header shows round 1 of 3
-  - Step 3: the Reply and Step in forms stay closed until their button is pressed; the request is added to the conversation and the next reply counts from round 1 of the new cycle
-- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
+  - Step 1 sends your words as the decision (`decide --choice`); the card closes with your words
+  - Step 2 sends a guidance message that starts cycle 2: a sent bubble "The user asks: …" appears in the chat, and the next bubble shows round 1
+  - Step 3: the Reply and Step in forms stay closed until their button is pressed; the request appears as a sent bubble and the next reply counts from round 1 of the new cycle
+- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
-### MT-MSG-003: Follow and filter the conversations
+### MT-MSG-003: Read the exchange as a chat
 
-- **Covers**: list and opened conversation (spec 010 US1, US2; ADJ-006, ADJ-007)
-- **Prerequisites**: across the two projects, a conversation waiting for the user, one awaiting a reply with a received message not read, one answered, one closed by a decision, and one message handled by its receiver (`> done (...)` note)
+- **Covers**: contacts, bubbles and the detail panel (spec 011 US1, US2, US3)
+- **Prerequisites**: across the two projects, a conversation waiting for the user, one with a received message not read, one closed by a decision, one message handled by its receiver, and messages on at least two different days; some messages sent with `--summary`, older ones without
 - **Steps**:
-  1. Open Messages and look at the list and at the navigation
-  2. Open the Closed tab, then go back to Active
-  3. Click the row with an unread dot, then click another row, then press Escape
-  4. In an open conversation, click an older message, and look at the handled one
-  5. Filter by one project, then by each status
+  1. Open Messages and look at the list of projects and at the navigation
+  2. Pick a project; scroll the chat to the top and back
+  3. Click a received bubble with "● new", then another bubble, then press Escape
+  4. Click the quote on top of a reply
+  5. With more than one counterpart, choose "With: <project>", then "With: all projects"
+  6. Type part of a subject in the search box above the projects
+  7. Use the Tab key to reach a bubble, then the Up and Down arrows
 - **Expected**:
-  - Step 1: each conversation appears once (even when both projects are registered); each row shows `opener → counterpart` large, the subject, and one line `Last: <kind> · date · who`; the left bar is amber (Waiting for you), blue (Awaiting reply), purple (Answered) or gray (Deferred), as in the legend; the navigation shows "N active", with an amber dot when something waits for you
-  - Step 2 lists the closed conversations with a green bar; the tabs show their counts
-  - Step 3 opens the conversation below its row: route large, subject, status pill, "N messages · round R of 3" and "Next: …"; only the newest message is open, older ones are one line each (from → to, kind, date, preview); the unread dot and the count drop at once; Escape closes it and the focus is back on the row
-  - Step 4 opens the older message; the message starts with its lead sentence (no "Ask" label), Next step is an amber callout, Authority and Open points are folded, and the handled message shows "✓ Handled by <project> · date" instead of the `> done` line
-  - Step 5 shows only the matching conversations each time
-- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
+  - Step 1: each registered project is a row with its picture (logo or initials on a palette color), its name, the last summary (`You: …` when it sent it), the time (`09:23`, `Yesterday`, a weekday or a date) and a badge with its unread count; an amber dot marks a project with a decision waiting; rows with the newest messages come first; the navigation shows "N active"
+  - Step 2: received bubbles are on the left with the sender's small picture and name, sent bubbles on the right in the accent-tinted color; each shows the sender's summary, or the subject when the message has none; the first bubble of a conversation shows "subject · kind · round"; day separators read `Today`, `Yesterday` or `Saturday, 1 November`; sent bubbles end with ✓ (not read), ✓✓ (read) or ✓✓ in the accent color (handled); the chat opens at the newest message
+  - Step 3: the bubble gets an outline and a panel slides in on the right with the full message: from → to, subject, kind, date and round, "Summary by the sender", the lead sentence, the sections, Next step in an amber callout, Authority and Open points folded, "✓ Handled by …", and Reply (for a received message) and Step in; the chat shrinks and the project list does not move; "● new" and the unread badge drop at once; the second click replaces the panel's content; Escape closes the panel and the chat takes the space back
+  - Step 4 scrolls the chat to the quoted message
+  - Step 5 shows only the messages with that project, then all again
+  - Step 6 keeps only the projects whose name, subjects or summaries match
+  - Step 7 moves the focus from bubble to bubble; Enter opens the panel
+- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
-### MT-MSG-004: Start a conversation and answer
+### MT-MSG-004: Start a conversation and answer, with a summary
 
-- **Covers**: new conversation and reply forms (spec 008 US4, FR-006)
+- **Covers**: new conversation and reply forms (spec 008 US4, FR-006; spec 011 US5)
 - **Prerequisites**: the two projects ready for messages
 - **Steps**:
-  1. Press "New conversation", pick the sending project, the receiving project and the kind "question"
-  2. Leave a required section empty and send; then fill every section and send
-  3. In the other project's conversation, answer with "answer"
+  1. Pick a project and press "New conversation" under its chat; choose the receiving project and the kind "question"
+  2. Leave a required section empty and send; then fill every section, write a summary and send
+  3. Write a summary longer than 280 characters in a reply and send
+  4. Pick the other project, click the question and answer it with "answer" and a short summary
 - **Expected**:
-  - Step 1 offers only the sender's counterparts and shows the sections of the question template, the required ones marked
-  - The first send in step 2 is refused next to the form with the missing sections named, and nothing is written; the second shows the new conversation
-  - Step 3 offers only the kinds the provider allows; after three rounds only agreement and impasse remain
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+  - Step 1 offers only the project's counterparts and shows the Summary field (with a 0 / 280 counter) and the sections of the question template, the required ones marked
+  - The first send in step 2 is refused next to the form with the missing sections named, and nothing is written; the second shows a sent bubble with the summary at once
+  - Step 3: the counter turns red and the reply is refused with the summary named; nothing is written
+  - Step 4: the answer appears as a sent bubble with its summary, quoting the question when it is not right above; after three rounds only agreement and impasse remain
+- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-005: News arrives without asking
@@ -604,11 +610,43 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   3. Bring the network back and wait 30 seconds
   4. Send a reply, then at once open another conversation
 - **Expected**:
-  - Step 1 lists the conversations at once from the last snapshot; projects that cannot be reached are named in a short notice, and their last known conversations stay listed
-  - Step 2 marks the conversation read at once; Aurora stays responsive
+  - Step 1 shows the projects and the chat at once from the last snapshot; a project that cannot be reached says so in a short notice above its chat, and its last known messages stay listed
+  - Step 2 marks the message read at once; Aurora stays responsive
   - Step 3: the notice goes away and the list is current, without reopening the view
-  - Step 4: the reply is listed as soon as it is written, with no reload of the page; the other conversation opens without waiting for the write
+  - Step 4: the reply appears as a sent bubble as soon as it is written, with no reload of the page; the other message opens without waiting for the write
 - **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-010: A summary sent from a terminal
+
+- **Covers**: `--summary` of the provider (spec 011 US5, FR-001 to FR-003)
+- **Prerequisites**: the installed package; two projects set up for messages
+- **Steps**:
+  1. In one project's folder, run `dcp-integrations send --to <other> --kind notice --subject "Test" --summary "I changed the export format; nothing to do on your side." --body-file <file>`
+  2. Run the same with a summary of 300 characters
+  3. In the other project's folder, run `dcp-integrations show <id> --json`; look at the message file on the `aurora/inbox` branch
+  4. Open Aurora's Messages on the receiving project
+- **Expected**:
+  - Step 1 sends the message; step 2 is refused with exit code 5 and "at most 280"; nothing is written
+  - Step 3: the header has `"summary"` with the text; the file has a `summary:` line after the other header fields and the body is unchanged
+  - Step 4: the bubble shows the summary, not the subject
+- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Notes**:
+
+### MT-MSG-011: A project's logo
+
+- **Covers**: project picture (spec 011 US1, FR-006)
+- **Prerequisites**: a PNG or SVG under 256 KB, and an image over 256 KB
+- **Steps**:
+  1. In Portfolio, press "Logo…" on a project and pick the small image
+  2. Open Messages
+  3. Press "Logo…" again and pick the large image; then press "Remove logo"
+- **Expected**:
+  - Step 1: the project's card shows the image; nothing changes in the repository (`git status` is clean)
+  - Step 2: the project's row, its chat header and the small pictures next to its received bubbles show the image
+  - Step 3: the large image is refused with the 256 KB limit named; after "Remove logo" the initials come back
+- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Packages

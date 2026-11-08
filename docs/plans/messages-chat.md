@@ -4,10 +4,10 @@ project: aurora-dev-suite
 title: Messages as a chat between projects
 kind: feature
 version: v0.3.1
-status: draft
+status: completed
 author: LeviGuilherme
 created_at: '2026-11-08T21:29:15'
-updated_at: '2026-11-08T21:29:15'
+updated_at: '2026-11-08T21:49:04'
 session_id: null
 tags: []
 supersedes: null
@@ -17,20 +17,53 @@ backlog_items:
 - FEAT-039
 milestones:
 - name: M1 Provider summary
-  done: false
+  done: true
+  done_at: '2026-11-08'
+  by: LeviGuilherme
 - name: M2 Core chat model
-  done: false
+  done: true
+  done_at: '2026-11-08'
+  by: LeviGuilherme
 - name: M3 Chat view
-  done: false
+  done: true
+  done_at: '2026-11-08'
+  by: LeviGuilherme
 - name: M4 Project logo
-  done: false
+  done: true
+  done_at: '2026-11-08'
+  by: LeviGuilherme
 - name: M5 Docs and manual tests
-  done: false
+  done: true
+  done_at: '2026-11-08'
+  by: LeviGuilherme
 status_log:
 - at: '2026-11-08T21:29:15'
   by: LeviGuilherme
   status: draft
   note: Plan created
+- at: '2026-11-08T21:48:53'
+  by: LeviGuilherme
+  note: Milestone 'M1 Provider summary' completed
+- at: '2026-11-08T21:48:54'
+  by: LeviGuilherme
+  note: Milestone 'M2 Core chat model' completed
+- at: '2026-11-08T21:48:55'
+  by: LeviGuilherme
+  note: Milestone 'M3 Chat view' completed
+- at: '2026-11-08T21:48:56'
+  by: LeviGuilherme
+  note: Milestone 'M4 Project logo' completed
+- at: '2026-11-08T21:49:03'
+  by: LeviGuilherme
+  status: in_progress
+  note: Design agreed with Levi on mockups (chat, summary by the sender, Aurora palette), 2026-11-08.
+- at: '2026-11-08T21:49:04'
+  by: LeviGuilherme
+  note: 'Milestone ''M5 Docs and manual tests'' completed: ADR-0013, architecture pages, README, manual tests MT-MSG-001 to 004 rewritten, 010 and 011 added'
+- at: '2026-11-08T21:49:04'
+  by: LeviGuilherme
+  status: completed
+  note: All milestones completed
 ---
 
 # Messages as a chat between projects

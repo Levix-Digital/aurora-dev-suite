@@ -3,7 +3,7 @@
 **Feature Branch**: `feat/011-messages-chat`
 **Created**: 2026-11-08
 **Status**: Draft, mockups shown to the user (2026-11-08)
-**Input**: Backlog FEAT-039 (Levi, 2026-11-08). Mockups: `mockup-chat.png` (two columns) and `mockup-chat-detail.png` (a message opened).
+**Input**: Backlog FEAT-039 (Levi, 2026-11-08). Mockups in both themes: `mockup-chat-dark.png`, `mockup-chat-light.png` (two columns) and `mockup-chat-detail-dark.png`, `mockup-chat-detail-light.png` (a message opened).
 
 The Messages view stops being a mailbox and becomes a chat between projects, laid out like a desktop messaging app: projects on the left as contacts, the selected project's conversation stream in the middle, and the full message in a panel that slides in on the right. The provider, the transport, the message format and the conversation rules stay as they are; the only change outside the view is an optional summary written by the sender.
 
@@ -66,7 +66,7 @@ The user sees every registered project as a contact and opens its chat with one 
 - **FR-004** The core builds, per project, one chronological stream of its sent and received messages and closing records, with the quote reference (reply_to) and the handling mark for each message.
 - **FR-005** The view has three columns: project list (fixed), chat (flexible), detail (closed by default, opened by a click on a bubble); the transition animates the column width and respects reduced motion.
 - **FR-006** A project in Aurora may have a logo: an image file chosen in the project settings, copied into Aurora's data folder; the registry and the repositories are not changed.
-- **FR-007** The colors of sent bubbles, received bubbles, the highlight and the separators are tokens in both themes and pass the contrast checks (WCAG 2.2 AA).
+- **FR-007** The view uses Aurora's palette only (Aurora Borealis tokens), no colors of other products: received bubbles on `--surface`, sent bubbles on a new accent-tinted token (`--bubble-out`, with its border), the highlight in `--focus`, avatars without a logo on the palette colors. New tokens exist in both themes and pass the contrast checks (WCAG 2.2 AA).
 - **FR-008** The keyboard reaches every row, bubble and button; Up and Down move between bubbles, Enter opens the panel, Esc closes it.
 - **FR-009** The mailbox view of v0.3.0 is replaced; its decision card, Handled chip, Next step callout and write queue are reused.
 

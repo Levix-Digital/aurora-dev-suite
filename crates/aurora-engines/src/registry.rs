@@ -38,6 +38,9 @@ struct StoredProject {
     name: ProjectName,
     root: PathBuf,
     added_at: String,
+    /// A `data:` URL of the project's logo (FEAT-039).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    logo: Option<String>,
 }
 
 impl StoredProject {
@@ -48,7 +51,7 @@ impl StoredProject {
             Presence::Missing
         };
         Project {
-            logo: None,
+            logo: self.logo.clone(),
             id: ProjectId(self.id.clone()),
             name: self.name.clone(),
             root: self.root.clone(),
@@ -144,6 +147,7 @@ impl ProjectRegistry for TomlRegistry {
                 name,
                 root,
                 added_at: crate::now_rfc3339(),
+                logo: None,
             };
             state.projects.push(stored.clone());
             self.persist(state);
@@ -158,6 +162,16 @@ impl ProjectRegistry for TomlRegistry {
         self.with_state(|state| {
             let stored = find_by_id(&mut state.projects, id)?;
             stored.name = name;
+            let project = stored.to_project();
+            self.persist(state);
+            Ok(project)
+        })
+    }
+
+    fn set_logo(&self, id: &ProjectId, logo: Option<String>) -> Result<Project, ProjectError> {
+        self.with_state(|state| {
+            let stored = find_by_id(&mut state.projects, id)?;
+            stored.logo = logo;
             let project = stored.to_project();
             self.persist(state);
             Ok(project)

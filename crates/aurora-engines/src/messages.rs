@@ -828,6 +828,9 @@ mod summary_tests {
             summary: "Yes, from v1.1.".into(),
         };
         let (args, _file) = act_args(&reply).expect("args");
-        assert!(args.windows(2).any(|w| w == ["--summary", "Yes, from v1.1."]));
+        assert!(
+            args.windows(2)
+                .any(|w| w == ["--summary", "Yes, from v1.1."])
+        );
     }
 }

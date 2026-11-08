@@ -39,8 +39,8 @@ pub use messages::{
 };
 pub use portfolio::{CyclePhase, CycleSummary, WaitingItem, WaitingKind};
 pub use project::{
-    AddOutcome, Presence, Project, ProjectError, ProjectId, ProjectList, ProjectName,
-    RegistryNotice,
+    AddOutcome, MAX_LOGO_BYTES, Presence, Project, ProjectError, ProjectId, ProjectList,
+    ProjectName, RegistryNotice, logo_data_url,
 };
 pub use project_view::{CandidateStage, Gate, GateKind};
 pub use settings::{EnginesSettings, SETTINGS_VERSION, Settings, Theme, ThemeChoice};

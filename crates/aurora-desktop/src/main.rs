@@ -31,6 +31,8 @@ fn main() {
             commands::add_project,
             commands::pick_and_add_project,
             commands::rename_project,
+            commands::pick_project_logo,
+            commands::clear_project_logo,
             commands::remove_project,
             commands::relocate_project,
             commands::engines_overview,

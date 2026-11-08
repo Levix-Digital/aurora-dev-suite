@@ -113,6 +113,13 @@ impl ProjectRegistry for MemoryRegistry {
         Ok(project.clone())
     }
 
+    fn set_logo(&self, id: &ProjectId, logo: Option<String>) -> Result<Project, ProjectError> {
+        let mut state = lock(&self.state);
+        let project = find_mut(&mut state.projects, id)?;
+        project.logo = logo;
+        Ok(project.clone())
+    }
+
     fn remove(&self, id: &ProjectId) -> Result<(), ProjectError> {
         let mut state = lock(&self.state);
         let before = state.projects.len();

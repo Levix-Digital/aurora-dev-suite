@@ -82,6 +82,7 @@ impl From<ProjectError> for CommandError {
             ProjectError::InvalidName { .. } => "invalidName",
             ProjectError::UnknownProject { .. } => "unknownProject",
             ProjectError::Storage { .. } => "storage",
+            ProjectError::InvalidLogo { .. } => "invalidLogo",
         };
         Self::new(kind, error)
     }
@@ -144,6 +145,62 @@ pub async fn rename_project(
 ) -> Reply<Project> {
     let registry = Arc::clone(&state.registry);
     blocking(move || Ok(projects::rename(registry.as_ref(), &ProjectId(id), &name)?)).await
+}
+
+/// Asks for an image and makes it the project's logo (FEAT-039); `None` when the user
+/// closes the dialog.
+#[tauri::command]
+pub async fn pick_project_logo(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Reply<Option<Project>> {
+    let registry = Arc::clone(&state.registry);
+    blocking(move || {
+        let Some(picked) = app
+            .dialog()
+            .file()
+            .set_title("Choose the project's logo")
+            .add_filter("Images", &["png", "jpg", "jpeg", "webp", "svg"])
+            .blocking_pick_file()
+        else {
+            return Ok(None);
+        };
+        let path = picked
+            .into_path()
+            .map_err(|error| CommandError::new("notFound", error))?;
+        let size = std::fs::metadata(&path)
+            .map_err(|error| CommandError::new("notFound", error))?
+            .len();
+        if size > aurora_core::domain::MAX_LOGO_BYTES as u64 {
+            return Err(ProjectError::InvalidLogo {
+                reason: format!(
+                    "the file has {} KB; the limit is {} KB",
+                    size.div_ceil(1024),
+                    aurora_core::domain::MAX_LOGO_BYTES / 1024
+                ),
+            }
+            .into());
+        }
+        let bytes = std::fs::read(&path).map_err(|error| CommandError::new("notFound", error))?;
+        let name = path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        Ok(Some(projects::set_logo(
+            registry.as_ref(),
+            &ProjectId(id),
+            &name,
+            &bytes,
+        )?))
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn clear_project_logo(state: State<'_, AppState>, id: String) -> Reply<Project> {
+    let registry = Arc::clone(&state.registry);
+    blocking(move || Ok(projects::clear_logo(registry.as_ref(), &ProjectId(id))?)).await
 }
 
 #[tauri::command]

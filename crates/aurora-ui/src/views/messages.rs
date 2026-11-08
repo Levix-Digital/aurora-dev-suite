@@ -146,7 +146,7 @@ impl Mailbox {
 
 /// A project's picture: its logo, else its initials on a palette color.
 #[component]
-fn Avatar(name: String, slug: String, logo: Option<String>, #[prop(optional)] small: bool) -> impl IntoView {
+fn Avatar(name: String, logo: Option<String>, #[prop(optional)] small: bool) -> impl IntoView {
     let size = if small { " small" } else { "" };
     match logo {
         Some(src) => view! {
@@ -154,7 +154,7 @@ fn Avatar(name: String, slug: String, logo: Option<String>, #[prop(optional)] sm
         }
         .into_any(),
         None => {
-            let color = AVATAR_CLASSES[avatar_color(&slug, AVATAR_CLASSES.len())];
+            let color = AVATAR_CLASSES[avatar_color(&name, AVATAR_CLASSES.len())];
             view! {
                 <span class=format!("avatar {color}{size}") aria-hidden="true">{initials(&name)}</span>
             }
@@ -218,7 +218,9 @@ pub fn MessagesView() -> impl IntoView {
     Effect::new(move |_| {
         let current = selected.get();
         let list = contacts.get();
-        if current.as_ref().is_none_or(|id| !list.iter().any(|c| &c.project.0 == id))
+        if current
+            .as_ref()
+            .is_none_or(|id| !list.iter().any(|c| &c.project.0 == id))
             && let Some(first) = list.first()
         {
             selected.set(Some(first.project.0.clone()));
@@ -316,7 +318,6 @@ pub fn MessagesView() -> impl IntoView {
                                 Memo::new(move |_| selected.get().as_deref() == Some(id.as_str()))
                             };
                             let logo = logos.with(|l| l.get(&id).cloned());
-                            let slug = c.slug.clone().unwrap_or_else(|| c.name.clone());
                             let (line, time) = match (&c.setup, &c.last) {
                                 (InboxSetup::Ready, Some(last)) => (
                                     if last.outgoing { format!("You: {}", last.text) } else { last.text.clone() },
@@ -334,7 +335,7 @@ pub fn MessagesView() -> impl IntoView {
                                         aria-current=move || is_selected.get().then_some("true")
                                         on:click=move |_| pick(id.clone())
                                     >
-                                        <Avatar name=c.name.clone() slug=slug logo=logo />
+                                        <Avatar name=c.name.clone() logo=logo />
                                         <span class="contact-text">
                                             <span class="contact-name">{c.name.clone()}</span>
                                             <span class=if muted { "contact-last muted" } else { "contact-last" }>{line}</span>
@@ -420,9 +421,15 @@ fn ChatColumn(
     let today = today();
     let subline = match &inbox.setup {
         InboxSetup::Ready => {
-            let mut text = format!("{active} active conversation{}", if active == 1 { "" } else { "s" });
+            let mut text = format!(
+                "{active} active conversation{}",
+                if active == 1 { "" } else { "s" }
+            );
             if waiting > 0 {
-                text.push_str(&format!(" · {waiting} wait{} for you", if waiting == 1 { "s" } else { "" }));
+                text.push_str(&format!(
+                    " · {waiting} wait{} for you",
+                    if waiting == 1 { "s" } else { "" }
+                ));
             }
             text
         }
@@ -430,13 +437,19 @@ fn ChatColumn(
         InboxSetup::Unavailable { .. } => "Not reachable now".to_owned(),
     };
     // Projects registered in Aurora by slug: a pending record links to the one that decides.
-    let registered: Vec<(String, String)> = mailbox
+    let registered: Vec<Registered> = mailbox
         .snapshot
         .get_untracked()
         .map(|s| {
             s.inboxes
                 .iter()
-                .filter_map(|i| i.slug.clone().map(|slug| (slug, i.project.0.clone())))
+                .filter_map(|i| {
+                    i.slug.clone().map(|slug| Registered {
+                        slug,
+                        id: i.project.0.clone(),
+                        name: i.name.clone(),
+                    })
+                })
                 .collect()
         })
         .unwrap_or_default();
@@ -471,8 +484,12 @@ fn ChatColumn(
         if key != "ArrowUp" && key != "ArrowDown" {
             return;
         }
-        let Some(el) = stream.get_untracked() else { return };
-        let Ok(list) = el.query_selector_all("button.bubble") else { return };
+        let Some(el) = stream.get_untracked() else {
+            return;
+        };
+        let Ok(list) = el.query_selector_all("button.bubble") else {
+            return;
+        };
         let active = document().active_element();
         let count = list.length();
         let mut at = None;
@@ -501,7 +518,10 @@ fn ChatColumn(
         let id = m.header.id.clone();
         opened.set(Some(id.clone()));
         // Read now: the view says so at once, the worker writes it behind (IMP-007).
-        if m.header.to == me && m.header.status == MessageStatus::Open && !mailbox.read.get_untracked().contains(&id) {
+        if m.header.to == me
+            && m.header.status == MessageStatus::Open
+            && !mailbox.read.get_untracked().contains(&id)
+        {
             mailbox.read.update(|r| {
                 r.insert(id.clone());
             });
@@ -519,12 +539,11 @@ fn ChatColumn(
         }
     });
 
-    let me_slug = inbox.slug.clone().unwrap_or_default();
     let inbox_for_compose = inbox.clone();
     let has_entries = !entries.is_empty();
     view! {
         <header class="chat-head">
-            <Avatar name=name.clone() slug=me_slug.clone() logo=logo />
+            <Avatar name=name.clone() logo=logo />
             <div class="chat-title">
                 <h2 id="chat-title">{name.clone()}</h2>
                 <p class="muted">{subline}</p>
@@ -600,6 +619,14 @@ fn ChatColumn(
     }
 }
 
+/// A project registered in Aurora, by its slug in messages.
+#[derive(Debug, Clone)]
+struct Registered {
+    slug: String,
+    id: String,
+    name: String,
+}
+
 fn project_id(inbox: &ProjectInbox) -> String {
     inbox.project.0.clone()
 }
@@ -611,7 +638,7 @@ fn BubbleLine(
     opened: RwSignal<Option<String>>,
     on_open: Callback<Message>,
     logos: RwSignal<HashMap<String, String>>,
-    registered: Vec<(String, String)>,
+    registered: Vec<Registered>,
 ) -> impl IntoView {
     let h = bubble.message.header.clone();
     let id = h.id.clone();
@@ -619,24 +646,27 @@ fn BubbleLine(
         let id = id.clone();
         Memo::new(move |_| opened.get().as_deref() == Some(id.as_str()))
     };
-    let side = if bubble.outgoing { "line out" } else { "line in" };
-    let time = local_time(&h.date, offset_minutes()).map(|(_, t)| t).unwrap_or_default();
-    let round = h
-        .round
-        .map(|r| format!(" · round {r}"))
+    let side = if bubble.outgoing {
+        "line out"
+    } else {
+        "line in"
+    };
+    let time = local_time(&h.date, offset_minutes())
+        .map(|(_, t)| t)
         .unwrap_or_default();
-    let sender_logo = registered
-        .iter()
-        .find(|(slug, _)| *slug == h.from)
-        .and_then(|(_, project)| logos.with_untracked(|l| l.get(project).cloned()));
-    let color = AVATAR_CLASSES[avatar_color(&h.from, AVATAR_CLASSES.len())];
+    let round = h.round.map(|r| format!(" · round {r}")).unwrap_or_default();
+    let sender = registered.iter().find(|r| r.slug == h.from);
+    let sender_logo = sender.and_then(|r| logos.with_untracked(|l| l.get(&r.id).cloned()));
+    // A registered sender has the same picture and color as its contact.
+    let sender_name = sender.map_or_else(|| h.from.clone(), |r| r.name.clone());
+    let color = AVATAR_CLASSES[avatar_color(&sender_name, AVATAR_CLASSES.len())];
     let message = bubble.message.clone();
     let quote_target = bubble.quote.as_ref().map(|q| q.id.clone());
     let mark = bubble.mark;
     view! {
         <div class=side id=format!("msg-{id}")>
             {(!bubble.outgoing).then(|| view! {
-                <Avatar name=h.from.clone() slug=h.from.clone() logo=sender_logo small=true />
+                <Avatar name=sender_name.clone() logo=sender_logo small=true />
             })}
             <button
                 class=move || if is_open.get() { "bubble selected" } else { "bubble" }
@@ -686,13 +716,19 @@ fn BubbleLine(
 fn RecordLine(
     record: ChatRecord,
     project: String,
-    registered: Vec<(String, String)>,
+    registered: Vec<Registered>,
     mailbox: Mailbox,
     pick: Callback<String>,
 ) -> impl IntoView {
-    let decided_here = mailbox.decided.with_untracked(|d| d.contains(&record.thread));
+    let decided_here = mailbox
+        .decided
+        .with_untracked(|d| d.contains(&record.thread));
     let context = format!("{} · {}", record.subject, record.kind);
-    let class = if record.kind == MessageKind::Impasse { "record impasse" } else { "record" };
+    let class = if record.kind == MessageKind::Impasse {
+        "record impasse"
+    } else {
+        "record"
+    };
     match record.state {
         RecordState::Waiting if !decided_here => view! {
             <div class=class>
@@ -718,8 +754,8 @@ fn RecordLine(
             let opener = record.record.projects.iter().find_map(|slug| {
                 registered
                     .iter()
-                    .find(|(s, id)| s == slug && *id != project)
-                    .map(|(s, id)| (s.clone(), id.clone()))
+                    .find(|r| r.slug == *slug && r.id != project)
+                    .map(|r| (r.slug.clone(), r.id.clone()))
             });
             view! {
                 <div class=format!("{class} pending")>
@@ -788,7 +824,15 @@ enum Form {
 /// The summary field of Reply and New conversation (US5).
 #[component]
 fn SummaryField(value: RwSignal<String>, id: String) -> impl IntoView {
-    let count = move || value.with(|v| v.split_whitespace().collect::<Vec<_>>().join(" ").chars().count());
+    let count = move || {
+        value.with(|v| {
+            v.split_whitespace()
+                .collect::<Vec<_>>()
+                .join(" ")
+                .chars()
+                .count()
+        })
+    };
     view! {
         <div class=move || { if count() > MAX_SUMMARY_CHARS { "field missing" } else { "field" } }>
             <label for=id.clone()>"Summary " <span class="muted">"(what the receiver reads in the chat)"</span></label>

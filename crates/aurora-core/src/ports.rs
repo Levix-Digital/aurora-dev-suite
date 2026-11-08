@@ -17,6 +17,8 @@ pub trait ProjectRegistry: Send + Sync {
     fn rename(&self, id: &ProjectId, name: ProjectName) -> Result<Project, ProjectError>;
     fn remove(&self, id: &ProjectId) -> Result<(), ProjectError>;
     fn relocate(&self, id: &ProjectId, path: &Path) -> Result<Project, ProjectError>;
+    /// Sets or removes the project's logo (FEAT-039), kept in Aurora's own list only.
+    fn set_logo(&self, id: &ProjectId, logo: Option<String>) -> Result<Project, ProjectError>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

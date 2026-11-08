@@ -242,3 +242,28 @@ fn version_1_settings_raise_the_provider_limit() {
     assert_eq!(loaded.engines.integrations.timeout_ms, 60_000);
     assert_eq!(loaded.engines.gedo.timeout_ms, 10_000);
 }
+
+#[test]
+fn a_logo_is_kept_and_removed() {
+    let config = tempfile::tempdir().unwrap();
+    let repos = tempfile::tempdir().unwrap();
+    let gedo = common::make_repo(repos.path(), "gedo");
+    let registry = TomlRegistry::open(config.path());
+    let project = registry.add(&gedo, None).unwrap().project;
+    assert_eq!(project.logo, None);
+    let set = aurora_core::usecases::projects::set_logo(&registry, &project.id, "g.svg", b"<svg/>")
+        .unwrap();
+    assert_eq!(
+        set.logo.as_deref(),
+        Some("data:image/svg+xml;base64,PHN2Zy8+")
+    );
+    let reopened = TomlRegistry::open(config.path()).load();
+    assert_eq!(reopened.projects[0].logo, set.logo);
+    let refused = aurora_core::usecases::projects::set_logo(&registry, &project.id, "g.gif", b"x");
+    assert!(matches!(refused, Err(ProjectError::InvalidLogo { .. })));
+    aurora_core::usecases::projects::clear_logo(&registry, &project.id).unwrap();
+    assert_eq!(
+        TomlRegistry::open(config.path()).load().projects[0].logo,
+        None
+    );
+}

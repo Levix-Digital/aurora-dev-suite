@@ -15,14 +15,17 @@ commands:
   version | init --project <slug> [--name <n>] | add <slug> --url <u> [--name <n>] | validate
   projects | poll | sync [--max-age S] | check [--no-sent] [--stale-hours H] | export
   list [--sent] [--all] | show <id>
-  template <kind> | send --to <slug> --kind <kind> --subject <s> --body-file <f>
-  reply <id> --kind <kind> [--subject <s>] --body-file <f> | thread <thread> | record <thread>
+  template <kind> | send --to <slug> --kind <kind> --subject <s> [--summary <s>] --body-file <f>
+  reply <id> --kind <kind> [--subject <s>] [--summary <s>] --body-file <f>
+  thread <thread> | record <thread>
   decide <thread> (--choice <text> [--note <text>] | --revise <text>) | guide <thread> --text <text>
   status <id> open|seen|done [--note <text>] | defer <id> --reason <text>
   watch --target <slug>=<dir> [--target ...] --exec <cmd> [--interval S] [--once]
 
 The reading commands (projects, check, export, list, show, thread, record) take --cached: they
-read the local caches and fetch only an inbox never fetched before; sync updates them.";
+read the local caches and fetch only an inbox never fetched before; sync updates them.
+--summary: one or two sentences in the first person, as the sender speaking to the recipient
+(at most 280 characters); readers such as Aurora show it instead of the body.";
 
 /// The arguments after the global options: positionals and `--name value` options.
 struct Args {
@@ -175,6 +178,7 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
             a.need("--to")?,
             a.need("--kind")?,
             a.need("--subject")?,
+            a.opt("--summary"),
             &body_file(a.need("--body-file")?)?,
         ),
         "reply" => commands::reply(
@@ -182,6 +186,7 @@ fn run(root: &Path, command: &str, a: &Args) -> Result<Reply, Failure> {
             a.arg(1, "id")?,
             a.need("--kind")?,
             a.opt("--subject"),
+            a.opt("--summary"),
             &body_file(a.need("--body-file")?)?,
         ),
         "thread" => commands::thread(&reading()?, a.arg(1, "thread")?),

@@ -128,7 +128,7 @@ fn reads_reuse_a_recent_fetch_and_writes_never_do() {
     let alpha = url(&w.root, "alpha");
     let beta = w.cx("beta");
     ok(commands::send(
-        &beta, "alpha", "question", "Format", QUESTION,
+        &beta, "alpha", "question", "Format", None, QUESTION,
     ));
     let mut reader = w.cx("alpha").transport;
     reader.reuse_fetch = Some(aurora_integrations::transport::REUSE_FETCH);
@@ -139,6 +139,7 @@ fn reads_reuse_a_recent_fetch_and_writes_never_do() {
         "alpha",
         "notice",
         "Second",
+        None,
         "Just so you know.\n",
     ));
     assert_eq!(reader.read_inbox("alpha", &alpha).unwrap().len(), 1);
@@ -189,7 +190,7 @@ fn transport_reads_writes_and_checks_the_format() {
     // The first write creates the branch with README.md and inbox.json 1.0.
     let beta = w.cx("beta");
     ok(commands::send(
-        &beta, "alpha", "question", "Format", QUESTION,
+        &beta, "alpha", "question", "Format", None, QUESTION,
     ));
     let tip = t
         .remote_tip("alpha", &alpha)
@@ -234,6 +235,7 @@ fn transport_reads_writes_and_checks_the_format() {
         "alpha",
         "notice",
         "Second",
+        None,
         "Just so you know.\n",
     ));
     stale
@@ -303,20 +305,21 @@ fn a_conversation_from_question_to_decision() {
         "beta",
         "question",
         "Format",
+        None,
         "### Ask\nx\n",
     ));
     assert_eq!((f.code, f.exit), ("refused", 5));
     assert_eq!(f.missing_sections, ["Context", "Closes when"]);
     assert_eq!(
-        refused(commands::send(&a, "beta", "answer", "x", ANSWER)).exit,
+        refused(commands::send(&a, "beta", "answer", "x", None, ANSWER)).exit,
         5
     );
     assert_eq!(
-        refused(commands::send(&a, "alpha", "notice", "x", "x")).exit,
+        refused(commands::send(&a, "alpha", "notice", "x", None, "x")).exit,
         5
     );
     assert_eq!(
-        refused(commands::send(&a, "gamma", "notice", "x", "x")).code,
+        refused(commands::send(&a, "gamma", "notice", "x", None, "x")).code,
         "unknown_project"
     );
     assert!(
@@ -327,7 +330,7 @@ fn a_conversation_from_question_to_decision() {
     );
 
     let q = sent_id(&ok(commands::send(
-        &a, "beta", "question", "Format", QUESTION,
+        &a, "beta", "question", "Format", None, QUESTION,
     )));
     let news = ok(commands::poll(&b));
     assert_eq!(news.code, NEWS);
@@ -346,7 +349,9 @@ fn a_conversation_from_question_to_decision() {
     let mut turn = [&b, &a].into_iter().cycle();
     for _ in 0..5 {
         let me = turn.next().unwrap();
-        last = sent_id(&ok(commands::reply(me, &last, "counter", None, COUNTER)));
+        last = sent_id(&ok(commands::reply(
+            me, &last, "counter", None, None, COUNTER,
+        )));
     }
     let r = ok(commands::list(&a, false, false));
     let rounds: Vec<i64> = r.json["items"]
@@ -360,10 +365,17 @@ fn a_conversation_from_question_to_decision() {
         [1, 2, 3],
         "alpha received the counters of rounds 1 to 3"
     );
-    let f = refused(commands::reply(&a, &last, "counter", None, COUNTER));
+    let f = refused(commands::reply(&a, &last, "counter", None, None, COUNTER));
     assert_eq!((f.code, f.exit), ("round_limit", 5));
-    let ack = sent_id(&ok(commands::reply(&a, &last, "ack", None, "Seen.")));
-    let close = sent_id(&ok(commands::reply(&b, &ack, "agreement", None, AGREEMENT)));
+    let ack = sent_id(&ok(commands::reply(&a, &last, "ack", None, None, "Seen.")));
+    let close = sent_id(&ok(commands::reply(
+        &b,
+        &ack,
+        "agreement",
+        None,
+        None,
+        AGREEMENT,
+    )));
     assert!(close.contains("-beta-"));
 
     // The opener sees it waiting for the user and presents the record.
@@ -392,7 +404,9 @@ fn a_conversation_from_question_to_decision() {
             .unwrap()
             .is_empty()
     );
-    let c2 = sent_id(&ok(commands::reply(&a, &close, "counter", None, COUNTER)));
+    let c2 = sent_id(&ok(commands::reply(
+        &a, &close, "counter", None, None, COUNTER,
+    )));
     let m = ok(commands::show(&b, &c2));
     assert_eq!(
         (
@@ -401,7 +415,14 @@ fn a_conversation_from_question_to_decision() {
         ),
         (Some(2), Some(1))
     );
-    let close2 = sent_id(&ok(commands::reply(&b, &c2, "agreement", None, AGREEMENT)));
+    let close2 = sent_id(&ok(commands::reply(
+        &b,
+        &c2,
+        "agreement",
+        None,
+        None,
+        AGREEMENT,
+    )));
     let record = ok(commands::record(&a, &q));
     assert_eq!(
         (
@@ -417,6 +438,7 @@ fn a_conversation_from_question_to_decision() {
 
     // The decision goes to the other side and closes the record.
     let decided = ok(commands::decide(&a, &q, "Adopt 1.1", Some("Both sides.")));
+    assert_eq!(decided.json["sent"][0]["summary"], "The user decided: Adopt 1.1");
     assert_eq!(decided.json["sent"][0]["kind"], "decision");
     assert_eq!(decided.json["closed"], serde_json::json!([close2]));
     let check = ok(commands::check(&a, true, 24.0, true, "x"));
@@ -471,10 +493,14 @@ fn guide_on_a_thread_and_unanswered_sent_messages() {
     let w = World::new();
     let (a, b) = (w.cx("alpha"), w.cx("beta"));
     let q = sent_id(&ok(commands::send(
-        &a, "beta", "question", "Dates", QUESTION,
+        &a, "beta", "question", "Dates", None, QUESTION,
     )));
     let g = ok(commands::guide(&a, &q, "Answer by Friday."));
     assert_eq!(g.json["sent"][0]["to"], "beta");
+    assert_eq!(
+        g.json["sent"][0]["summary"],
+        "The user asks: Answer by Friday."
+    );
     assert_eq!(refused(commands::guide(&a, &q, "  ")).exit, 5);
     assert_eq!(
         refused(commands::guide(&a, "20990101-000000-alpha-x", "x")).exit,
@@ -510,7 +536,7 @@ fn guide_on_a_thread_and_unanswered_sent_messages() {
     let quiet = ok(commands::check(&a, true, 24.0, true, "x"));
     assert!(quiet.text.is_empty());
     // A reply in cycle 2 starts at round 1.
-    let r = ok(commands::reply(&b, &q, "answer", None, ANSWER));
+    let r = ok(commands::reply(&b, &q, "answer", None, None, ANSWER));
     assert_eq!(
         (
             r.json["sent"][0]["cycle"].as_i64(),
@@ -570,6 +596,7 @@ fn init_add_validate_and_watch_once() {
         "alpha",
         "notice",
         "Hello",
+        None,
         "Hi.\n",
     ));
     let marker = w.root.join("alpha").join("ran.txt");
@@ -658,7 +685,7 @@ fn sync_keeps_copies_that_cached_reads_use_without_git() {
     let alpha = url(&w.root, "alpha");
     let beta = w.cx("beta");
     ok(commands::send(
-        &beta, "alpha", "question", "Format", QUESTION,
+        &beta, "alpha", "question", "Format", None, QUESTION,
     ));
     let cx = w.cx("alpha");
     let synced = ok(commands::sync(&cx, std::time::Duration::ZERO));
@@ -685,6 +712,7 @@ fn sync_keeps_copies_that_cached_reads_use_without_git() {
         "alpha",
         "notice",
         "Second",
+        None,
         "Just so you know.\n",
     ));
     let mut cached = w.cx("alpha");
@@ -739,14 +767,15 @@ fn export_gives_conversations_with_their_messages_notes_and_records() {
     let w = World::new();
     let (a, b) = (w.cx("alpha"), w.cx("beta"));
     let q = sent_id(&ok(commands::send(
-        &b, "alpha", "question", "Format", QUESTION,
+        &b, "alpha", "question", "Format", None, QUESTION,
     )));
-    let answer = sent_id(&ok(commands::reply(&a, &q, "answer", None, ANSWER)));
+    let answer = sent_id(&ok(commands::reply(&a, &q, "answer", None, None, ANSWER)));
     ok(commands::status(&a, &q, "done", Some("answered")));
     let close = sent_id(&ok(commands::reply(
         &b,
         &answer,
         "agreement",
+        None,
         None,
         AGREEMENT,
     )));
@@ -785,4 +814,60 @@ fn export_gives_conversations_with_their_messages_notes_and_records() {
         beta["conversations"][0]["items"].as_array().unwrap().len(),
         3
     );
+}
+
+#[test]
+fn a_summary_travels_with_the_message_and_is_never_cut() {
+    let w = World::new();
+    let (a, b) = (w.cx("alpha"), w.cx("beta"));
+    let q = sent_id(&ok(commands::send(
+        &a,
+        "beta",
+        "question",
+        "Format",
+        Some("I need your export format.\nCan you send it?"),
+        QUESTION,
+    )));
+    let shown = ok(commands::show(&b, &q));
+    valid(&shown.json);
+    assert_eq!(
+        shown.json["message"]["summary"],
+        "I need your export format. Can you send it?"
+    );
+    let r = ok(commands::reply(&b, &q, "answer", None, None, ANSWER));
+    valid(&r.json);
+    assert_eq!(r.json["sent"][0]["summary"], "");
+
+    let long = "x".repeat(commands::SUMMARY_MAX + 1);
+    let f = refused(commands::send(
+        &a,
+        "beta",
+        "notice",
+        "Long",
+        Some(&long),
+        "Just so you know.\n",
+    ));
+    assert_eq!((f.code, f.exit), ("refused", 5));
+    assert!(f.message.contains("at most 280"), "{}", f.message);
+    let exact = "y".repeat(commands::SUMMARY_MAX);
+    ok(commands::send(
+        &a,
+        "beta",
+        "notice",
+        "Exact",
+        Some(&exact),
+        "Just so you know.\n",
+    ));
+
+    let e = ok(commands::export(&b));
+    valid(&e.json);
+    let summaries: Vec<&str> = e.json["conversations"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .flat_map(|c| c["items"].as_array().unwrap())
+        .map(|i| i["message"]["summary"].as_str().unwrap())
+        .collect();
+    assert!(summaries.contains(&"I need your export format. Can you send it?"));
+    assert!(summaries.contains(&exact.as_str()));
 }

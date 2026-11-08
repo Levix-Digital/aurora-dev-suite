@@ -131,9 +131,9 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 ### FEAT-039: Messages as a chat between projects
 - **Priority**: high
 - **Epic**: EPIC-010
-- **Status**: open
+- **Status**: planned
 - **Found**: 2026-11-08, v0.3.0-rc.6
-- **Plan**: -
+- **Plan**: messages-chat
 - **Description**: Levi, 2026-11-08: the Messages view becomes a chat between projects, like a desktop messaging app. Two columns: a narrow list of projects (avatar or logo and name, unread count, last summary) that never moves, and a wide chat of everything the selected project exchanged with the others; received bubbles on the left, sent bubbles on the right in another style, each showing a short first-person summary. A click on a bubble highlights it and a third column slides in on the right with the full message as shown today; the chat shrinks to share the space. Closing records and decisions render as special cards in the chat. The summary is written by the sender: a new optional field of send and reply in dcp-integrations; older messages fall back to the subject. Spec: specs/011-messages-chat.
 
 ### FEAT-040: Gedo alerts as a chat between Gedo instances

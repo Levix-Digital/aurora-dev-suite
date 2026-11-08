@@ -56,6 +56,8 @@ struct RawHeader {
     needs_user: bool,
     #[serde(default)]
     tool: Option<String>,
+    #[serde(default)]
+    summary: String,
 }
 
 impl From<RawHeader> for MessageHeader {
@@ -83,6 +85,7 @@ impl From<RawHeader> for MessageHeader {
             round: raw.round,
             needs_user: raw.needs_user,
             tool: raw.tool.unwrap_or_default(),
+            summary: raw.summary,
         }
     }
 }
@@ -402,7 +405,7 @@ pub fn act_args(
         UserAction::MarkSeen { id } => (s(&["status", id, "seen"]), None),
         UserAction::Send { draft } => {
             let file = BodyFile::new(&message_body(&draft.sections))?;
-            let args = s(&[
+            let mut args = s(&[
                 "send",
                 "--to",
                 &draft.to,
@@ -413,11 +416,17 @@ pub fn act_args(
                 "--body-file",
                 &file.arg(),
             ]);
+            with_summary(&mut args, &draft.summary);
             (args, Some(BodyFileHandle(file)))
         }
-        UserAction::Reply { id, kind, sections } => {
+        UserAction::Reply {
+            id,
+            kind,
+            sections,
+            summary,
+        } => {
             let file = BodyFile::new(&message_body(sections))?;
-            let args = s(&[
+            let mut args = s(&[
                 "reply",
                 id,
                 "--kind",
@@ -425,9 +434,20 @@ pub fn act_args(
                 "--body-file",
                 &file.arg(),
             ]);
+            with_summary(&mut args, summary);
             (args, Some(BodyFileHandle(file)))
         }
     })
+}
+
+/// Adds `--summary` when the user wrote one (FEAT-039); a provider before 1.3 never gets it
+/// from an empty summary.
+fn with_summary(args: &mut Vec<String>, summary: &str) {
+    let summary = summary.split_whitespace().collect::<Vec<_>>().join(" ");
+    if !summary.is_empty() {
+        args.push("--summary".to_owned());
+        args.push(summary);
+    }
 }
 
 /// Keeps the body file of an action until the provider has run.
@@ -777,5 +797,37 @@ mod unread_tests {
         let unread = unread_by_thread(&list);
         assert_eq!(unread.get("a"), Some(&2));
         assert_eq!(unread.get("b"), None);
+    }
+}
+
+#[cfg(test)]
+mod summary_tests {
+    use super::*;
+    use aurora_core::domain::{Draft, Section};
+
+    #[test]
+    fn a_summary_is_passed_only_when_written() {
+        let draft = |summary: &str| UserAction::Send {
+            draft: Draft {
+                to: "beta".into(),
+                kind: MessageKind::Question,
+                subject: "Format".into(),
+                summary: summary.into(),
+                sections: vec![Section::new("Ask", "Adopt 1.0?")],
+            },
+        };
+        let (args, _file) = act_args(&draft("  ")).expect("args");
+        assert!(!args.iter().any(|a| a == "--summary"));
+        let (args, _file) = act_args(&draft("I need\nyour format.")).expect("args");
+        let at = args.iter().position(|a| a == "--summary").expect("summary");
+        assert_eq!(args[at + 1], "I need your format.");
+        let reply = UserAction::Reply {
+            id: "m1".into(),
+            kind: MessageKind::Answer,
+            sections: vec![Section::new("Answer", "Yes.")],
+            summary: "Yes, from v1.1.".into(),
+        };
+        let (args, _file) = act_args(&reply).expect("args");
+        assert!(args.windows(2).any(|w| w == ["--summary", "Yes, from v1.1."]));
     }
 }

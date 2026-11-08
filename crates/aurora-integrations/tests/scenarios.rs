@@ -438,7 +438,10 @@ fn a_conversation_from_question_to_decision() {
 
     // The decision goes to the other side and closes the record.
     let decided = ok(commands::decide(&a, &q, "Adopt 1.1", Some("Both sides.")));
-    assert_eq!(decided.json["sent"][0]["summary"], "The user decided: Adopt 1.1");
+    assert_eq!(
+        decided.json["sent"][0]["summary"],
+        "The user decided: Adopt 1.1"
+    );
     assert_eq!(decided.json["sent"][0]["kind"], "decision");
     assert_eq!(decided.json["closed"], serde_json::json!([close2]));
     let check = ok(commands::check(&a, true, 24.0, true, "x"));

@@ -531,6 +531,7 @@ mod tests {
         let aurora = project("aurora-dev-suite", Presence::Present);
         let send = UserAction::Send {
             draft: Draft {
+                summary: String::new(),
                 to: "gedo".into(),
                 kind: MessageKind::Question,
                 subject: "Dates".into(),

@@ -136,6 +136,10 @@ pub struct MessageHeader {
     pub needs_user: bool,
     /// Version of the tool that wrote it.
     pub tool: String,
+    /// The sender's one- or two-sentence first-person summary (FEAT-039); empty when it
+    /// wrote none, then the chat shows the subject.
+    #[serde(default)]
+    pub summary: String,
 }
 
 /// One `##` or `###` section of a message body.
@@ -853,6 +857,9 @@ pub struct Draft {
     pub to: String,
     pub kind: MessageKind,
     pub subject: String,
+    /// The first-person summary the receiver reads in the chat; optional.
+    #[serde(default)]
+    pub summary: String,
     pub sections: Vec<Section>,
 }
 
@@ -868,6 +875,26 @@ pub fn body(sections: &[Section]) -> String {
         out.push_str("\n\n");
     }
     out.trim_end().to_owned() + "\n"
+}
+
+/// The longest summary a sender may write (FEAT-039, as the provider checks it).
+pub const MAX_SUMMARY_CHARS: usize = 280;
+
+/// A summary is optional; when given it is at most [`MAX_SUMMARY_CHARS`], never cut.
+pub fn check_summary(summary: &str) -> Result<(), MessagesError> {
+    let length = summary
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .chars()
+        .count();
+    if length > MAX_SUMMARY_CHARS {
+        return Err(MessagesError::refused(
+            format!("the summary has {length} characters; at most {MAX_SUMMARY_CHARS}"),
+            vec!["Summary".to_owned()],
+        ));
+    }
+    Ok(())
 }
 
 /// What the user asks Aurora to do in a project's name.
@@ -898,6 +925,9 @@ pub enum UserAction {
         id: String,
         kind: MessageKind,
         sections: Vec<Section>,
+        /// The first-person summary the receiver reads in the chat; optional.
+        #[serde(default)]
+        summary: String,
     },
     MarkSeen {
         id: String,
@@ -1069,9 +1099,16 @@ pub fn check_action(
             }
             check_text(&draft.to, "the receiver")?;
             check_text(&draft.subject, "the subject")?;
+            check_summary(&draft.summary)?;
             check_sections(&draft.kind, template, &draft.sections)
         }
-        UserAction::Reply { kind, sections, .. } => {
+        UserAction::Reply {
+            kind,
+            sections,
+            summary,
+            ..
+        } => {
+            check_summary(summary)?;
             if !MessageKind::REPLIES.contains(kind) {
                 return Err(MessagesError::refused(
                     format!("'{kind}' is not a reply"),
@@ -1121,6 +1158,7 @@ mod tests {
 
     fn header(id: &str, kind: MessageKind, from: &str, date: &str) -> MessageHeader {
         MessageHeader {
+            summary: String::new(),
             id: id.into(),
             kind,
             from: from.into(),
@@ -1439,6 +1477,7 @@ mod tests {
         let mut c = conversation("x", "d", MessageKind::Counter, false, 1);
         c.next_round = 4;
         let reply = |kind| UserAction::Reply {
+            summary: String::new(),
             id: "x".into(),
             kind,
             sections: vec![Section::new("Answer", "No.")],
@@ -1507,6 +1546,7 @@ mod tests {
         let template = [t("Ask", true), t("Context", true), t("Constraints", false)];
         let draft = |sections: Vec<Section>| UserAction::Send {
             draft: Draft {
+                summary: String::new(),
                 to: "gedo".into(),
                 kind: MessageKind::Question,
                 subject: "Dates".into(),
@@ -1543,6 +1583,7 @@ mod tests {
         };
         assert!(check_action(&guide, &[], None).is_err());
         let free = UserAction::Reply {
+            summary: String::new(),
             id: "x".into(),
             kind: MessageKind::Ack,
             sections: vec![Section::new("", "")],
@@ -1550,6 +1591,7 @@ mod tests {
         assert!(check_action(&free, &[], None).is_err(), "an empty ack");
         let not_opening = UserAction::Send {
             draft: Draft {
+                summary: String::new(),
                 to: "gedo".into(),
                 kind: MessageKind::Answer,
                 subject: "x".into(),

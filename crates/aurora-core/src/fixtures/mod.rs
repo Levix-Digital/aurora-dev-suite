@@ -61,6 +61,7 @@ impl MemoryRegistry {
         let mut state = lock(&self.state);
         state.next_id += 1;
         let project = Project {
+            logo: None,
             id: ProjectId(format!("sample-{}", state.next_id)),
             name,
             root,

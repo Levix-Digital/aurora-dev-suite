@@ -133,6 +133,7 @@ mod tests {
 
     fn project(presence: Presence) -> Project {
         Project {
+            logo: None,
             id: ProjectId("p1".into()),
             name: ProjectName::parse("gedo").expect("valid name"),
             root: PathBuf::from("/repos/gedo"),

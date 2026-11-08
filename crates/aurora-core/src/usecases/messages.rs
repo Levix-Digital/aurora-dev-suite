@@ -381,6 +381,7 @@ mod tests {
 
     fn project(name: &str, presence: Presence) -> Project {
         Project {
+            logo: None,
             id: ProjectId(name.into()),
             name: ProjectName::parse(name).unwrap_or_else(|_| unreachable!("valid sample")),
             root: Path::new("/repos").join(name),

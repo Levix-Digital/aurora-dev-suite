@@ -85,6 +85,10 @@ pub struct Project {
     /// RFC 3339 date-time.
     pub added_at: String,
     pub presence: Presence,
+    /// The project's picture in Aurora (FEAT-039): a `data:image/...;base64,` URL of a
+    /// small image the user picked; `None` shows its initials.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logo: Option<String>,
 }
 
 /// The result of adding a project.

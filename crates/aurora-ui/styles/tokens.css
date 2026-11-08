@@ -19,6 +19,11 @@
   --warn: #F59E0B;
   --error: #F87171;
   --info: #38BDF8;
+  --bubble-in: #161F30;
+  --bubble-out: #0D2B33;
+  --bubble-out-border: #155E6B;
+  --row-sel: #1E293B;
+  --quote-bg: #0B0F19;
 }
 
 :root[data-theme="light"] {
@@ -37,4 +42,9 @@
   --warn: #B45309;
   --error: #B91C1C;
   --info: #0369A1;
+  --bubble-in: #FFFFFF;
+  --bubble-out: #E0F4F8;
+  --bubble-out-border: #A5D8E3;
+  --row-sel: #F1F5F9;
+  --quote-bg: #F1F5F9;
 }

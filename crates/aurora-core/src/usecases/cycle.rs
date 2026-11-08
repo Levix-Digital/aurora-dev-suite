@@ -78,6 +78,7 @@ mod tests {
 
     fn project(root: &str, presence: Presence) -> Project {
         Project {
+            logo: None,
             id: ProjectId("p1".into()),
             name: ProjectName::parse("sample").expect("valid name"),
             root: PathBuf::from(root),

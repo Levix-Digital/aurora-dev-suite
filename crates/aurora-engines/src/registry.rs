@@ -48,6 +48,7 @@ impl StoredProject {
             Presence::Missing
         };
         Project {
+            logo: None,
             id: ProjectId(self.id.clone()),
             name: self.name.clone(),
             root: self.root.clone(),

@@ -84,4 +84,4 @@ The user sees every registered project as a contact and opens its chat with one 
 
 ## Open questions
 
-- Release: v0.3.0 before the final tag, a v0.3.x right after it, or v0.4.0 (asked to the user).
+- None. Release decided: v0.3.1, right after v0.3.0 final (Levi, 2026-11-08).

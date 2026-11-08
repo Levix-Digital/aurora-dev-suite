@@ -24,6 +24,12 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Goal**: Change a project's Dev Cycle settings through dcp commands; and talk to the other projects from Aurora's Messages tab, through the integrations provider shipped with Aurora, deciding on each conversation's closing record or stepping into it (Levi, 2026-11-06). The inbox actions (FEAT-018, on hold) moved to v0.6.0, which also waits for dcp v2.11.0.
 - **Items**: FEAT-027, BUG-004, ADJ-001, FEAT-029, FEAT-031, FEAT-032, FEAT-033, FEAT-034, BUG-005, BUG-006, ADJ-002, BUG-007, ADJ-003, BUG-008, IMP-004, BUG-009, ADJ-005, IMP-005, IMP-006
 
+## v0.3.1: Messages as a chat
+- **Status**: planned
+- **Target**: right after v0.3.0 final (Levi, 2026-11-08)
+- **Goal**: The Messages view reads like a chat between projects: projects as contacts, bubbles with the sender's first-person summary, the full message in a panel that slides in on the right.
+- **Items**: FEAT-039
+
 ## v0.4.0: Agents
 - **Status**: planned
 - **Goal**: Parallel agents and Gedo collisions are visible per project; waits for Gedo v0.4.0 (command line) and v0.5.0 (agent streams).

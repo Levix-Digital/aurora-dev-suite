@@ -2,7 +2,9 @@
 
 use std::path::Path;
 
-use crate::domain::{AddOutcome, Project, ProjectError, ProjectId, ProjectList, ProjectName};
+use crate::domain::{
+    AddOutcome, Project, ProjectError, ProjectId, ProjectList, ProjectName, logo_data_url,
+};
 use crate::ports::ProjectRegistry;
 
 pub fn list(registry: &dyn ProjectRegistry) -> ProjectList {
@@ -25,6 +27,21 @@ pub fn rename(
     name: &str,
 ) -> Result<Project, ProjectError> {
     registry.rename(id, ProjectName::parse(name)?)
+}
+
+/// Sets the project's logo from an image file the user picked (FEAT-039).
+pub fn set_logo(
+    registry: &dyn ProjectRegistry,
+    id: &ProjectId,
+    file_name: &str,
+    bytes: &[u8],
+) -> Result<Project, ProjectError> {
+    registry.set_logo(id, Some(logo_data_url(file_name, bytes)?))
+}
+
+/// Removes the project's logo: its initials show again.
+pub fn clear_logo(registry: &dyn ProjectRegistry, id: &ProjectId) -> Result<Project, ProjectError> {
+    registry.set_logo(id, None)
 }
 
 /// Forgets a project; nothing on disk outside Aurora's own files changes.

@@ -44,6 +44,7 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
+| [ADR-0013](docs/adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md) | Messages read as a chat between projects, with a summary written by the sender | accepted | v0.3.1 | 2026-11-08 |
 | [ADR-0012](docs/adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md) | A messages worker in Aurora owns every provider call and serves a saved snapshot | accepted | v0.3.0 | 2026-11-07 |
 | [ADR-0011](docs/adr/0011-messages-are-read-from-local-inbox-copies-kept-current-by-a.md) | Messages are read from local inbox copies kept current by a background sync | accepted | v0.3.0 | 2026-11-07 |
 | [ADR-0010](docs/adr/0010-the-integrations-provider-ships-with-aurora-and-the-inbox-br.md) | The integrations provider ships with Aurora and the inbox branch holds only data | accepted |  | 2026-11-06 |

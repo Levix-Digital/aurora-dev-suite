@@ -274,13 +274,52 @@ fn ProjectRow(
         }
     };
     let (start_rename, start_locate) = (start.clone(), start);
+    let has_logo = project.logo.is_some();
+    let choose_logo = {
+        let (id, name) = (id.clone(), name.clone());
+        move |_| {
+            let (id, name) = (id.clone(), name.clone());
+            spawn_local(async move {
+                match ctx.backend.get_value().pick_project_logo(id).await {
+                    Ok(Some(_)) => finish(Ok(format!("{name} has a new logo."))),
+                    Ok(None) => {}
+                    Err(error) => finish(Err(error)),
+                }
+            });
+        }
+    };
+    let clear_logo = {
+        let (id, name) = (id.clone(), name.clone());
+        move |_| {
+            let (id, name) = (id.clone(), name.clone());
+            spawn_local(async move {
+                let result = ctx.backend.get_value().clear_project_logo(id).await;
+                finish(result.map(|_| format!("{name} shows its initials again.")));
+            });
+        }
+    };
+    let avatar = match project.logo.clone() {
+        Some(src) => {
+            view! { <span class="avatar logo" aria-hidden="true"><img src=src alt="" /></span> }
+                .into_any()
+        }
+        None => {
+            let slug = project.name.to_string();
+            let color = ["av-1", "av-2", "av-3", "av-4", "av-5", "av-6"]
+                [aurora_core::domain::avatar_color(&slug, 6)];
+            view! { <span class=format!("avatar {color}") aria-hidden="true">{aurora_core::domain::initials(&slug)}</span> }.into_any()
+        }
+    };
 
     view! {
         <div class="card">
             <div class="row">
-                <div>
+                <div class="project-title">
+                    {avatar}
+                    <div>
                     <h3>{name.clone()}</h3>
                     <div class="path muted">{project.root.display().to_string()}</div>
+                    </div>
                 </div>
                 {if missing {
                     view! { <span class="badge warn">"Missing: folder moved or deleted"</span> }.into_any()
@@ -293,11 +332,16 @@ fn ProjectRow(
                 RowMode::Idle => {
                     let start_rename = start_rename.clone();
                     let start_locate = start_locate.clone();
+                    let (choose_logo, clear_logo) = (choose_logo.clone(), clear_logo.clone());
                     let id = id.clone();
                     view! {
                         <div class="actions">
                             <button class="btn primary" on:click=move |_| ctx.open_project(id.clone())>"Open"</button>
                             <button class="btn" on:click=move |_| start_rename(RowMode::Renaming)>"Rename"</button>
+                            <button class="btn" title="An image shown for the project in Messages" on:click=choose_logo>"Logo…"</button>
+                            {has_logo.then(|| view! {
+                                <button class="btn" on:click=clear_logo>"Remove logo"</button>
+                            })}
                             {missing.then(|| view! {
                                 <button class="btn" on:click=move |_| start_locate(RowMode::Locating)>"Locate…"</button>
                             })}

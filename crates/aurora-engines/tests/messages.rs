@@ -145,6 +145,7 @@ mod fake {
                 to: "beta".into(),
                 kind: MessageKind::Question,
                 subject: "Format".into(),
+                summary: String::new(),
                 sections: vec![Section::new("Ask", "Should both sides adopt 1.0?")],
             },
         }

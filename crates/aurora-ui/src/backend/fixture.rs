@@ -85,6 +85,24 @@ impl FixtureBackend {
         )?)
     }
 
+    /// There is no file dialog in a browser: the pick takes a sample logo.
+    pub fn pick_project_logo(&self, id: &str) -> Reply<Option<Project>> {
+        const SAMPLE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#0E7490"/><path d="M14 44 L32 14 L50 44 Z" fill="none" stroke="#F1F5F9" stroke-width="5" stroke-linejoin="round"/><circle cx="32" cy="36" r="5" fill="#00E5A3"/></svg>"##;
+        Ok(Some(projects::set_logo(
+            &self.registry,
+            &ProjectId(id.to_owned()),
+            "sample-logo.svg",
+            SAMPLE,
+        )?))
+    }
+
+    pub fn clear_project_logo(&self, id: &str) -> Reply<Project> {
+        Ok(projects::clear_logo(
+            &self.registry,
+            &ProjectId(id.to_owned()),
+        )?)
+    }
+
     pub fn remove_project(&self, id: &str) -> Reply<()> {
         Ok(projects::remove(&self.registry, &ProjectId(id.to_owned()))?)
     }
@@ -314,6 +332,7 @@ fn serde_json_kind(error: &aurora_core::domain::ProjectError) -> String {
         E::InvalidName { .. } => "invalidName",
         E::UnknownProject { .. } => "unknownProject",
         E::Storage { .. } => "storage",
+        E::InvalidLogo { .. } => "invalidLogo",
     }
     .to_owned()
 }

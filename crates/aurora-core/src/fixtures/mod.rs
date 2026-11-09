@@ -61,6 +61,7 @@ impl MemoryRegistry {
         let mut state = lock(&self.state);
         state.next_id += 1;
         let project = Project {
+            logo: None,
             id: ProjectId(format!("sample-{}", state.next_id)),
             name,
             root,
@@ -109,6 +110,13 @@ impl ProjectRegistry for MemoryRegistry {
         let mut state = lock(&self.state);
         let project = find_mut(&mut state.projects, id)?;
         project.name = name;
+        Ok(project.clone())
+    }
+
+    fn set_logo(&self, id: &ProjectId, logo: Option<String>) -> Result<Project, ProjectError> {
+        let mut state = lock(&self.state);
+        let project = find_mut(&mut state.projects, id)?;
+        project.logo = logo;
         Ok(project.clone())
     }
 

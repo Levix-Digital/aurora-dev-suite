@@ -138,6 +138,11 @@
         },
         "tool": {
           "type": "string"
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 280,
+          "description": "1.3: the sender's one- or two-sentence first-person summary; empty when the sender wrote none (readers show the subject)"
         }
       }
     },

@@ -56,6 +56,8 @@ flowchart LR
 
 **Sync.** `sync` fetches the project's inbox and every counterpart's at once, one thread per inbox, each unless fetched less than `--max-age` seconds ago (10 by default, so a sweep over projects that share counterparts fetches each inbox once), and indexes them; it reports per inbox the tip, whether it changed and why one could not be fetched. The reading commands with `--cached` then answer from the copies, and `check --cached` records the cached tip instead of running `ls-remote`. `version` declares the capability `cache` for this (ADR-0011).
 
+**Summary.** A message may carry `summary` (FEAT-039, ADR-0013): one or two sentences in the first person for a reader at a glance, at most 280 characters, given with `--summary` on `send` and `reply` and refused when longer. It is written in the front matter after the fixed fields only when set (`summary: "..."`, line breaks folded into spaces), so a message without it is written exactly as before and tools 0.3 and earlier read it unchanged. `decide` writes "The user decided: <choice>" and `guide` "The user asks: <first sentence>". Every header in the replies carries `summary`, empty when none was written; documents are at schema 1.3 and `version` declares the capability `summary`.
+
 **Export.** `export` answers `dcp-integrations.export`: the project, the registry's projects, and every conversation as `check` gives it with all its messages and its closing record when one exists, in one process (with `--cached`, from the copies). Each message carries its sections, its text and body without the status notes, and `notes`: the `> open|seen|done (date): note` lines the receiver appended, parsed with an ISO date. A closing record whose text has a `Recommended: <n>` line, or an option ending in "(recommended)", carries `recommended`. `version` declares the capability `export`; documents are at schema 1.2 (ADR-0012).
 
 **Logs.** With `--verbose`, Git's error output goes to standard error. Bodies are never logged.
@@ -73,4 +75,5 @@ The command line of [`contracts/cli.md`](../../specs/008-messages/contracts/cli.
 - [ADR-0010](../adr/0010-the-integrations-provider-ships-with-aurora-and-the-inbox-br.md): the provider ships with Aurora and alone; each project lists its counterparts; the branch holds only data and its format version.
 - [ADR-0011](../adr/0011-messages-are-read-from-local-inbox-copies-kept-current-by-a.md): reads answer from local copies indexed per tip, kept current by `sync`.
 - [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): `export` gives a whole reading in one call for Aurora's messages worker.
+- [ADR-0013](../adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md): the sender's summary in the message header.
 - [ADR-0003](../adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md): Aurora uses it only through its command line with versioned JSON.

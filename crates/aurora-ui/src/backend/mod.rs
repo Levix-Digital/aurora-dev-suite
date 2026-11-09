@@ -139,6 +139,20 @@ impl Backend {
         }
     }
 
+    pub async fn pick_project_logo(&self, id: String) -> Reply<Option<Project>> {
+        match self {
+            Backend::Tauri => tauri::invoke("pick_project_logo", &tauri::IdArgs { id }).await,
+            Backend::Fixture(fixture) => fixture.pick_project_logo(&id),
+        }
+    }
+
+    pub async fn clear_project_logo(&self, id: String) -> Reply<Project> {
+        match self {
+            Backend::Tauri => tauri::invoke("clear_project_logo", &tauri::IdArgs { id }).await,
+            Backend::Fixture(fixture) => fixture.clear_project_logo(&id),
+        }
+    }
+
     pub async fn remove_project(&self, id: String) -> Reply<()> {
         match self {
             Backend::Tauri => tauri::invoke("remove_project", &tauri::IdArgs { id }).await,

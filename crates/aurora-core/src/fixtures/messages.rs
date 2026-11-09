@@ -123,6 +123,7 @@ fn message(
             cycle,
             round,
             tool: "0.3.0".into(),
+            summary: String::new(),
         },
         body: message_body(&sections),
         sections,
@@ -365,6 +366,26 @@ fn sample_messages() -> Vec<Message> {
         1,
         &[("Notice", "The engine binary is `dcp` from v2.11.0.")],
     ));
+    // The senders' summaries, as the chat shows them (FEAT-039); the notice keeps none,
+    // so the chat shows its subject.
+    let summaries = [
+        "Can I commit the shared settings file that turns attribution off?",
+        "I agree, with one change: commit only the shared file, never personal settings.",
+        "Fine by me: only the shared file goes in.",
+        "Agreed: one shared file, the same sentence in both instructions.",
+        "I propose one time limit per hook point, so a hung hook never blocks a merge.",
+        "Partly: I need longer checks after a merge; 30 s would cut my snapshot refresh.",
+        "Then I keep 300 s as the cap and 120 s by default after a merge. Does that work?",
+        "Agreed: a 300 s cap and 120 s after a merge. I am sending the record to Levi.",
+        "Which JSON schema will your ask command answer, so I can show citations?",
+        "Should the logging setup move into one shared crate that every project reuses?",
+        "Agreed: one shared crate in levix-platform, with the same fields everywhere.",
+    ];
+    for (m, summary) in out.iter_mut().zip(summaries) {
+        if m.header.kind != MessageKind::Decision {
+            m.header.summary = summary.to_owned();
+        }
+    }
     // Everything was read except the last message of each conversation; closed ones
     // were handled.
     let mut last_of: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
@@ -781,11 +802,17 @@ impl MessagesSource for FixtureMessages {
                     &[],
                 );
                 m.header.thread = String::new();
+                m.header.summary.clone_from(&draft.summary);
                 m.body = message_body(&draft.sections);
                 m.sections = draft.sections.clone();
                 Ok(vec![Self::push(state, m)])
             }
-            UserAction::Reply { id, kind, sections } => {
+            UserAction::Reply {
+                id,
+                kind,
+                sections,
+                summary,
+            } => {
                 let original = state
                     .messages
                     .iter()
@@ -820,6 +847,7 @@ impl MessagesSource for FixtureMessages {
                     &[],
                 );
                 m.header.reply_to = id.clone();
+                m.header.summary.clone_from(summary);
                 m.body = message_body(sections);
                 m.sections = sections.clone();
                 Ok(vec![Self::push(state, m)])

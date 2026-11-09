@@ -13,7 +13,7 @@ use crate::registry::{self, Registry, RegistryError};
 use crate::rules;
 use crate::transport::{Identity, Transport, TransportError};
 
-pub const SCHEMA_VERSION: &str = "1.2";
+pub const SCHEMA_VERSION: &str = "1.3";
 /// Exit code of `poll` when there is news.
 pub const NEWS: i32 = 10;
 
@@ -119,7 +119,7 @@ pub fn header(m: &Message) -> Value {
         "id": m.id, "kind": m.kind.as_str(), "from": m.from, "to": m.to, "date": m.date,
         "subject": m.subject, "status": m.status.as_str(), "reply_to": m.reply_to,
         "deferred": m.deferred, "thread": m.thread_id(), "cycle": m.cycle, "round": m.round,
-        "needs_user": m.needs_user, "tool": m.tool,
+        "needs_user": m.needs_user, "tool": m.tool, "summary": m.summary,
     })
 }
 
@@ -337,6 +337,7 @@ impl Context {
         thread: &str,
         round: Option<u32>,
         cycle: u32,
+        summary: &str,
         body: &str,
     ) -> Result<Message> {
         if to == self.me() {
@@ -394,6 +395,7 @@ impl Context {
             deferred: String::new(),
             cycle,
             tool: self.transport.tool.clone(),
+            summary: format::one_line(summary),
             body: body.to_owned(),
         };
         self.write(to, &m, &format!("inbox({} -> {to}): {subject}", self.me()))?;
@@ -419,6 +421,7 @@ pub fn version(tool: &str) -> Result<Reply> {
                 { "name": "messages", "schema_major": 1 },
                 { "name": "cache", "schema_major": 1 },
                 { "name": "export", "schema_major": 1 },
+                { "name": "summary", "schema_major": 1 },
             ],
         }),
         format!("dcp-integrations {tool}"),
@@ -949,7 +952,50 @@ pub fn show(cx: &Context, id: &str) -> Result<Reply> {
     )
 }
 
-pub fn send(cx: &Context, to: &str, kind: &str, subject: &str, body: &str) -> Result<Reply> {
+/// The longest summary a sender may write (FEAT-039).
+pub const SUMMARY_MAX: usize = 280;
+
+/// Checks a summary given with `--summary`: one or two sentences, never cut.
+fn summary_arg(summary: Option<&str>) -> Result<String> {
+    let text = format::one_line(summary.unwrap_or_default());
+    let length = text.chars().count();
+    if length > SUMMARY_MAX {
+        return Err(Failure::new(
+            "refused",
+            5,
+            format!(
+                "the summary has {length} characters; at most {SUMMARY_MAX} (one or two sentences in the first person)"
+            ),
+        ));
+    }
+    Ok(text)
+}
+
+/// A summary made by the tool from text it writes for the user (decide, guide): the first
+/// sentence, shortened with an ellipsis when needed.
+fn tool_summary(prefix: &str, text: &str) -> String {
+    let line = format::one_line(text);
+    let first = match line.find(". ") {
+        Some(end) => &line[..=end],
+        None => line.as_str(),
+    };
+    let full = format!("{prefix}{}", first.trim());
+    if full.chars().count() <= SUMMARY_MAX {
+        return full;
+    }
+    let cut: String = full.chars().take(SUMMARY_MAX - 1).collect();
+    format!("{}…", cut.trim_end())
+}
+
+pub fn send(
+    cx: &Context,
+    to: &str,
+    kind: &str,
+    subject: &str,
+    summary: Option<&str>,
+    body: &str,
+) -> Result<Reply> {
+    let summary = summary_arg(summary)?;
     let kind = Kind::parse(kind);
     if !rules::OPENING.contains(&kind) {
         return Err(Failure::new(
@@ -958,7 +1004,7 @@ pub fn send(cx: &Context, to: &str, kind: &str, subject: &str, body: &str) -> Re
             "a new thread starts with one of: question, proposal, notice",
         ));
     }
-    let m = cx.send_one(to, subject, kind, "", "", Some(1), 1, body)?;
+    let m = cx.send_one(to, subject, kind, "", "", Some(1), 1, &summary, body)?;
     let text = format!("sent {} to {}", m.id, m.to);
     sent(&[m], &[], text)
 }
@@ -968,8 +1014,10 @@ pub fn reply(
     id: &str,
     kind: &str,
     subject: Option<&str>,
+    summary: Option<&str>,
     body: &str,
 ) -> Result<Reply> {
+    let summary = summary_arg(summary)?;
     let kind = Kind::parse(kind);
     if !rules::REPLIES.contains(&kind) {
         return Err(Failure::new(
@@ -1001,6 +1049,7 @@ pub fn reply(
         &thread,
         Some(round),
         cycle,
+        &summary,
         body,
     )?;
     let text = format!(
@@ -1050,6 +1099,7 @@ pub fn decide(cx: &Context, thread: &str, choice: &str, note: Option<&str>) -> R
         .find(|m| m.id == thread)
         .unwrap_or(&messages[0]);
     let subject = format!("Decision: {}", rules::strip_re(&first.subject));
+    let summary = tool_summary("The user decided: ", choice);
     let mut out = Vec::new();
     for side in cx.sides(&messages) {
         out.push(cx.send_one(
@@ -1060,6 +1110,7 @@ pub fn decide(cx: &Context, thread: &str, choice: &str, note: Option<&str>) -> R
             thread,
             None,
             cycle,
+            &summary,
             &body,
         )?);
     }
@@ -1099,6 +1150,7 @@ pub fn guide(cx: &Context, thread: &str, text: &str) -> Result<Reply> {
         .find(|m| m.id == thread)
         .unwrap_or(&messages[0]);
     let subject = format!("User request: {}", rules::strip_re(&first.subject));
+    let summary = tool_summary("The user asks: ", text);
     let body = format!(
         "### User request\n{}\n\n### Cycle\nThe user stepped into this conversation. Cycle {cycle} starts: up to {} new rounds that take this request into account, closed by a new agreement or impasse for the user.\n",
         text.trim(),
@@ -1114,6 +1166,7 @@ pub fn guide(cx: &Context, thread: &str, text: &str) -> Result<Reply> {
             thread,
             None,
             cycle,
+            &summary,
             &body,
         )?);
     }

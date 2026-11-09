@@ -139,6 +139,8 @@ pub struct Message {
     pub needs_user: bool,
     /// The writer's version, empty for tool 0.1.
     pub tool: String,
+    /// The sender's short first-person summary (FEAT-039); empty when the sender wrote none.
+    pub summary: String,
     #[serde(skip)]
     pub body: String,
 }
@@ -229,6 +231,7 @@ pub fn parse(text: &str, path: &str) -> Result<Message, ParseError> {
         round: number("round")?,
         needs_user: get("needs_user") == "true",
         tool: get("tool"),
+        summary: get("summary"),
         body: body.trim().to_owned(),
     })
 }
@@ -270,10 +273,23 @@ pub fn render(message: &Message, tool: &str) -> String {
     } else {
         &message.tool
     };
+    // Optional fields go after the fixed ones and only when set, so a message without
+    // them is written exactly as before.
+    if !message.summary.is_empty() {
+        out.push_str(&format!(
+            "summary: {}\n",
+            quoted(&one_line(&message.summary))
+        ));
+    }
     out.push_str(&format!("tool: {tool}\n---\n\n"));
     out.push_str(message.body.trim());
     out.push('\n');
     out
+}
+
+/// `text` on one line: line breaks and runs of blanks become one space.
+pub fn one_line(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 /// The `##` or `###` sections of a body, in order, with their text trimmed.
@@ -480,6 +496,23 @@ mod tests {
                 m
             );
         }
+    }
+
+    #[test]
+    fn a_summary_is_written_only_when_set_and_read_back() {
+        let plain = parse(TOOL_02, "x.md").unwrap();
+        assert_eq!(plain.summary, "");
+        assert!(!render(&plain, "1.0.0").contains("summary:"));
+        let with = Message {
+            summary: "I agree, with \"one\" change.\nSee below.".into(),
+            ..plain
+        };
+        let text = render(&with, "1.0.0");
+        assert!(text.contains("summary: \"I agree, with 'one' change. See below.\"\ntool:"));
+        assert_eq!(
+            parse(&text, "x.md").unwrap().summary,
+            "I agree, with 'one' change. See below."
+        );
     }
 
     #[test]

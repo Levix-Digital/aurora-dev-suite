@@ -408,6 +408,7 @@ mod tests {
             round: None,
             needs_user: false,
             tool: String::new(),
+            summary: String::new(),
             body: String::new(),
         }
     }

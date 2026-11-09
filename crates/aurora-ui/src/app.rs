@@ -165,7 +165,7 @@ pub fn App() -> impl IntoView {
                     <p>{concat!("v", env!("CARGO_PKG_VERSION"))}</p>
                 </div>
             </aside>
-            <main id="main" tabindex="-1" node_ref=main_ref>
+            <main id="main" tabindex="-1" node_ref=main_ref class=move || if ctx.view.get() == View::Messages { "flush" } else { "" }>
                 {preview
                     .then(|| {
                         view! {

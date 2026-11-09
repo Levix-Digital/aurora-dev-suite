@@ -381,6 +381,7 @@ mod tests {
 
     fn project(name: &str, presence: Presence) -> Project {
         Project {
+            logo: None,
             id: ProjectId(name.into()),
             name: ProjectName::parse(name).unwrap_or_else(|_| unreachable!("valid sample")),
             root: Path::new("/repos").join(name),
@@ -531,6 +532,7 @@ mod tests {
         let aurora = project("aurora-dev-suite", Presence::Present);
         let send = UserAction::Send {
             draft: Draft {
+                summary: String::new(),
                 to: "gedo".into(),
                 kind: MessageKind::Question,
                 subject: "Dates".into(),

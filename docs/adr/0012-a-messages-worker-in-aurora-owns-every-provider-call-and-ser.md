@@ -8,7 +8,7 @@ subsystems: [desktop, ui, core, integrations]
 supersedes: []
 superseded_by: []
 amends: [11]
-amended_by: []
+amended_by: [13, 14]
 ---
 
 # ADR-0012: A messages worker in Aurora owns every provider call and serves a saved snapshot

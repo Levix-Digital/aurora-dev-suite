@@ -1,12 +1,12 @@
 ---
 id: 2
 title: Desktop application with Tauri 2 and a Leptos interface
-status: accepted
+status: superseded
 date: '2026-10-27'
 version: null
 subsystems: [desktop, ui]
 supersedes: []
-superseded_by: []
+superseded_by: [14]
 amends: []
 amended_by: []
 ---

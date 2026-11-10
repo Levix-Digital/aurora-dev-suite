@@ -60,3 +60,4 @@ Called by `aurora-ui` through `window.__TAURI__` (`invoke` and `event.listen`). 
 - [ADR-0011](../adr/0011-messages-are-read-from-local-inbox-copies-kept-current-by-a.md): the Messages view answers from the provider's copies and a background sync follows every poll.
 - [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): a worker owns every provider call and the view reads a saved snapshot.
 - [ADR-0008](../adr/0008-installers-built-by-the-tauri-bundler-and-published-by-the-r.md): packages built by the Tauri bundler and published by the release workflow.
+- [ADR-0014](../adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md): Aurora becomes a self-hosted web application governed by the Admin Hub; this shell stays until the web server replaces it.

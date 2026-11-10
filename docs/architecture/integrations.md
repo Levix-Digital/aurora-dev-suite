@@ -77,3 +77,4 @@ The command line of [`contracts/cli.md`](../../specs/008-messages/contracts/cli.
 - [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): `export` gives a whole reading in one call for Aurora's messages worker.
 - [ADR-0013](../adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md): the sender's summary in the message header.
 - [ADR-0003](../adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md): Aurora uses it only through its command line with versioned JSON.
+- [ADR-0014](../adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md): integration approvals are attestations signed by the Admin Hub, written to the inboxes and verified offline.

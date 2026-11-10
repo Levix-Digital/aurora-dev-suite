@@ -8,7 +8,7 @@ subsystems: [core, engines]
 supersedes: []
 superseded_by: []
 amends: []
-amended_by: []
+amended_by: [14]
 ---
 
 # ADR-0004: Local-first state derived from the repositories

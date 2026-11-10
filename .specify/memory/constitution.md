@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: 14b8dc4c3064ee0000250590d981b05f1d7ba4be460157cf5ca1b3c35bd878f3
-content-sha256: c6eddc31f059e3bbaaa627cb917bbe1df9c47ad4a84190be8677c174dfa4eb51
+sources-sha256: bd2990867d9cb678c2791e6ba6e7522947b2e509ed5cf0b1eef5232d5a37561b
+content-sha256: b8e11cc33827533fc99877200a86cadc72403d6bcd265c6c3d3cb37c9092b06e
 -->
 # aurora-dev-suite Constitution
 
@@ -162,7 +162,6 @@ A desktop application without a service. Recovery means: a missing or broken eng
 Accepted decisions; a plan that contradicts one needs a new ADR that supersedes it.
 
 - ADR-0001: Hexagonal architecture with the engines behind ports (`docs/adr/0001-hexagonal-architecture-with-the-engines-behind-ports.md`)
-- ADR-0002: Desktop application with Tauri 2 and a Leptos interface (`docs/adr/0002-desktop-application-with-tauri-2-and-a-leptos-interface.md`)
 - ADR-0003: Engines integrated only through their command lines with versioned JSON (`docs/adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md`)
 - ADR-0004: Local-first state derived from the repositories (`docs/adr/0004-local-first-state-derived-from-the-repositories.md`)
 - ADR-0005: Proprietary binary-only distribution with Levix licenses (`docs/adr/0005-proprietary-binary-only-distribution-with-levix-licenses.md`)
@@ -171,6 +170,10 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0008: Installers built by the Tauri bundler and published by the release workflow (`docs/adr/0008-installers-built-by-the-tauri-bundler-and-published-by-the-r.md`)
 - ADR-0009: Conversations between projects in rounds that close with a record for the user (`docs/adr/0009-conversations-between-projects-in-rounds-that-close-with-a-r.md`)
 - ADR-0010: The integrations provider ships with Aurora and the inbox branch holds only data (`docs/adr/0010-the-integrations-provider-ships-with-aurora-and-the-inbox-br.md`)
+- ADR-0011: Messages are read from local inbox copies kept current by a background sync (`docs/adr/0011-messages-are-read-from-local-inbox-copies-kept-current-by-a.md`)
+- ADR-0012: A messages worker in Aurora owns every provider call and serves a saved snapshot (`docs/adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md`)
+- ADR-0013: Messages read as a chat between projects, with a summary written by the sender (`docs/adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md`)
+- ADR-0014: Aurora is a self-hosted web application governed by the Levix Admin Hub (`docs/adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md`)
 
 ## Governance
 
@@ -178,4 +181,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.8.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-06
+**Version**: 1.9.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-10

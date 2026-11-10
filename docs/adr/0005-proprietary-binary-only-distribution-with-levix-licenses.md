@@ -8,7 +8,7 @@ subsystems: [desktop]
 supersedes: []
 superseded_by: []
 amends: []
-amended_by: []
+amended_by: [14]
 ---
 
 # ADR-0005: Proprietary binary-only distribution with Levix licenses

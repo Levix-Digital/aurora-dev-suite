@@ -85,3 +85,4 @@ Called by `aurora-desktop` (one Tauri command per use case) and, for the preview
 - [ADR-0009](../adr/0009-conversations-between-projects-in-rounds-that-close-with-a-r.md): conversations between projects in at most three rounds, closed by a record the user decides on once.
 - [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): the messages snapshot, its views and the poll interval in seconds.
 - [ADR-0013](../adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md): the chat model, the summary in `MessageHeader`, `Draft` and `UserAction::Reply` (checked by `check_summary`), and `Project.logo` (`logo_data_url`: PNG, JPEG, WebP or SVG, at most 256 KB).
+- [ADR-0014](../adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md): project state stays derived from the repositories on the Aurora web server; identities and approvals come from the Admin Hub.

@@ -136,6 +136,62 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: Levi, 2026-11-08: later, show the alerts one Gedo publishes to another Gedo in the same chat style as Messages (FEAT-039). To be detailed when it is planned.
 
+### FEAT-041: [server] Aurora web server replacing the desktop shell
+- **Priority**: high
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Plan**: -
+- **Description**: ADR-0014. An axum server exposes the command set of the desktop shell over HTTP with a push channel for events, runs the messages worker, and serves the Leptos interface built into the binary. One container with SQLite for settings only; project state stays derived from the repositories. Until Admin Hub v0.4.0, a single local development account.
+
+### FEAT-042: [ui] HTTP backend for the interface
+- **Priority**: high
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Plan**: -
+- **Description**: ADR-0014. A third implementation of the interface's backend abstraction, next to the desktop shell and the fixtures, talking to the Aurora web server.
+
+### FEAT-043: [governance] Sign-in through the Admin Hub with approver and reader roles
+- **Priority**: high
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Plan**: -
+- **Description**: ADR-0014. Aurora signs people in through the Admin Hub (Hub FEAT-047, OIDC); access is granted only in the Hub by the company's governance people; roles approver (per project) and reader arrive in the token. No user table in Aurora. Depends on Admin Hub v0.4.0.
+
+### FEAT-044: [governance] Aurora product manifest
+- **Priority**: medium
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Plan**: -
+- **Description**: ADR-0014. Aurora's product manifest in this repository: roles (approver per project, reader), policy schema (projects that require approval, approver group per project, deadlines) and seat model, registered in the Admin Hub (Hub FEAT-042, FEAT-043).
+
+### FEAT-045: [governance] Integration approvals through the Admin Hub
+- **Priority**: high
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Plan**: -
+- **Description**: ADR-0014 and the coordinator design. Aurora sends approval requests with metadata only (request id, content digest, projects, approver group) to the Admin Hub (Hub FEAT-048); the approver reads the decision in Aurora and approves in the Hub with a TOTP step-up; the Hub-signed attestation is written to the inboxes and verified offline at merge. Replaces personal approval keys. Depends on Admin Hub v0.4.0.
+
+### FEAT-046: [packaging] Server packaging: container image and Linux binary
+- **Priority**: medium
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Plan**: -
+- **Description**: ADR-0014. Release artifacts become a container image and a static Linux binary published to the public releases repository, following the Admin Hub's packaging; desktop installers retired once the server ships.
+
+### FEAT-047: [governance] Read-only view without an Admin Hub
+- **Priority**: low
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Plan**: -
+- **Description**: ADR-0014. Without a governing Admin Hub, Aurora is a read-only portfolio view: no approvals and no governance actions.
+
 ## Improvements
 
 ### IMP-003: Messages tells when .aurora/integrations.json is on another branch
@@ -217,6 +273,12 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-29, 2026-10-29, Levi
 - **Description**: Projects that depend on each other learn about each other's merges and agree on integrations before changing code: notices and messages travel through plain Git on an orphan aurora/inbox branch of each project's repository, the Dev Cycle's integration step runs through dcp with any agent or a person, and the user approves each agreed integration at an integration gate. Agnostic to coding agents and Git hosts; available only with Aurora (ADR-0007, ADR-0009).
+
+### EPIC-011: Web application governed by the Admin Hub
+- **Priority**: medium
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
+- **Description**: Design: docs/adr/ (ADR on the self-hosted web application). Aurora becomes a self-hosted web server (one container, same Rust core, engines, integrations and Leptos interface with an HTTP backend) enrolled and governed by the Levix Admin Hub as a product server: sign-in, approver and reader roles, approvals, audit, policies and license come from the Hub; Aurora keeps every piece of content. Depends on Admin Hub v0.4.0 (Hub FEAT-017, FEAT-042, FEAT-047, FEAT-048, FEAT-049), agreed 2026-11-10.
 
 ## Closed
 

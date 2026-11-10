@@ -18,22 +18,15 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Goal**: Every registered project's cycle state and what waits for the user, read through the dcp binary's versioned JSON; built and tested against fixtures, it lights up when the first dcp release with the contract is installed. Plus installable packages.
 - **Items**: FEAT-014, FEAT-015, FEAT-017, FEAT-005, FEAT-016
 
-## v0.3.0: Actions through dcp
-- **Status**: in_progress
-- **Target**: project settings light up with dcp v2.11.0 (DCP FEAT-017)
-- **Goal**: Change a project's Dev Cycle settings through dcp commands; and talk to the other projects from Aurora's Messages tab, through the integrations provider shipped with Aurora, deciding on each conversation's closing record or stepping into it (Levi, 2026-11-06). The inbox actions (FEAT-018, on hold) moved to v0.6.0, which also waits for dcp v2.11.0.
-- **Items**: FEAT-027, BUG-004, ADJ-001, FEAT-029, FEAT-031, FEAT-032, FEAT-033, FEAT-034, BUG-005, BUG-006, ADJ-002, BUG-007, ADJ-003, BUG-008, IMP-004, BUG-009, ADJ-005, IMP-005, IMP-006
-
 ## v0.4.0: Web application
-- **Status**: planned
-- **Target**: after v0.3.0 final (Levi, 2026-11-10)
-- **Goal**: Aurora runs as a self-hosted web application (ADR-0014): one server per organization with the same core, engines, integrations and interface, packaged as a container image and a Linux binary; without a governing Admin Hub it is a read-only view, and until Admin Hub v0.4.0 it uses a single local development account. It also delivers the Messages chat view (FEAT-039), whose desktop release candidate v0.3.1-rc.1 was cancelled because the move to the web would make that acceptance run obsolete (Levi, 2026-11-10).
-- **Items**: FEAT-039, FEAT-041, FEAT-042, FEAT-046, FEAT-047
+- **Status**: in_progress
+- **Goal**: Aurora runs as a self-hosted web application (ADR-0014): one server per organization with the same core, engines, integrations and interface, packaged as a container image and a Linux binary; without a governing Admin Hub it is a read-only view, and until Admin Hub v0.4.0 it uses a single local development account. It also delivers the Messages chat view (FEAT-039), whose desktop release candidate v0.3.1-rc.1 was cancelled because the move to the web would make that acceptance run obsolete (Levi, 2026-11-10). v0.3.0 "Actions through dcp" (project settings through dcp, Messages through the integrations provider) is not released as desktop either: its items are delivered and ship here, accepted on the web candidate (Levi, 2026-11-10).
+- **Items**: FEAT-027, BUG-004, ADJ-001, FEAT-029, FEAT-031, FEAT-032, FEAT-033, FEAT-034, BUG-005, BUG-006, ADJ-002, BUG-007, ADJ-003, BUG-008, IMP-004, BUG-009, ADJ-005, IMP-005, IMP-006, FEAT-039, FEAT-041, FEAT-042, FEAT-046, FEAT-047
 
 ## v0.6.0: Integrations
 - **Status**: planned
 - **Target**: after dcp v2.11.0 (DCP FEAT-018)
-- **Goal**: Projects that depend on each other learn about each other's merges automatically and their conversations and decisions (delivered in v0.3.0) become the integration step and the integration gate of the Dev Cycle, through the integrations provider plugged into dcp; waits for dcp v2.11.0 with the extension point (DCP FEAT-018). Approvals go through the Admin Hub (ADR-0014), so this release also waits for Admin Hub v0.4.0 (Hub FEAT-047 sign-in, FEAT-048 signed approval attestations, FEAT-049 e-mail; agreed 2026-11-10).
+- **Goal**: Projects that depend on each other learn about each other's merges automatically and their conversations and decisions (delivered in v0.4.0) become the integration step and the integration gate of the Dev Cycle, through the integrations provider plugged into dcp; waits for dcp v2.11.0 with the extension point (DCP FEAT-018). Approvals go through the Admin Hub (ADR-0014), so this release also waits for Admin Hub v0.4.0 (Hub FEAT-047 sign-in, FEAT-048 signed approval attestations, FEAT-049 e-mail; agreed 2026-11-10).
 - **Items**: FEAT-018, FEAT-030, FEAT-036, FEAT-037, FEAT-043, FEAT-044, FEAT-045
 
 ## v0.7.0: Agents

@@ -24,7 +24,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - The window titled "Aurora" appears within 1.5 seconds with the navigation and the Portfolio view selected
   - No "Preview" banner is shown
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-WIN-002: Every view is reachable with the keyboard only
@@ -39,7 +39,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - The focused element always has a visible outline
   - Alt+1 to Alt+6 open Portfolio, Project, Engines, Inbox, Messages and Settings, with the focus in the content of the view
   - Every button and field can be reached and used without the mouse
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-WIN-003: The theme follows the system and the setting
@@ -52,7 +52,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   3. Choose "Follow the system" and Save, then switch the system to light appearance
 - **Expected**:
   - Step 1 shows the dark theme; step 2 shows light after Save and after the restart; step 3 follows the system change without a restart
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-WIN-005: Linux without WebKitGTK
@@ -63,7 +63,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   1. Run `aurora` from a terminal
 - **Expected**:
   - The terminal names the missing library (`libwebkit2gtk-4.1.so.0`); the README's troubleshooting section tells which package to install
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-WIN-006: The log file is written
@@ -75,7 +75,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   2. Start Aurora with `AURORA_LOG=debug` and open the Engines view
 - **Expected**:
   - A file `aurora.<date>.log` has a "starting Aurora" line and one "engine probed" or "engine missing" line per engine; with `debug`, each engine command and its duration; never the engine's output
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Foundations: projects
@@ -91,7 +91,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Each appears with its folder name; the third says its repository root was registered instead of the sub-folder
   - After the restart the list, with the new name, is the same
   - Done in under one minute
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PRJ-002: Refused folders say why
@@ -104,7 +104,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   3. Type the registered repository again through another path (a link, or other letter case on Windows) and click Add
 - **Expected**:
   - Nothing is added; the messages say "not inside a Git repository", "does not exist" and "already registered as …"
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PRJ-003: A moved project is shown as missing and can be located
@@ -116,7 +116,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   2. Click "Locate…", type the new path and Save
 - **Expected**:
   - Step 1 shows the project as "Missing" with its old path; step 2 shows it as "Present" at the new path
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PRJ-004: Removing a project never touches the repository
@@ -127,7 +127,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   1. Click Remove, then confirm
 - **Expected**:
   - The project leaves the list; the repository folder is unchanged on disk
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PRJ-005: A damaged project list is kept aside
@@ -139,7 +139,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   2. Start Aurora
 - **Expected**:
   - The Portfolio is empty and a notice gives the path of `projects.toml.damaged-<timestamp>`, which holds the old content
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Foundations: engines
@@ -152,7 +152,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   1. Open Engines
 - **Expected**:
   - The three engines are "Missing" with what to install; every feature says what it needs; Aurora keeps working
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-ENG-002: Refresh after installing an engine
@@ -166,7 +166,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Step 1: Gedo is "Ready" with version 1.2.3 and its capabilities, and "Agent work" shows "Coming in v0.4.0"
   - Step 2: Gedo is "Installed without contract" with what to update
   - On Windows, no console window opens at any step
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-ENG-003: A hanging engine only delays itself
@@ -177,7 +177,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   1. Click Refresh on Engines
 - **Expected**:
   - AnyContext updates at once; Gedo turns "Degraded" ("no answer after 3 s") after about 3 seconds; "Last error output" opens
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-ENG-004: A configured location wins over the search path
@@ -188,7 +188,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   1. In Settings, set the Gedo location to that file and Save; refresh Engines
 - **Expected**:
   - Gedo is "Ready" and its location is the configured file
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Foundations: preview
@@ -203,7 +203,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - A "Preview" banner is shown; the Portfolio lists four sample projects, one missing
   - The engines show ready, installed without contract and missing; after one refresh Gedo is degraded, after the next ready again
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Portfolio on the dcp contract
@@ -220,7 +220,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - `ai-code-agent-skills`: "Release candidate", "v2.9.0 Baseline and zero friction", "1 waits for you: 1 release candidate" and "Part of the project could not be read."
   - `levix-platform`: "Missing" and "Locate the folder to read its cycle state."
   - The header says "4 items wait for you"
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-POR-002: Without dcp the Portfolio says what to install once
@@ -232,7 +232,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - The Portfolio line at the top says to install the Dev Cycle Protocol with its JSON contract
   - Every present project says "Cycle state unavailable." within a second; missing projects say to locate the folder
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-POR-003: With dcp answering the contract, every project shows its summary
@@ -244,7 +244,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - Every present project shows "Implementation", "v0.4.0 Command line" and "3 wait for you"
   - While reading, the rows say "Reading the cycle state…" or "Refreshing…" and the header counts the reads
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-POR-004: A hanging dcp only delays its own rows
@@ -257,7 +257,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - Step 1: each row keeps its last summary marked "Refreshing…", then says the Dev Cycle Protocol did not answer within 3 s; the window stays responsive and the project actions keep working
   - Step 2: the summaries come back
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Project view
@@ -276,7 +276,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Release candidate: "No release candidate"
   - Pull requests: "#41 feat: gedo radar --json", "Needs your action", "2 threads open, CI green. 1 review thread for you"
   - Blocking bugs: "BUG-012 (high) Merge falls back to text on renamed files"; untriaged bugs: "BUG-015 Slow radar on large repositories: no severity"
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PVW-002: Gates and the next step
@@ -291,7 +291,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Step 1: the gate "Decision" says "Choose how to go on: Fix the blocking bug first"; Next step lists "Fix the blocking bug first" first, marked "Recommended", then "Resume plan command-line" and "Answer the review of pull request 41", each with its reason when it has one
   - Step 2: "Release candidate" phase; the gates "Decision" and "Release candidate acceptance" with "v2.9.0-rc.1: 4 not run, 1 failed"; the release candidate "v2.9.0-rc.1 of v2.9.0: 4 not run, 1 failed" and "Not released"; the overview lists the finding about pull requests
   - Step 3: "Idle", "No gate waits for you", "No step recommended", and every other section says it has nothing
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PVW-003: Switching, a missing project and Refresh
@@ -308,7 +308,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Step 2: "Missing: folder moved or deleted" and "Locate the folder to read its cycle state.", the same text as its Portfolio row
   - Step 3: the sections stay while "Refreshing…" is shown, then the state comes back
   - Step 4: `gedo` is still chosen
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PVW-004: Without dcp the Project view says what to install once
@@ -320,7 +320,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - The Project view line at the top says to install the Dev Cycle Protocol with its JSON contract
   - The view says "Cycle state unavailable." within a second
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 
@@ -338,7 +338,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - "Branching model" is a choice set to `trunk` with "Default: integration"; "Release candidates" is a checked box; "Bug severities that block new work" has `critical`, `high`, `medium` checked and `low` not; "README line limit" is `400`
   - "Integration branch", "Production branch" and "Release candidates" are marked "Default"; "Branching model" and "Latest release for a bug that does not block" are not, and have a **Reset to default** button
   - "Mandatory gates", the two `speckit` settings and "Rules that flag a change drifting from the active plan" show their value as text with no control, marked "Read-only" with their reason (for example "Changed only by dcp speckit init and dcp speckit upgrade"); the drift rules show `[{"path":"crates/gedo-core/**","plan":"required"}]`
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-SET-002: Edit, preview and apply a change
@@ -353,7 +353,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Step 1: both fields are marked "Edited" and the toolbar says "2 changes"
   - Step 2: the preview lists `devops.branching: trunk → integration` and `devops.release_candidates: on → off` and shows the diff of `.dev-cycle.json`; back to editing keeps both edits
   - Step 3: "Saved to .dev-cycle.json. Commit it to share the change."; the settings are read again with the new values and "No changes"
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-SET-003: Refusals are shown next to the field
@@ -368,7 +368,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Step 1: "Expected a whole number" under the field; the toolbar does not count it
   - Step 2: "The integration branch must differ from the production branch" under "Integration branch" and in the status line; nothing is written
   - Step 3: the edits and the errors are gone
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-SET-004: Without the config capability nothing runs
@@ -381,7 +381,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - Step 1: "Project settings" says what to install (needs config) and "Project settings unavailable."; no process is started
   - Step 2: the sample settings are shown and the preview lists the sample changes; the project's `.dev-cycle.json` is not touched by Aurora
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-SET-005: Only what the user changed is written
@@ -396,7 +396,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
   - Step 1: "Release candidates" is not marked "Edited" and the toolbar says "No changes" (its default is not written as a decision)
   - Step 2: the field is marked "Back to default" and shows "Not set"; the preview lists `architecture.core_path: crates/gedo-core → Not in the file (default)` and the diff removes the line
   - Step 3: after reading again, the field is marked "Default" and has no **Reset to default** button
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Inbox
@@ -416,7 +416,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
     - "Waits for your review (1)": `gedo`, "Pull request", "#41 feat: gedo radar --json", "2 threads open, CI green. 1 review thread for you"
     - "To triage (1)": `gedo`, "Untriaged bug", "BUG-015 Slow radar on large repositories", "no severity"
   - The note that part of a project could not be read is shown (the release candidate sample has a finding)
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-INB-002: Open the project of an item
@@ -429,7 +429,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - Step 1: the Project view opens on `ai-code-agent-skills`, with the gate "Release candidate acceptance"
   - Step 2: the Project view opens on `levix-platform`, which says to locate its folder
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-INB-003: Refresh and the projects not read
@@ -442,7 +442,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - Step 1: "Not read (1)" lists `levix-platform` with "Locate the folder to read its cycle state.", the same text as its Portfolio row, and **Open**
   - Step 2: the items stay while the header says how many projects are being read, then the same items come back in the same order
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-INB-004: Without dcp the Inbox says what to install once
@@ -454,7 +454,7 @@ The binary is `target/release/aurora` (`aurora.exe` on Windows). A fake engine f
 - **Expected**:
   - The line at the top says to install the Dev Cycle Protocol with its JSON contract
   - "Nothing waits for you", and "Not read" says "Cycle state unavailable." once, within a second, not once per project
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Messages
@@ -548,7 +548,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 2 repeated with Portfolio open: the count next to Messages goes up there too
   - Step 3: the message appears within a few seconds of the window coming back (minimized, Aurora checks once a minute)
   - Step 4 shows no news until "Check now"
-- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-006: The provider from a terminal
@@ -563,7 +563,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 1 prints the version (Aurora's), then says `.aurora/integrations.json` is not found and gives the `init` command
   - Step 2 writes `.aurora/integrations.json` with the counterpart and `validate` reports it valid
   - Step 3 answers a document with `schema` `dcp-integrations.check` and `schema_version` 1.1; `poll` exits with 10 when there is news and 0 otherwise
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-007: Without the provider or with a project not set up
@@ -578,7 +578,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 1 lists the project as not set up with a command that runs from any folder: the full path of the provider, `--dir` with the project's folder and `init --project` with the slug the other projects' `.aurora/integrations.json` give to its repository (for a clone of ai-code-agent-skills, `dev-cycle-protocol`), or a slug from its name when none lists it; the other projects work normally
   - Step 2: within a few seconds of the window getting the focus, Messages offers to read again (or the count changes on another view); after reading again the project takes part, without restarting Aurora or reopening the view
   - Step 3 says once that the provider is missing and how to install it; nothing else runs and Aurora stays responsive
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-008: Messages open fast and read conversations stop counting as new
@@ -597,7 +597,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 3: the new question is listed after "Check now", without reopening the view
   - Step 4: the unread dot and the navigation count drop at once, without waiting; the conversation stays usable while it is marked
   - Step 5: the conversation opened in step 4 no longer shows the unread dot
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-009: Messages open from the last snapshot, even offline
@@ -614,7 +614,6 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 2 marks the message read at once; Aurora stays responsive
   - Step 3: the notice goes away and the list is current, without reopening the view
   - Step 4: the reply appears as a sent bubble as soon as it is written, with no reload of the page; the other message opens without waiting for the write
-- **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
 - **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
@@ -669,7 +668,7 @@ These tests use the packages of a release (or of a dry run of the release workfl
   - Step 3: under 30 MB
   - Step 4: prints the release's version (the installation folder is on the user's `PATH`)
   - Step 5: the Start menu entry is removed and the command is no longer found (the folder left `PATH`, other entries unchanged); after installing again, the project added in step 2 is still listed
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PKG-002: A newer installer updates an older installation
@@ -682,7 +681,7 @@ These tests use the packages of a release (or of a dry run of the release workfl
 - **Expected**:
   - Step 1: it installs over the earlier version without asking to uninstall it first
   - Step 2: the sidebar shows the new version and the project list is unchanged; **Settings > Apps** lists one Aurora
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PKG-003: Install, open and remove the .deb
@@ -699,7 +698,7 @@ These tests use the packages of a release (or of a dry run of the release workfl
   - Step 2: the menu entry has Aurora's icon; the window opens and the sidebar shows the release's version
   - Step 3: under 30720 (KiB)
   - Step 4: the remove deletes the menu entry and `/usr/bin/aurora`; after installing again, the project added in step 2 is still listed
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PKG-004: The AppImage runs
@@ -710,7 +709,7 @@ These tests use the packages of a release (or of a dry run of the release workfl
   1. `chmod +x <the AppImage>` and run it
 - **Expected**:
   - The window opens with the release's version on the sidebar, without installing anything else
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-PKG-005: The release lists the packages and their checksums
@@ -723,5 +722,5 @@ These tests use the packages of a release (or of a dry run of the release workfl
 - **Expected**:
   - Step 1: a release candidate is marked "Pre-release" and not "Latest"; the assets are the Windows installer, the `.deb`, the AppImage and `SHA256SUMS.txt`
   - Step 2: every package reports `OK`
-- **Result** (v0.3.0-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:

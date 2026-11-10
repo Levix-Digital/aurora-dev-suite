@@ -30,21 +30,27 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Goal**: The Messages view reads like a chat between projects: projects as contacts, bubbles with the sender's first-person summary, the full message in a panel that slides in on the right.
 - **Items**: FEAT-039
 
-## v0.4.0: Agents
+## v0.4.0: Web application
 - **Status**: planned
-- **Goal**: Parallel agents and Gedo collisions are visible per project; waits for Gedo v0.4.0 (command line) and v0.5.0 (agent streams).
-- **Items**: FEAT-019, FEAT-020
-
-## v0.5.0: Knowledge
-- **Status**: planned
-- **Goal**: Questions about a project are answered with citations inside Aurora; waits for AnyContext's versioned JSON output.
-- **Items**: FEAT-021, FEAT-022
+- **Target**: after v0.3.1 (Levi, 2026-11-10)
+- **Goal**: Aurora runs as a self-hosted web application (ADR-0014): one server per organization with the same core, engines, integrations and interface, packaged as a container image and a Linux binary; without a governing Admin Hub it is a read-only view, and until Admin Hub v0.4.0 it uses a single local development account.
+- **Items**: FEAT-041, FEAT-042, FEAT-046, FEAT-047
 
 ## v0.6.0: Integrations
 - **Status**: planned
 - **Target**: after dcp v2.11.0 (DCP FEAT-018)
 - **Goal**: Projects that depend on each other learn about each other's merges automatically and their conversations and decisions (delivered in v0.3.0) become the integration step and the integration gate of the Dev Cycle, through the integrations provider plugged into dcp; waits for dcp v2.11.0 with the extension point (DCP FEAT-018). Approvals go through the Admin Hub (ADR-0014), so this release also waits for Admin Hub v0.4.0 (Hub FEAT-047 sign-in, FEAT-048 signed approval attestations, FEAT-049 e-mail; agreed 2026-11-10).
-- **Items**: FEAT-018, FEAT-030, FEAT-036, FEAT-037, FEAT-045
+- **Items**: FEAT-018, FEAT-030, FEAT-036, FEAT-037, FEAT-043, FEAT-044, FEAT-045
+
+## v0.7.0: Agents
+- **Status**: planned
+- **Goal**: Parallel agents and Gedo collisions are visible per project; waits for Gedo v0.4.0 (command line) and v0.5.0 (agent streams). Moved after the web application and the integrations (Levi, 2026-11-10).
+- **Items**: FEAT-019, FEAT-020
+
+## v0.8.0: Knowledge
+- **Status**: planned
+- **Goal**: Questions about a project are answered with citations inside Aurora; waits for AnyContext's versioned JSON output. Moved after the web application and the integrations (Levi, 2026-11-10).
+- **Items**: FEAT-021, FEAT-022
 
 ## v1.0.0: The suite
 - **Status**: planned

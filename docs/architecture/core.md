@@ -53,8 +53,8 @@ The catalog maps each feature to one engine, the capabilities it needs (schema M
 | Feature | Engine | Capabilities | Release |
 |---|---|---|---|
 | Portfolio, Project view, Decision inbox | Dev Cycle (`dcp`) | `diagnose` | v0.2.0 |
-| Agent work | Gedo | `radar`, `scope`, `stream` | v0.4.0 |
-| Knowledge | AnyContext (`actx`) | `ask`, `workspaces` | v0.5.0 |
+| Agent work | Gedo | `radar`, `scope`, `stream` | v0.7.0 |
+| Knowledge | AnyContext (`actx`) | `ask`, `workspaces` | v0.8.0 |
 
 A feature is unavailable, with the hint of its engine, while its engine is not ready or lacks a capability; only a ready engine counts, and only the capabilities of the engine the feature names. When everything is there but the feature ships in a later release, it says "not in this release". Errors are values (`thiserror` enums), never panics.
 

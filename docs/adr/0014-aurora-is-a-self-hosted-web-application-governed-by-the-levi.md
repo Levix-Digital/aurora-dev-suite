@@ -8,7 +8,7 @@ subsystems: [desktop, ui, core, integrations]
 supersedes: [2]
 superseded_by: []
 amends: [4, 5, 8, 11, 12]
-amended_by: []
+amended_by: [15]
 ---
 
 # ADR-0014: Aurora is a self-hosted web application governed by the Levix Admin Hub

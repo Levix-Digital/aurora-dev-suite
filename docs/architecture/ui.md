@@ -45,3 +45,4 @@ Calls `aurora-desktop` commands and listens to its events; uses the types of `au
 - [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): the Messages view reads only the snapshot; writes go through the worker queue.
 - [ADR-0013](../adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md): Messages as a chat between projects in three columns; project logos.
 - [ADR-0014](../adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md): the interface gets an HTTP backend for the Aurora web server.
+- [ADR-0015](../adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md): Messages as a list of round tables, a group chat per table and an approval strip per involved project.

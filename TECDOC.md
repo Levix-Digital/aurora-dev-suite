@@ -44,6 +44,7 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
+| [ADR-0015](docs/adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md) | Integrations coordinator: round tables, approvals by every involved project and the integration hold | accepted |  | 2026-11-10 |
 | [ADR-0014](docs/adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md) | Aurora is a self-hosted web application governed by the Levix Admin Hub | accepted |  | 2026-11-10 |
 | [ADR-0013](docs/adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md) | Messages read as a chat between projects, with a summary written by the sender | accepted | v0.3.1 | 2026-11-08 |
 | [ADR-0012](docs/adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md) | A messages worker in Aurora owns every provider call and serves a saved snapshot | accepted | v0.3.0 | 2026-11-07 |

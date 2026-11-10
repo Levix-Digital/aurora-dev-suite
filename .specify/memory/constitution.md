@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: bd2990867d9cb678c2791e6ba6e7522947b2e509ed5cf0b1eef5232d5a37561b
-content-sha256: b8e11cc33827533fc99877200a86cadc72403d6bcd265c6c3d3cb37c9092b06e
+sources-sha256: c435a6128da1047bd2dc11a3a5eb16872b4ee2d19d2804f56008554bafefe28f
+content-sha256: a5c9f514597f97a5c3a62803f920cf90d7fb7f4504b70a10e44f843dff5ca90d
 -->
 # aurora-dev-suite Constitution
 
@@ -174,6 +174,7 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0012: A messages worker in Aurora owns every provider call and serves a saved snapshot (`docs/adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md`)
 - ADR-0013: Messages read as a chat between projects, with a summary written by the sender (`docs/adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md`)
 - ADR-0014: Aurora is a self-hosted web application governed by the Levix Admin Hub (`docs/adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md`)
+- ADR-0015: Integrations coordinator: round tables, approvals by every involved project and the integration hold (`docs/adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md`)
 
 ## Governance
 
@@ -181,4 +182,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.9.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-10
+**Version**: 1.10.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-10

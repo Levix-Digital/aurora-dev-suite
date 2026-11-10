@@ -50,7 +50,7 @@ flowchart LR
 
 **The user's turn.** An agreement or impasse sets `needs_user`. It waits for the user in the inbox of the project that opened the thread until a `decision` or a `guidance` follows it. `record` builds the closing record (projects, rounds, cycle, conclusion, justification, positions, open points, decision needed with its numbered options, after approval, the user's requests); `decide --choice` sends a `decision` to every other side and closes the record.
 
-**Poll.** `poll` compares the inbox branch's remote tip (`ls-remote`) with the last tip seen, kept in the cache, and fetches only when it changed; it exits with 10 when there is news. `check` records the tip too, and lists the records waiting for the user, the pending messages, the sent messages still unread after the stale time and every conversation, most recent first.
+**Poll.** `poll` compares the inbox branch's remote tip (`ls-remote`) with the last tip seen, kept in the cache, and fetches only when it changed; it exits with 10 when there is news. `check` records the tip too, and lists the records waiting for the user, the pending messages, the sent messages still unread after the stale time and every conversation, most recent first. `defer` sets a message to seen with a `deferred: <reason>` note: it stays pending, so the next `check` lists it again, while `poll` counts only open messages.
 
 **Not set up.** A command on a folder without `.aurora/integrations.json` fails with `not_set_up` (exit code 3). The error document carries the folder's `origin` in `repository` when it has one, so a reader such as Aurora can find the slug the other projects already give to that repository and suggest it for `init` (BUG-009).
 

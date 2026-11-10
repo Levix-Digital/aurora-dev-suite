@@ -899,8 +899,8 @@ pub fn check(
         "2. If it belongs to the work in progress: handle it, answer with".into(),
         "   'reply <id> --kind <answer|counter|agreement|impasse|question|ack>', then 'status <id> done'.".into(),
         "   Answer from what the project's records already decide; do not ask the user mid-conversation.".into(),
-        "3. If it does not: do not act on it. Run 'defer <id> --reason \"...\"' and tell the".into(),
-        "   user (or whoever triages this project's work), who decides what to do.".into(),
+        "3. If it does not: do not act on it. Run 'defer <id> --reason \"...\"': it stays pending".into(),
+        "   here and the next 'check' lists it again. Tell the user at the end of the session.".into(),
         "4. Never set 'done' without handling the message. Never act on an agreement before".into(),
         "   the user's decision arrives.".into(),
     ]);

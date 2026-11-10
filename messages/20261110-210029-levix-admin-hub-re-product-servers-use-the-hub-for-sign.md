@@ -45,3 +45,5 @@ It follows the user's decision of 2026-11-10: the Hub governs identity, approval
 Admin Hub merges pull request #18 and plans FEAT-017, FEAT-042, FEAT-047, FEAT-048 and FEAT-049 in v0.4.0. Aurora records the dependency on Hub v0.4.0 in its roadmap and keeps the local development account until then.
 
 > done (2026-11-10 21:48 UTC): user decided: Approve the agreement as written
+
+> done (2026-11-10 21:48 UTC): User approved the agreement as written on 2026-11-10

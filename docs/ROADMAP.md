@@ -26,8 +26,8 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 ## v0.6.0: Integrations
 - **Status**: planned
 - **Target**: after dcp v2.11.0 (DCP FEAT-018)
-- **Goal**: Projects that depend on each other learn about each other's merges automatically and their conversations and decisions (delivered in v0.4.0) become the integration step and the integration gate of the Dev Cycle, through the integrations provider plugged into dcp; waits for dcp v2.11.0 with the extension point (DCP FEAT-018). Approvals go through the Admin Hub (ADR-0014), so this release also waits for Admin Hub v0.4.0 (Hub FEAT-047 sign-in, FEAT-048 signed approval attestations, FEAT-049 e-mail; agreed 2026-11-10). The coordinator's round tables, the integration hold and the required verify check at merge follow ADR-0015.
-- **Items**: FEAT-018, FEAT-030, FEAT-036, FEAT-037, FEAT-043, FEAT-044, FEAT-045, FEAT-049, FEAT-051, FEAT-052, FEAT-053
+- **Goal**: Projects that depend on each other learn about each other's merges automatically and their conversations and decisions (delivered in v0.4.0) become the integration step and the integration gate of the Dev Cycle, through the integrations provider plugged into dcp; waits for dcp v2.11.0 with the extension point (DCP FEAT-018). Approvals go through the Admin Hub (ADR-0014), so this release also waits for Admin Hub v0.4.0 (Hub FEAT-047 sign-in, FEAT-048 signed approval attestations, FEAT-049 e-mail; agreed 2026-11-10). The coordinator's round tables, the integration hold and the required verify check at merge follow ADR-0015; they run in dcp-integrations, while dcp gives the phase points (DCP FEAT-018, v2.11.0) and enforces the hold before phase exit (DCP FEAT-032, v2.12.0), per ADR-0016.
+- **Items**: FEAT-018, FEAT-030, FEAT-036, FEAT-037, FEAT-043, FEAT-044, FEAT-045, FEAT-049, FEAT-051, FEAT-052, FEAT-053, FEAT-054, FEAT-055, FEAT-056
 
 ## v0.7.0: Agents
 - **Status**: planned

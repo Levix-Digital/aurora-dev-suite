@@ -240,6 +240,30 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: ADR-0015. When adding a project, a checkbox marks it as a shared library (help text and confirmation); the form names the Admin Hub approver group of the project and proposes the pull request that adds .aurora/approvers.json; Aurora warns about long-lived branches without the required verify check.
 
+### FEAT-054: [integrations] Phase-check judgment at the phase points
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0016
+- **Plan**: -
+- **Description**: ADR-0016. At the dcp points phase-enter and phase-exit (DCP FEAT-018, dcp v2.11.0), dcp-integrations reads the project's content up to the phase and its project card, decides whether another project's contracts may be touched, and returns provider items naming the projects involved and informed, with a blocking item that suggests dcp integrations table.
+
+### FEAT-055: [integrations] Round-table runner: coordinator, chair and seats
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0016
+- **Plan**: -
+- **Description**: ADR-0015 and ADR-0016. dcp integrations table <id> runs the coordinator and one seat per involved project through a configured command (any agent), within the organisation's budget, following the ADR-0015 dynamics; reports the hold as the provider gate that DCP FEAT-032 enforces before phase exit.
+
+### FEAT-056: [integrations] Mail fallback without an Admin Hub
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0016
+- **Plan**: -
+- **Description**: ADR-0016. dcp integrations mail setup configures an SMTP account or a mail command once per machine, with the password in the operating system keychain; the table notifies approvers at once when no Admin Hub is configured, and without a mail setting the hold names the approvers.
+
 ## Improvements
 
 ### IMP-003: Messages tells when .aurora/integrations.json is on another branch

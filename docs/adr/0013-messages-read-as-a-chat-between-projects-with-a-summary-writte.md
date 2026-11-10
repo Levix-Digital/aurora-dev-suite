@@ -8,7 +8,7 @@ subsystems: [ui, core, integrations, desktop]
 supersedes: []
 superseded_by: []
 amends: [12]
-amended_by: []
+amended_by: [15]
 ---
 
 # ADR-0013: Messages read as a chat between projects, with a summary written by the sender

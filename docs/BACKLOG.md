@@ -192,6 +192,54 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: ADR-0014. Without a governing Admin Hub, Aurora is a read-only portfolio view: no approvals and no governance actions.
 
+### FEAT-048: [integrations] Round-table messages, templates and storage in dcp-integrations
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0015
+- **Plan**: -
+- **Description**: ADR-0015. Tables with many participants: table-opening, table-answer, table-review, table-proposal and table-impasse templates with required fields and citations; not-affected exit and call-back; consolidated counterproposals; confirmation of the final text; full transcript in the triggering project's inbox and pointers in the others; notices to informed projects; direct messages as two-project tables.
+
+### FEAT-049: [integrations] Verification of Admin Hub attestations and the integration hold record
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0015
+- **Plan**: -
+- **Description**: ADR-0015. The hold recorded in aurora/inbox and linked to plan and branch; verification of Hub-signed attestations against .aurora/approvers.json read from the target branch, offline; the data behind dcp integrations verify and verify --branches.
+
+### FEAT-050: [ui] Messages as round tables
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0015
+- **Plan**: -
+- **Description**: ADR-0015 (amends ADR-0013). List of tables with logos, state and my pending action, filters by project and waiting for my approval; the table as a group chat with the coordinator's system lines and each project's bubbles with summary and citations; outcome card with one approval chip per involved project and Approve, Ask, Object for approvers; full message in the right panel. Mockups first.
+
+### FEAT-051: [ui] Integration hold on the project's cycle timeline
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0015
+- **Plan**: -
+- **Description**: ADR-0015. The project view shows a hold on the phase it stopped at, who must still approve, and a link to the table.
+
+### FEAT-052: [server] Restart the round table after an approver's question or objection
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0015
+- **Plan**: -
+- **Description**: ADR-0015. When an approver asks or objects in Aurora, the server writes the answer to the table and starts a new table with dcp integrations table and the agent configured once per organisation, within the organisation's budget; at most three tables per decision.
+
+### FEAT-053: [portfolio] Add-project form with the shared-library checkbox and approver group
+- **Priority**: medium
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-10, 2026-11-10, ADR-0015
+- **Plan**: -
+- **Description**: ADR-0015. When adding a project, a checkbox marks it as a shared library (help text and confirmation); the form names the Admin Hub approver group of the project and proposes the pull request that adds .aurora/approvers.json; Aurora warns about long-lived branches without the required verify check.
+
 ## Improvements
 
 ### IMP-003: Messages tells when .aurora/integrations.json is on another branch

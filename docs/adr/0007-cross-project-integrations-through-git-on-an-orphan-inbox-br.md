@@ -8,7 +8,7 @@ subsystems: [core, engines]
 supersedes: []
 superseded_by: []
 amends: []
-amended_by: [9, 10]
+amended_by: [9, 10, 15]
 ---
 
 # ADR-0007: Cross-project integrations through Git on an orphan inbox branch

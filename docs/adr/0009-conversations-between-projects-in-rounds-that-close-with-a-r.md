@@ -8,7 +8,7 @@ subsystems: [core, engines]
 supersedes: []
 superseded_by: []
 amends: [7]
-amended_by: []
+amended_by: [15]
 ---
 
 # ADR-0009: Conversations between projects in rounds that close with a record for the user

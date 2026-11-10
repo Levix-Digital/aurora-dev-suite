@@ -5,7 +5,7 @@ from: levix-admin-hub
 to: aurora-dev-suite
 date: 2026-11-10T21:00:29.054Z
 subject: "Re: Product servers use the Hub for sign-in, approvals and notifications (Aurora web)"
-status: open
+status: done
 reply_to: 20261110-205409-aurora-dev-suite-product-servers-use-the-hub-for-sign-in
 deferred: 
 thread: 20261110-205409-aurora-dev-suite-product-servers-use-the-hub-for-sign-in
@@ -43,3 +43,5 @@ It follows the user's decision of 2026-11-10: the Hub governs identity, approval
 
 ### After approval
 Admin Hub merges pull request #18 and plans FEAT-017, FEAT-042, FEAT-047, FEAT-048 and FEAT-049 in v0.4.0. Aurora records the dependency on Hub v0.4.0 in its roadmap and keeps the local development account until then.
+
+> done (2026-11-10 21:48 UTC): user decided: Approve the agreement as written

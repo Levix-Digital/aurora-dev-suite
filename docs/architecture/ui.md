@@ -44,3 +44,4 @@ Calls `aurora-desktop` commands and listens to its events; uses the types of `au
 - [ADR-0002](../adr/0002-desktop-application-with-tauri-2-and-a-leptos-interface.md): Leptos interface, all Rust.
 - [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): the Messages view reads only the snapshot; writes go through the worker queue.
 - [ADR-0013](../adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md): Messages as a chat between projects in three columns; project logos.
+- [ADR-0014](../adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md): the interface gets an HTTP backend for the Aurora web server.

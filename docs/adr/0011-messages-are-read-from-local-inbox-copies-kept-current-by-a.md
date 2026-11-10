@@ -8,7 +8,7 @@ subsystems: [engines, desktop]
 supersedes: []
 superseded_by: []
 amends: [10]
-amended_by: [12]
+amended_by: [12, 14]
 ---
 
 # ADR-0011: Messages are read from local inbox copies kept current by a background sync

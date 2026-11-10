@@ -53,8 +53,8 @@ The catalog maps each feature to one engine, the capabilities it needs (schema M
 | Feature | Engine | Capabilities | Release |
 |---|---|---|---|
 | Portfolio, Project view, Decision inbox | Dev Cycle (`dcp`) | `diagnose` | v0.2.0 |
-| Agent work | Gedo | `radar`, `scope`, `stream` | v0.4.0 |
-| Knowledge | AnyContext (`actx`) | `ask`, `workspaces` | v0.5.0 |
+| Agent work | Gedo | `radar`, `scope`, `stream` | v0.7.0 |
+| Knowledge | AnyContext (`actx`) | `ask`, `workspaces` | v0.8.0 |
 
 A feature is unavailable, with the hint of its engine, while its engine is not ready or lacks a capability; only a ready engine counts, and only the capabilities of the engine the feature names. When everything is there but the feature ships in a later release, it says "not in this release". Errors are values (`thiserror` enums), never panics.
 
@@ -85,3 +85,4 @@ Called by `aurora-desktop` (one Tauri command per use case) and, for the preview
 - [ADR-0009](../adr/0009-conversations-between-projects-in-rounds-that-close-with-a-r.md): conversations between projects in at most three rounds, closed by a record the user decides on once.
 - [ADR-0012](../adr/0012-a-messages-worker-in-aurora-owns-every-provider-call-and-ser.md): the messages snapshot, its views and the poll interval in seconds.
 - [ADR-0013](../adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md): the chat model, the summary in `MessageHeader`, `Draft` and `UserAction::Reply` (checked by `check_summary`), and `Project.logo` (`logo_data_url`: PNG, JPEG, WebP or SVG, at most 256 KB).
+- [ADR-0014](../adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md): project state stays derived from the repositories on the Aurora web server; identities and approvals come from the Admin Hub.

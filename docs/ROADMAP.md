@@ -24,17 +24,11 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Goal**: Change a project's Dev Cycle settings through dcp commands; and talk to the other projects from Aurora's Messages tab, through the integrations provider shipped with Aurora, deciding on each conversation's closing record or stepping into it (Levi, 2026-11-06). The inbox actions (FEAT-018, on hold) moved to v0.6.0, which also waits for dcp v2.11.0.
 - **Items**: FEAT-027, BUG-004, ADJ-001, FEAT-029, FEAT-031, FEAT-032, FEAT-033, FEAT-034, BUG-005, BUG-006, ADJ-002, BUG-007, ADJ-003, BUG-008, IMP-004, BUG-009, ADJ-005, IMP-005, IMP-006
 
-## v0.3.1: Messages as a chat
-- **Status**: in_progress
-- **Target**: right after v0.3.0 final (Levi, 2026-11-08)
-- **Goal**: The Messages view reads like a chat between projects: projects as contacts, bubbles with the sender's first-person summary, the full message in a panel that slides in on the right.
-- **Items**: FEAT-039
-
 ## v0.4.0: Web application
 - **Status**: planned
-- **Target**: after v0.3.1 (Levi, 2026-11-10)
-- **Goal**: Aurora runs as a self-hosted web application (ADR-0014): one server per organization with the same core, engines, integrations and interface, packaged as a container image and a Linux binary; without a governing Admin Hub it is a read-only view, and until Admin Hub v0.4.0 it uses a single local development account.
-- **Items**: FEAT-041, FEAT-042, FEAT-046, FEAT-047
+- **Target**: after v0.3.0 final (Levi, 2026-11-10)
+- **Goal**: Aurora runs as a self-hosted web application (ADR-0014): one server per organization with the same core, engines, integrations and interface, packaged as a container image and a Linux binary; without a governing Admin Hub it is a read-only view, and until Admin Hub v0.4.0 it uses a single local development account. It also delivers the Messages chat view (FEAT-039), whose desktop release candidate v0.3.1-rc.1 was cancelled because the move to the web would make that acceptance run obsolete (Levi, 2026-11-10).
+- **Items**: FEAT-039, FEAT-041, FEAT-042, FEAT-046, FEAT-047
 
 ## v0.6.0: Integrations
 - **Status**: planned

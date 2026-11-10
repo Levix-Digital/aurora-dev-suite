@@ -475,7 +475,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 2 shows "sending … in 5 s" with a shrinking bar; Undo brings the options back and nothing is sent
   - Step 3 sends option 1 without any confirmation dialog; "Decision sent" appears, the card closes in green with the choice, the amber dot leaves the row and the navigation count drops; no separate bubble for the decision message appears
   - Step 4: the other project's chat shows the record closed with the same choice; `check` lists the decision as a new message
-- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-002: Decide in your own words, ask for a rework and step in
@@ -491,7 +491,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 1 sends your words as the decision (`decide --choice`); the card closes with your words
   - Step 2 sends a guidance message that starts cycle 2: a sent bubble "The user asks: …" appears in the chat, and the next bubble shows round 1
   - Step 3: the Reply and Step in forms stay closed until their button is pressed; the request appears as a sent bubble and the next reply counts from round 1 of the new cycle
-- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-003: Read the exchange as a chat
@@ -514,7 +514,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 5 shows only the messages with that project, then all again
   - Step 6 keeps only the projects whose name, subjects or summaries match
   - Step 7 moves the focus from bubble to bubble; Enter opens the panel
-- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-004: Start a conversation and answer, with a summary
@@ -531,7 +531,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - The first send in step 2 is refused next to the form with the missing sections named, and nothing is written; the second shows a sent bubble with the summary at once
   - Step 3: the counter turns red and the reply is refused with the summary named; nothing is written
   - Step 4: the answer appears as a sent bubble with its summary, quoting the question when it is not right above; after three rounds only agreement and impasse remain
-- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-005: News arrives without asking
@@ -615,7 +615,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 3: the notice goes away and the list is current, without reopening the view
   - Step 4: the reply appears as a sent bubble as soon as it is written, with no reload of the page; the other message opens without waiting for the write
 - **Result** (v0.3.0-rc.6): [ ] Pass [ ] Fail [ ] Blocked
-- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-010: A summary sent from a terminal
@@ -631,7 +631,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 1 sends the message; step 2 is refused with exit code 5 and "at most 280"; nothing is written
   - Step 3: the header has `"summary"` with the text; the file has a `summary:` line after the other header fields and the body is unchanged
   - Step 4: the bubble shows the summary, not the subject
-- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ### MT-MSG-011: A project's logo
@@ -646,7 +646,7 @@ These tests need two projects registered in Aurora, each with `.aurora/integrati
   - Step 1: the project's card shows the image; nothing changes in the repository (`git status` is clean)
   - Step 2: the project's row, its chat header and the small pictures next to its received bubbles show the image
   - Step 3: the large image is refused with the 256 KB limit named; after "Remove logo" the initials come back
-- **Result** (v0.3.1-rc.1): [ ] Pass [ ] Fail [ ] Blocked
+- **Result** (v0.4.0): [ ] Pass [ ] Fail [ ] Blocked
 - **Notes**:
 
 ## Packages

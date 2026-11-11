@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: c435a6128da1047bd2dc11a3a5eb16872b4ee2d19d2804f56008554bafefe28f
-content-sha256: a5c9f514597f97a5c3a62803f920cf90d7fb7f4504b70a10e44f843dff5ca90d
+sources-sha256: 20484956ed7d1eade6dff438ac18db22dbf3e1c767da93c1f3c79d102e3c47ab
+content-sha256: 98f57d4b27119443203e078a7450e42ece6f645be469282f2a56ee2d1f2f92c8
 -->
 # aurora-dev-suite Constitution
 
@@ -175,6 +175,7 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0013: Messages read as a chat between projects, with a summary written by the sender (`docs/adr/0013-messages-read-as-a-chat-between-projects-with-a-summary-writte.md`)
 - ADR-0014: Aurora is a self-hosted web application governed by the Levix Admin Hub (`docs/adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md`)
 - ADR-0015: Integrations coordinator: round tables, approvals by every involved project and the integration hold (`docs/adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md`)
+- ADR-0016: The integrations coordinator runs in dcp-integrations; dcp gives the phase points and enforces the hold (`docs/adr/0016-the-integrations-coordinator-runs-in-dcp-integrations-dcp-gi.md`)
 
 ## Governance
 
@@ -182,4 +183,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.10.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-10
+**Version**: 1.11.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-10

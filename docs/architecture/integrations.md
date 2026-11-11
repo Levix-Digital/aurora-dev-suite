@@ -79,3 +79,4 @@ The command line of [`contracts/cli.md`](../../specs/008-messages/contracts/cli.
 - [ADR-0003](../adr/0003-engines-integrated-only-through-their-command-lines-with-ver.md): Aurora uses it only through its command line with versioned JSON.
 - [ADR-0014](../adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md): integration approvals are attestations signed by the Admin Hub, written to the inboxes and verified offline.
 - [ADR-0015](../adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md): round tables chaired by the coordinator, approvals by every involved project, the integration hold and the verify check at merge.
+- [ADR-0016](../adr/0016-the-integrations-coordinator-runs-in-dcp-integrations-dcp-gi.md): the phase-check judgment, the round table, `verify` and the mail fallback run in dcp-integrations as `dcp integrations ...`; dcp gives the phase points and enforces the hold.

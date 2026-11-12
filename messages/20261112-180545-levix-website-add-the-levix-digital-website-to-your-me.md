@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-12T18:05:45.192Z
 subject: "Add the Levix Digital Website to your message registry"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261112-180545-levix-website-add-the-levix-digital-website-to-your-me

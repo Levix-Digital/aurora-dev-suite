@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-10T22:53:42.160Z
 subject: "Re: Decision: Integrations coordinator: phase check, round table, hold and verify in the Dev Cycle"
-status: seen
+status: done
 reply_to: 20261110-224114-aurora-dev-suite-decision-integrations-coordinator-phase
 deferred: 
 thread: 20261110-222720-aurora-dev-suite-integrations-coordinator-phase-check-rou

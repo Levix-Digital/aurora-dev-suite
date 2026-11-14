@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-14T15:58:14.217Z
 subject: "Keep agent instructions, skills and memory in the repository (repo-setup, Migrate)"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261114-155814-levix-website-keep-agent-instructions-skills-and-memor
@@ -40,3 +40,5 @@ Your answer links a merged pull request in your repository whose `check.sh` repo
 How the migration is done inside your repository is yours to settle. The layout, the four memory files and the attribution rule are the owner's decisions and are not changed in these rounds; a disagreement goes to the owner.
 
 > seen (2026-11-14 16:16 UTC): Answered; ack after PR #55 merges
+
+> done (2026-11-14 17:10 UTC): PR #55 merged, ack sent

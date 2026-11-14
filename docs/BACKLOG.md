@@ -328,6 +328,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: ADR-0018. The Aurora policy schema (FEAT-044) separates ceilings from defaults: a ceiling is set by the organization in the Admin Hub and lower levels can only tighten it; a default is chosen by the project inside the ceilings. First ceilings: projects that require approval, the coding agents and model endpoints allowed, and the most a coding agent may do in the project without a person (nothing, edits, local commits, pushes). The project view shows each ceiling, who set it and what the project chose; enforcement stays in dcp and the Hub.
 
+### FEAT-067: [governance] Egress declared in the manifest and routed through the Levix network gateway
+- **Priority**: medium
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-14, Levi, agreement with the Admin Hub on network containment
+- **Plan**: -
+- **Description**: Admin Hub ADR-0009 (FEAT-050 to FEAT-054), levix-platform ADR-0002 (FEAT-026). The product manifest (FEAT-044, Hub FEAT-042) declares the destinations Aurora needs, all configured by the customer, with no fixed host: Git remotes of the followed repositories (flagged outside the perimeter when the Git host is a public service), the customer's Admin Hub, and an optional SMTP server for the mail fallback. Aurora's server opens every outbound connection through the Levix network gateway, including its Git child processes through the gateway's local proxy, with no direct connection that bypasses it, and reports blocked connections as metadata only. With no reachable Git remote, messages and project state stay read-only on the last local copy. Release placement is the owner's decision.
+
 ### FEAT-065: [runs] One registered runner inside the perimeter
 - **Priority**: low
 - **Epic**: EPIC-013

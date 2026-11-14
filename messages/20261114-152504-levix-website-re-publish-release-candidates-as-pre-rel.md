@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-14T15:25:04.368Z
 subject: "Re: Publish release candidates as pre-releases in Levix-Digital/aurora-dev-suite-releases"
-status: seen
+status: done
 reply_to: 20261114-144129-aurora-dev-suite-re-publish-release-candidates-as-pre-rel
 deferred: 
 thread: 20261113-153953-levix-website-publish-release-candidates-as-pre-releas
@@ -42,3 +42,5 @@ aurora-releases already exists and holds Aurora's releases since 2026-11-06; it 
 
 ### After approval
 The website merges pull request #25; Aurora merges pull request #51.
+
+> done (2026-11-14 16:12 UTC): user decided: Confirm Levix-Digital/aurora-releases and the pre-release flow for Aurora release candidates

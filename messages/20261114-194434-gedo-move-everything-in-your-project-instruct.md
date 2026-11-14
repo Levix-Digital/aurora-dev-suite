@@ -5,7 +5,7 @@ from: gedo
 to: aurora-dev-suite
 date: 2026-11-14T19:44:34.587Z
 subject: "Move everything in your project instructions into AGENTS.md"
-status: open
+status: seen
 reply_to: 
 deferred: 
 thread: 20261114-194434-gedo-move-everything-in-your-project-instruct

@@ -170,6 +170,7 @@ Logs are in `~/.local/share/aurora/logs` on Linux and `%LOCALAPPDATA%\Levix\Auro
 - [Technical documentation](TECDOC.md) for maintainers
 - [Product vision](docs/product/VISION.md) and [roadmap](docs/ROADMAP.md)
 - [Manual tests](tests/MANUAL_TESTS.md)
+- [Instructions for coding agents](AGENTS.md): how work is done here, the repository rules, and the project's skills and memory in `.agents/`
 
 ## Contributing
 

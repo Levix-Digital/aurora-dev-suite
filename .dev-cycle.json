@@ -14,7 +14,8 @@
     "enabled": true,
     "version": "v1.2.3",
     "script": "sh",
-    "branch_prefix": "feat"
+    "branch_prefix": "feat",
+    "integration": "agy"
   },
   "architecture": {
     "style": "hexagonal",

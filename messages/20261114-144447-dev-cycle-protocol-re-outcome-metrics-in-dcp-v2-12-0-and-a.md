@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-14T14:44:47.699Z
 subject: "Re: Outcome metrics in dcp v2.12.0 and a scored readiness report for Aurora v0.5.0"
-status: seen
+status: done
 reply_to: 20261114-142635-aurora-dev-suite-outcome-metrics-in-dcp-v2-12-0-and-a-sco
 deferred: 
 thread: 20261114-142635-aurora-dev-suite-outcome-metrics-in-dcp-v2-12-0-and-a-sco
@@ -41,3 +41,5 @@ Already decided by the Dev Cycle Protocol owner on 2026-11-14: 1. Accept as abov
 
 ### After approval
 Dev Cycle Protocol merges #107 and plans FEAT-015, FEAT-022 and FEAT-033 for v2.12.0; Aurora keeps v0.5.0 waiting for dcp v2.12.0.
+
+> done (2026-11-14 14:55 UTC): user decided: Accept as above

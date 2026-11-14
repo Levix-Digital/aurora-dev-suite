@@ -5,9 +5,9 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-13T15:53:53.772Z
 subject: "Publish final releases as latest in Levix-Digital/aurora-dev-suite-releases with stable installer names"
-status: open
+status: seen
 reply_to: 
-deferred: 
+deferred: "Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject"
 thread: 20261113-155353-levix-website-publish-final-releases-as-latest-in-levi
 cycle: 1
 round: 1
@@ -35,3 +35,5 @@ A reply with the installer asset names per operating system (or "no installers")
 
 ### Authority
 The asset names and the workflow are yours to settle. Creating the public repository is done by the owner.
+
+> seen (2026-11-14 14:22 UTC): deferred: Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject

@@ -8,7 +8,7 @@ subsystems: []
 supersedes: []
 superseded_by: []
 amends: [5]
-amended_by: []
+amended_by: [20]
 ---
 
 # ADR-0018: Aurora names the whole suite, sold in editions by deployment and governance with a license per seat

@@ -44,6 +44,7 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
+| [ADR-0020](docs/adr/0020-the-dev-cycle-protocol-is-proprietary-from-its-next-versions.md) | The Dev Cycle Protocol is proprietary from its next versions; Aurora uses it only through its releases | accepted |  | 2026-11-14 |
 | [ADR-0019](docs/adr/0019-release-candidates-cut-automatically-after-the-merge-gate-wit.md) | Release candidates are cut automatically after the merge gate, with notes from the repository | accepted |  | 2026-11-14 |
 | [ADR-0018](docs/adr/0018-aurora-names-the-whole-suite-sold-in-editions-by-deployment.md) | Aurora names the whole suite, sold in editions by deployment and governance with a license per seat | accepted |  | 2026-11-14 |
 | [ADR-0017](docs/adr/0017-each-project-declares-the-repositories-it-writes-and-reads-i.md) | Each project declares the repositories it writes and reads in .aurora/integrations.json | accepted |  | 2026-11-13 |

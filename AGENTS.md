@@ -63,6 +63,7 @@ This project is `aurora-dev-suite` in `.aurora/integrations.json`. Each project'
 - To ask another project for something: write the body from `template <question|proposal>` and run `send --to <recipient-slug> --kind <question|proposal> --subject "..." --body-file <file>`.
 - A conversation has at most three rounds and closes with an agreement or an impasse. The project that opened it presents the closing record to the owner once (`record <thread>`) and sends the owner's answer with `decide <thread> --choice "..."`. No project acts on an agreement before that decision.
 - Every message is in English, with no reference to AI, agents or assistants.
+- `levix-platform` is a library, not a project: it neither sends nor answers messages, has no inbox and is not in `.aurora/integrations.json`. Never send it a message; a change it needs goes through a pull request in it (section 3).
 - The only write allowed in another project's repository is its `aurora/inbox` branch, always through `dcp-integrations send` and `reply`, never by hand.
 
 ## 3. Repository rules

@@ -33,3 +33,5 @@ Your answer links the merged pull request that adds the line, and says you asked
 
 ### Authority
 Nothing to settle between projects: this is an owner's decision being applied.
+
+> seen (2026-11-14 20:08 UTC): Ack after PR #57 merges

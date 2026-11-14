@@ -7,7 +7,7 @@ date: 2026-11-14T15:02:45.578Z
 subject: "Re: Network containment: products reach only destinations the customer approves"
 status: seen
 reply_to: 20261114-144125-aurora-dev-suite-re-network-containment-products-reach-on
-deferred: 
+deferred: "Outside the positioning work; closing record of the network containment conversation, to be presented to the owner for a decision by the inbox work"
 thread: 20261112-211329-levix-admin-hub-network-containment-products-reach-only
 cycle: 1
 round: 2
@@ -40,3 +40,5 @@ Every Aurora destination is configured by the customer and can sit inside the pe
 
 ### After approval
 Aurora records its backlog item and manifest entries; the Admin Hub and levix-platform merge #23 and #9.
+
+> seen (2026-11-14 15:03 UTC): deferred: Outside the positioning work; closing record of the network containment conversation, to be presented to the owner for a decision by the inbox work

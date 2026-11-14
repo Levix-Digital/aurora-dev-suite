@@ -86,7 +86,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-10-28, Dev Cycle Protocol suggestion 2026-10-28
 - **Plan**: -
-- **Description**: A Metrics tab per project and release (first-pass gate rate, rework, time per phase, escaped bugs, tokens when reported, trends across releases) and a combined view across the portfolio with totals and the protocol's baseline marker, read only from dcp metrics --json (schema dcp.metrics, capability metrics; DCP FEAT-022, dcp v2.12.0, which also sends the dcp.metrics MAJOR 1 draft for review). No stand-in: without the capability the views say to update dcp (ADR-0006). Release assigned when dcp metrics has a date.
+- **Description**: A Metrics tab per project and release (first-pass gate rate, rework, time per phase, escaped bugs, tokens when reported, trends across releases) and a combined view across the portfolio with totals and the protocol's baseline marker, read only from dcp metrics --json (schema dcp.metrics, capability metrics; DCP FEAT-022, dcp v3.3.0 (moved from v2.12.0 on 2026-11-14), which also sends the dcp.metrics MAJOR 1 draft for review). No stand-in: without the capability the views say to update dcp (ADR-0006). Release assigned when dcp metrics has a date.
 
 ### FEAT-030: Merge notices
 - **Priority**: medium
@@ -182,7 +182,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
 - **Plan**: -
-- **Description**: ADR-0014. Release artifacts become a container image and a static Linux binary published to the public releases repository, following the Admin Hub's packaging; desktop installers retired once the server ships.
+- **Description**: ADR-0014. Release artifacts become a container image and a static Linux binary published to the public releases repository `Levix-Digital/aurora-releases`, following the Admin Hub's packaging; desktop installers retired once the server ships. Asset names carry no version (stable from release to release) and are sent to levix-website before the first final release, which links them from the product site (decided with levix-website on 2026-11-14).
 
 ### FEAT-047: [governance] Read-only view without an Admin Hub
 - **Priority**: low
@@ -278,7 +278,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
 - **Plan**: -
-- **Description**: ADR-0018. Each project shows its readiness level and score (how governed the repository is: plans, gates, tests, review, security checks, documentation, approvals), the failing criteria with what to fix first, and the trend over time; the portfolio shows the organization's level. Read only from dcp readiness --json (schema dcp.readiness, capability readiness; DCP FEAT-033, dcp v2.12.0, agreed with dev-cycle-protocol and approved by the user on 2026-11-14, conversation 20261114-142635). The Dev Cycle Protocol defines the levels and criteria and sends the dcp.readiness MAJOR 1 draft to Aurora for review before freezing it. No stand-in: without the capability the view says to update dcp (ADR-0006).
+- **Description**: ADR-0018. Each project shows its readiness level and score (how governed the repository is: plans, gates, tests, review, security checks, documentation, approvals), the failing criteria with what to fix first, and the trend over time; the portfolio shows the organization's level. Read only from dcp readiness --json (schema dcp.readiness, capability readiness; DCP FEAT-033, dcp v3.3.0 (moved from v2.12.0 on 2026-11-14), agreed with dev-cycle-protocol and approved by the user on 2026-11-14, conversation 20261114-142635). The Dev Cycle Protocol defines the levels and criteria and sends the dcp.readiness MAJOR 1 draft to Aurora for review before freezing it. No stand-in: without the capability the view says to update dcp (ADR-0006).
 
 ### FEAT-059: [outcomes] Where the work went and what was delivered
 - **Priority**: medium
@@ -286,7 +286,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
 - **Plan**: -
-- **Description**: ADR-0018. Extends the cycle metrics (FEAT-028) with two views per project, team and portfolio: the split of delivered work by backlog item type (features, bugs, improvements, adjustments) against the roadmap of the period, and the attribution of delivered work to backlog items, plans and pull requests, with the time each spent waiting at gates and at integration decisions. Read from dcp metrics --json, which carries per period the items delivered by backlog type, the time each item waited at each gate and the backlog item, plan and pull request of each delivery (DCP FEAT-022 as extended on 2026-11-14, dcp v2.12.0, conversation 20261114-142635); computed at the customer, no session content is read.
+- **Description**: ADR-0018. Extends the cycle metrics (FEAT-028) with two views per project, team and portfolio: the split of delivered work by backlog item type (features, bugs, improvements, adjustments) against the roadmap of the period, and the attribution of delivered work to backlog items, plans and pull requests, with the time each spent waiting at gates and at integration decisions. Read from dcp metrics --json, which carries per period the items delivered by backlog type, the time each item waited at each gate and the backlog item, plan and pull request of each delivery (DCP FEAT-022 as extended on 2026-11-14, dcp v3.3.0, conversation 20261114-142635); computed at the customer, no session content is read.
 
 ### FEAT-060: [outcomes] Metrics shown per team by default, per person only by policy
 - **Priority**: medium
@@ -342,7 +342,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
 - **Plan**: -
-- **Description**: ADR-0018. A machine of the customer is enrolled in the Admin Hub as a product server and registered in Aurora as a runner. It takes requests from the entry points (FEAT-062) and runs the configured coding agent's command line headless under the Dev Cycle Protocol, with a service identity, inside the Hub's policy ceilings and network containment. Aurora shows the queue, each run's phase and its result (a pull request, a hold or a failure). The runner is agnostic to the agent and the model.
+- **Description**: ADR-0018. A machine of the customer is enrolled in the Admin Hub as a product server and registered in Aurora as a runner. It takes requests from the entry points (FEAT-062) and runs `dcp` in its conducted mode, which starts the coding agent for each role (Aurora never starts agents itself; DCP ADR-0010), with a service identity, inside the Hub's policy ceilings and network containment. Aurora shows the queue, each run's phase and its result (a pull request, a hold or a failure). The runner is agnostic to the agent and the model.
 
 ### FEAT-066: [runs] Runner pool on the customer's capacity
 - **Priority**: low
@@ -443,13 +443,13 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Priority**: high
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
-- **Description**: ADR-0018. What a lead uses to judge the result of the cycle: the cycle metrics per project, release and portfolio (FEAT-028), where the work went and what was delivered (FEAT-059), the readiness score of each repository (FEAT-058) and the per-team default of the figures (FEAT-060). Everything is computed at the customer from Git and from dcp's versioned JSON (DCP FEAT-015 and FEAT-022 for the metrics and DCP FEAT-033 for the readiness report, all in dcp v2.12.0, agreed on 2026-11-14).
+- **Description**: ADR-0018. What a lead uses to judge the result of the cycle: the cycle metrics per project, release and portfolio (FEAT-028), where the work went and what was delivered (FEAT-059), the readiness score of each repository (FEAT-058) and the per-team default of the figures (FEAT-060). Everything is computed at the customer from Git and from dcp's versioned JSON (DCP FEAT-015 and FEAT-022 for the metrics and DCP FEAT-033 for the readiness report, agreed on 2026-11-14; DCP FEAT-022 and FEAT-033 moved to dcp v3.3.0, after the conducted cycle of dcp v3.0.0).
 
 ### EPIC-013: Managed runs inside the perimeter
 - **Priority**: low
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
-- **Description**: ADR-0018. Coding agents run by themselves under the Dev Cycle Protocol on machines of the customer, started by the entry points (FEAT-062): first one registered runner (FEAT-065), then a pool (FEAT-066). After the integrations release (v0.6.0). Depends on the Dev Cycle Protocol's role runners (DCP FEAT-005) and on the Admin Hub's product servers, quotas, model endpoints and network containment.
+- **Description**: ADR-0018. Coding agents run by themselves under the Dev Cycle Protocol on machines of the customer, started by the entry points (FEAT-062): first one registered runner (FEAT-065), then a pool (FEAT-066). After the integrations release (v0.6.0). Depends on the Dev Cycle Protocol's conducted cycle (DCP FEAT-035 and FEAT-036, which supersede DCP FEAT-005) and on the Admin Hub's product servers, quotas, model endpoints and network containment.
 
 ## Closed
 

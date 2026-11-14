@@ -238,7 +238,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-10, 2026-11-10, ADR-0015
 - **Plan**: -
-- **Description**: ADR-0015. When adding a project, a checkbox marks it as a shared library (help text and confirmation); the form names the Admin Hub approver group of the project and proposes the pull request that adds .aurora/approvers.json; Aurora warns about long-lived branches without the required verify check.
+- **Description**: ADR-0015, ADR-0017. When adding a project, a checkbox marks it as a shared library (help text and confirmation), prefilled from the kind the repository declares in its .aurora/integrations.json; the form names the Admin Hub approver group of the project and proposes the pull request that adds .aurora/approvers.json; Aurora warns about long-lived branches without the required verify check.
 
 ### FEAT-054: [integrations] Phase-check judgment at the phase points
 - **Priority**: high
@@ -263,6 +263,14 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Found**: 2026-11-10, 2026-11-10, ADR-0016
 - **Plan**: -
 - **Description**: ADR-0016. dcp integrations mail setup configures an SMTP account or a mail command once per machine, with the password in the operating system keychain; the table notifies approvers at once when no Admin Hub is configured, and without a mail setting the hold names the approvers.
+
+### FEAT-057: [integrations] Repositories each project writes and reads
+- **Priority**: high
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-13, Levi, ADR-0017
+- **Plan**: -
+- **Description**: ADR-0017. .aurora/integrations.json schema 1.1 adds kind (project or library), writes (the project itself, then libraries only) and reads (context sources with ref, paths and why). dcp-integrations validates them on init, add and access --check, returns them with access --json, opens check with a Writes and a Reads line, refuses send to a library with a hint to open a pull request there, and gives the reads to a round-table seat. Aurora shows them in the project view and the portfolio dependency map. A new withdraw <id> --note lets the sender close a message it sent that is still unread (today only the recipient can change a status). Then a notice to each project to add its own declaration, and the three messages sent to levix-platform on 2026-11-06 withdrawn with the note 'levix-platform is a shared library and has no inbox reader (ADR-0017); what these asked is done by pull request from the project that needs it' (Levi, 2026-11-13).
 
 ## Improvements
 

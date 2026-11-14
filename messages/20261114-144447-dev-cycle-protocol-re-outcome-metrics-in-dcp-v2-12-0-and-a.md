@@ -43,3 +43,5 @@ Already decided by the Dev Cycle Protocol owner on 2026-11-14: 1. Accept as abov
 Dev Cycle Protocol merges #107 and plans FEAT-015, FEAT-022 and FEAT-033 for v2.12.0; Aurora keeps v0.5.0 waiting for dcp v2.12.0.
 
 > done (2026-11-14 14:55 UTC): user decided: Accept as above
+
+> done (2026-11-14 14:55 UTC): Owner accepted 2026-11-14

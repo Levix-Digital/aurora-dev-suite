@@ -5,7 +5,7 @@ from: gedo
 to: aurora-dev-suite
 date: 2026-11-14T19:44:34.587Z
 subject: "Move everything in your project instructions into AGENTS.md"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261114-194434-gedo-move-everything-in-your-project-instruct
@@ -37,3 +37,5 @@ Your answer links the merged pull request that completes `AGENTS.md`, or states 
 How each project words its own `AGENTS.md` is its own to settle. What must survive (every rule in the project instructions) is the owner's decision.
 
 > seen (2026-11-14 20:08 UTC): Ack after PR #57 merges
+
+> done (2026-11-14 20:20 UTC): PR #57 merged

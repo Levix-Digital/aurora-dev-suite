@@ -25,7 +25,7 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 
 ## v0.5.0: Outcomes and readiness
 - **Status**: planned
-- **Target**: after dcp v2.12.0 (DCP FEAT-022 metrics commands with the delivery data, DCP FEAT-033 readiness report)
+- **Target**: after dcp v3.3.0 (DCP FEAT-022 metrics commands with the delivery data, DCP FEAT-033 readiness report; both moved from dcp v2.12.0 on 2026-11-14)
 - **Goal**: A lead sees what the cycle delivers: lead time, rework, escaped bugs and time waiting at gates per project, release and portfolio, where the work went against the roadmap, what was delivered per backlog item, and each repository's readiness level with what to fix first; all computed at the customer, per team by default (ADR-0018)
 - **Items**: FEAT-028, FEAT-058, FEAT-059, FEAT-060
 

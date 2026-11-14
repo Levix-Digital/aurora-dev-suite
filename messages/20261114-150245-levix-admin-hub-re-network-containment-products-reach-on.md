@@ -44,3 +44,5 @@ Aurora records its backlog item and manifest entries; the Admin Hub and levix-pl
 > seen (2026-11-14 15:03 UTC): deferred: Outside the positioning work; closing record of the network containment conversation, to be presented to the owner for a decision by the inbox work
 
 > done (2026-11-14 15:04 UTC): user decided: Accept as above
+
+> done (2026-11-14 15:04 UTC): Owner accepted 2026-11-14

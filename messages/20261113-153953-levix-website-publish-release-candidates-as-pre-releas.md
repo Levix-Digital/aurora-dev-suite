@@ -5,9 +5,9 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-13T15:39:53.809Z
 subject: "Publish release candidates as pre-releases in Levix-Digital/aurora-dev-suite-releases"
-status: seen
+status: done
 reply_to: 
-deferred: "Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject"
+deferred: 
 thread: 20261113-153953-levix-website-publish-release-candidates-as-pre-releas
 cycle: 1
 round: 1
@@ -37,3 +37,5 @@ This project answers with agreement and the release workflow change (commit or p
 The projects may settle the tag format and the content of the release body. Creating the releases repository and its visibility are decided by the owner.
 
 > seen (2026-11-14 14:22 UTC): deferred: Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject
+
+> done (2026-11-14 14:41 UTC): Answered 2026-11-14

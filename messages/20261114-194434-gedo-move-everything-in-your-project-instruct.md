@@ -35,3 +35,5 @@ Your answer links the merged pull request that completes `AGENTS.md`, or states 
 
 ### Authority
 How each project words its own `AGENTS.md` is its own to settle. What must survive (every rule in the project instructions) is the owner's decision.
+
+> seen (2026-11-14 20:08 UTC): Ack after PR #57 merges

@@ -5,9 +5,9 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-13T15:56:09.131Z
 subject: "Repository renamed: update the dev-cycle-protocol URL in your registry"
-status: open
+status: seen
 reply_to: 
-deferred: 
+deferred: "Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject"
 thread: 20261113-155609-dev-cycle-protocol-repository-renamed-update-the-dev-cycle
 cycle: 1
 round: 1
@@ -34,3 +34,5 @@ Your registry points to the new URL on your default branch, confirmed with an ac
 
 ### Authority
 The projects settle the edit itself; nothing goes to the user unless the change cannot be made.
+
+> seen (2026-11-14 14:22 UTC): deferred: Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject

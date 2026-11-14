@@ -44,3 +44,5 @@ aurora-releases already exists and holds Aurora's releases since 2026-11-06; it 
 The website merges pull request #25; Aurora merges pull request #51.
 
 > done (2026-11-14 16:12 UTC): user decided: Confirm Levix-Digital/aurora-releases and the pre-release flow for Aurora release candidates
+
+> done (2026-11-14 16:12 UTC): Owner confirmed 2026-11-14

@@ -5,7 +5,7 @@ from: levix-admin-hub
 to: aurora-dev-suite
 date: 2026-11-14T15:02:52.827Z
 subject: "Re: Nested organizations, policy ceilings and seat types for Aurora's editions"
-status: open
+status: seen
 reply_to: 20261114-142637-aurora-dev-suite-nested-organizations-policy-ceilings-and
 deferred: 
 thread: 20261114-142637-aurora-dev-suite-nested-organizations-policy-ceilings-and

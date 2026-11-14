@@ -21,11 +21,6 @@
       "url": "https://github.com/Levix-Digital/any-context.git"
     },
     {
-      "slug": "levix-platform",
-      "name": "Levix Platform",
-      "url": "https://github.com/Levix-Digital/levix-platform.git"
-    },
-    {
       "slug": "levix-admin-hub",
       "name": "Levix Admin Hub",
       "url": "https://github.com/Levix-Digital/levix-admin-hub.git"

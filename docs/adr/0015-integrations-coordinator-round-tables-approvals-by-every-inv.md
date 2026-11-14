@@ -8,7 +8,7 @@ subsystems: [integrations, core, ui]
 supersedes: []
 superseded_by: []
 amends: [7, 9, 13, 14]
-amended_by: [16]
+amended_by: [16, 17]
 ---
 
 # ADR-0015: Integrations coordinator: round tables, approvals by every involved project and the integration hold

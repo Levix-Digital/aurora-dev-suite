@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: 20484956ed7d1eade6dff438ac18db22dbf3e1c767da93c1f3c79d102e3c47ab
-content-sha256: 98f57d4b27119443203e078a7450e42ece6f645be469282f2a56ee2d1f2f92c8
+sources-sha256: e64d7fc4016339ebc7c793e7026b49c1d453cd1713778faf7e4d4fd34c3e6cf2
+content-sha256: 2145b749a1123c48610832bfeb9206f521b90c03e0dbd2c67e31ed6b07640bd9
 -->
 # aurora-dev-suite Constitution
 
@@ -176,6 +176,8 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0014: Aurora is a self-hosted web application governed by the Levix Admin Hub (`docs/adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md`)
 - ADR-0015: Integrations coordinator: round tables, approvals by every involved project and the integration hold (`docs/adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md`)
 - ADR-0016: The integrations coordinator runs in dcp-integrations; dcp gives the phase points and enforces the hold (`docs/adr/0016-the-integrations-coordinator-runs-in-dcp-integrations-dcp-gi.md`)
+- ADR-0017: Each project declares the repositories it writes and reads in .aurora/integrations.json (`docs/adr/0017-each-project-declares-the-repositories-it-writes-and-reads-i.md`)
+- ADR-0018: Aurora names the whole suite, sold in editions by deployment and governance with a license per seat (`docs/adr/0018-aurora-names-the-whole-suite-sold-in-editions-by-deployment.md`)
 
 ## Governance
 
@@ -183,4 +185,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.11.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-10
+**Version**: 1.13.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-14

@@ -81,8 +81,8 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Description**: Show the user's plan, what it includes and how to upgrade.
 
 ### FEAT-028: Cycle metrics
-- **Priority**: medium
-- **Epic**: EPIC-004
+- **Priority**: high
+- **Epic**: EPIC-012
 - **Status**: open
 - **Found**: 2026-10-28, Dev Cycle Protocol suggestion 2026-10-28
 - **Plan**: -
@@ -272,6 +272,77 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Plan**: -
 - **Description**: ADR-0017. .aurora/integrations.json schema 1.1 adds kind (project or library), writes (the project itself, then libraries only) and reads (context sources with ref, paths and why). dcp-integrations validates them on init, add and access --check, returns them with access --json, opens check with a Writes and a Reads line, refuses send to a library with a hint to open a pull request there, and gives the reads to a round-table seat. Aurora shows them in the project view and the portfolio dependency map. A new withdraw <id> --note lets the sender close a message it sent that is still unread (today only the recipient can change a status). Then a notice to each project to add its own declaration, and the three messages sent to levix-platform on 2026-11-06 withdrawn with the note 'levix-platform is a shared library and has no inbox reader (ADR-0017); what these asked is done by pull request from the project that needs it' (Levi, 2026-11-13).
 
+### FEAT-058: [outcomes] Readiness score per project
+- **Priority**: medium
+- **Epic**: EPIC-012
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. Each project shows its readiness level and score (how governed the repository is: plans, gates, tests, review, security checks, documentation, approvals), the failing criteria with what to fix first, and the trend over time; the portfolio shows the organization's level. Read only from the Dev Cycle Protocol's scored readiness report through dcp --json (asked of dev-cycle-protocol on 2026-11-14; levels and criteria agreed with it). No stand-in: without the capability the view says to update dcp (ADR-0006).
+
+### FEAT-059: [outcomes] Where the work went and what was delivered
+- **Priority**: medium
+- **Epic**: EPIC-012
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. Extends the cycle metrics (FEAT-028) with two views per project, team and portfolio: the split of delivered work by backlog item type (features, bugs, improvements, adjustments) against the roadmap of the period, and the attribution of delivered work to backlog items, plans and pull requests, with the time each spent waiting at gates and at integration decisions. Computed at the customer from Git, the plans and dcp metrics --json; no session content is read.
+
+### FEAT-060: [outcomes] Metrics shown per team by default, per person only by policy
+- **Priority**: medium
+- **Epic**: EPIC-012
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. The outcome views aggregate per project and team by default. Figures per person appear only when the organization's policy allows it (a field of the Aurora policy schema in the product manifest, signed by the Admin Hub), for organizations where per-person analytics are forbidden by agreement or law. Without a Hub the views stay aggregated.
+
+### FEAT-061: [portfolio] Initiatives across projects
+- **Priority**: medium
+- **Epic**: EPIC-004
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. A named initiative groups backlog items and plans of several projects under one goal. Its page shows, per project, the plan and its milestones, the phase, the round tables and decisions that belong to it and the approvals pending, with the initiative's overall state. The grouping is recorded in the repositories (a reference in each plan or item), so it is read from Git like the rest (ADR-0004).
+
+### FEAT-062: [integrations] Entry points: a ticket, a message, an alert or a schedule starts a request
+- **Priority**: low
+- **Epic**: EPIC-010
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. Optional adapters turn an event into a request of the cycle and report back where it came from: an issue or work item on any supported tracker, a chat message, an alert or a schedule. Each entry point has four parts: the trigger, the path of the cycle it starts (feature or fix), where it runs and under which identity. Never the required path: the cycle starts from a session as today, and nothing here is specific to one tracker, chat tool or Git host. Running the request unattended needs a runner (EPIC-013); before that an entry point records the request in the project's backlog and notifies.
+
+### FEAT-063: [portfolio] Catalogue of ready recipes
+- **Priority**: low
+- **Epic**: EPIC-004
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. A page lists ready recipes of the cycle that an organization can turn on per project: a ticket to a pull request under the full cycle, nightly intake of failures as triaged bugs, review, security audit, release notes, documentation refresh. Each recipe says what it needs (dcp capability, entry point, runner) and shows where it is active. Recipes are defined by the Dev Cycle Protocol; Aurora lists and shows them.
+
+### FEAT-064: [governance] Policy ceilings and project defaults shown per project
+- **Priority**: medium
+- **Epic**: EPIC-011
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. The Aurora policy schema (FEAT-044) separates ceilings from defaults: a ceiling is set by the organization in the Admin Hub and lower levels can only tighten it; a default is chosen by the project inside the ceilings. First ceilings: projects that require approval, the coding agents and model endpoints allowed, and the most a coding agent may do in the project without a person (nothing, edits, local commits, pushes). The project view shows each ceiling, who set it and what the project chose; enforcement stays in dcp and the Hub.
+
+### FEAT-065: [runs] One registered runner inside the perimeter
+- **Priority**: low
+- **Epic**: EPIC-013
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. A machine of the customer is enrolled in the Admin Hub as a product server and registered in Aurora as a runner. It takes requests from the entry points (FEAT-062) and runs the configured coding agent's command line headless under the Dev Cycle Protocol, with a service identity, inside the Hub's policy ceilings and network containment. Aurora shows the queue, each run's phase and its result (a pull request, a hold or a failure). The runner is agnostic to the agent and the model.
+
+### FEAT-066: [runs] Runner pool on the customer's capacity
+- **Priority**: low
+- **Epic**: EPIC-013
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Plan**: -
+- **Description**: ADR-0018. After FEAT-065: runners are provisioned on demand, suspended and removed on capacity the customer provides (its container platform or virtual machines), with limits per project from the Hub's quotas. Aurora shows the pool's capacity and use.
 ## Improvements
 
 ### IMP-003: Messages tells when .aurora/integrations.json is on another branch
@@ -359,6 +430,18 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
 - **Description**: Design: docs/adr/ (ADR on the self-hosted web application). Aurora becomes a self-hosted web server (one container, same Rust core, engines, integrations and Leptos interface with an HTTP backend) enrolled and governed by the Levix Admin Hub as a product server: sign-in, approver and reader roles, approvals, audit, policies and license come from the Hub; Aurora keeps every piece of content. Depends on Admin Hub v0.4.0 (Hub FEAT-017, FEAT-042, FEAT-047, FEAT-048, FEAT-049), agreed 2026-11-10.
+
+### EPIC-012: Outcomes and readiness
+- **Priority**: high
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Description**: ADR-0018. What a lead uses to judge the result of the cycle: the cycle metrics per project, release and portfolio (FEAT-028), where the work went and what was delivered (FEAT-059), the readiness score of each repository (FEAT-058) and the per-team default of the figures (FEAT-060). Everything is computed at the customer from Git and from dcp's versioned JSON (DCP FEAT-015 and FEAT-022, dcp v2.12.0, and the readiness report asked of dev-cycle-protocol).
+
+### EPIC-013: Managed runs inside the perimeter
+- **Priority**: low
+- **Status**: open
+- **Found**: 2026-11-14, Levi, ADR-0018
+- **Description**: ADR-0018. Coding agents run by themselves under the Dev Cycle Protocol on machines of the customer, started by the entry points (FEAT-062): first one registered runner (FEAT-065), then a pool (FEAT-066). After the integrations release (v0.6.0). Depends on the Dev Cycle Protocol's role runners (DCP FEAT-005) and on the Admin Hub's product servers, quotas, model endpoints and network containment.
 
 ## Closed
 

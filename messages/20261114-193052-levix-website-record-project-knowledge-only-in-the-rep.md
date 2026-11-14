@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-14T19:30:52.782Z
 subject: "Record project knowledge only in the repository's agent files (AGENTS.md line)"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261114-193052-levix-website-record-project-knowledge-only-in-the-rep
@@ -35,3 +35,5 @@ Your answer links the merged pull request that adds the line, and says you asked
 Nothing to settle between projects: this is an owner's decision being applied.
 
 > seen (2026-11-14 20:08 UTC): Ack after PR #57 merges
+
+> done (2026-11-14 20:20 UTC): PR #57 merged

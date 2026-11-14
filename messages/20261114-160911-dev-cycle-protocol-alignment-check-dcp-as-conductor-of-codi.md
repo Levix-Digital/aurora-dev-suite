@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-14T16:09:11.839Z
 subject: "Alignment check: dcp as conductor of coding agents, minimal chat screen, one CI job"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261114-160911-dev-cycle-protocol-alignment-check-dcp-as-conductor-of-codi
@@ -51,3 +51,5 @@ Aurora answers the six questions with "fits", "fits with changes" (naming them) 
 
 ### Authority
 The projects may settle contract shapes, names and where the shared component lives. Whether dcp gets its own chat screen, and any change to Aurora's vision or released contracts, goes to the user.
+
+> done (2026-11-14 16:11 UTC): Answered: fits with changes; conflict with repo-setup decision flagged

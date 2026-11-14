@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-14T16:38:46.392Z
 subject: "Dev Cycle Protocol is now proprietary (after engine-v0.46.1 and v2.10.0-rc.1)"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261114-163846-dev-cycle-protocol-dev-cycle-protocol-is-now-proprietary-af
@@ -36,3 +36,5 @@ Aurora answers ack or agreement, or a counter on points 1 to 3.
 
 ### Authority
 The projects may settle points 1 to 3; licence terms and the chat component's distribution model go to the owner.
+
+> done (2026-11-14 17:11 UTC): Answered; PR #56

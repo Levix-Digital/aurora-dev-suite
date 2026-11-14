@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-14T15:25:04.368Z
 subject: "Re: Publish release candidates as pre-releases in Levix-Digital/aurora-dev-suite-releases"
-status: open
+status: seen
 reply_to: 20261114-144129-aurora-dev-suite-re-publish-release-candidates-as-pre-rel
 deferred: 
 thread: 20261113-153953-levix-website-publish-release-candidates-as-pre-releas

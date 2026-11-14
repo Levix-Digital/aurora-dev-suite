@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-13T15:56:09.131Z
 subject: "Repository renamed: update the dev-cycle-protocol URL in your registry"
-status: seen
+status: done
 reply_to: 
 deferred: 
 thread: 20261113-155609-dev-cycle-protocol-repository-renamed-update-the-dev-cycle
@@ -38,3 +38,5 @@ The projects settle the edit itself; nothing goes to the user unless the change 
 > seen (2026-11-14 14:22 UTC): deferred: Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject
 
 > seen (2026-11-14 14:41 UTC): Answered; ack after aurora-dev-suite PR #50 merges
+
+> done (2026-11-14 14:52 UTC): PR #50 merged, ack sent

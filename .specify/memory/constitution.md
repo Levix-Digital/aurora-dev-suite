@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: 20484956ed7d1eade6dff438ac18db22dbf3e1c767da93c1f3c79d102e3c47ab
-content-sha256: 98f57d4b27119443203e078a7450e42ece6f645be469282f2a56ee2d1f2f92c8
+sources-sha256: b8cc3f97313687238faecea7d8750839e8b73b2195dfd4045b408a86b71eadf6
+content-sha256: e54015c02339e8e51c433964f73d3753a95a360f628e62977e08bfe294f7b403
 -->
 # aurora-dev-suite Constitution
 
@@ -176,6 +176,7 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0014: Aurora is a self-hosted web application governed by the Levix Admin Hub (`docs/adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md`)
 - ADR-0015: Integrations coordinator: round tables, approvals by every involved project and the integration hold (`docs/adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md`)
 - ADR-0016: The integrations coordinator runs in dcp-integrations; dcp gives the phase points and enforces the hold (`docs/adr/0016-the-integrations-coordinator-runs-in-dcp-integrations-dcp-gi.md`)
+- ADR-0018: Aurora names the whole suite, sold in editions by deployment and governance with a license per seat (`docs/adr/0018-aurora-names-the-whole-suite-sold-in-editions-by-deployment.md`)
 
 ## Governance
 
@@ -183,4 +184,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.11.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-10
+**Version**: 1.12.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-14

@@ -44,6 +44,7 @@ flowchart LR
 <!-- architecture-docs:adrs:start -->
 | ADR | Title | Status | Version | Date |
 |---|---|---|---|---|
+| [ADR-0018](docs/adr/0018-aurora-names-the-whole-suite-sold-in-editions-by-deployment.md) | Aurora names the whole suite, sold in editions by deployment and governance with a license per seat | accepted |  | 2026-11-14 |
 | [ADR-0016](docs/adr/0016-the-integrations-coordinator-runs-in-dcp-integrations-dcp-gi.md) | The integrations coordinator runs in dcp-integrations; dcp gives the phase points and enforces the hold | accepted |  | 2026-11-10 |
 | [ADR-0015](docs/adr/0015-integrations-coordinator-round-tables-approvals-by-every-inv.md) | Integrations coordinator: round tables, approvals by every involved project and the integration hold | accepted |  | 2026-11-10 |
 | [ADR-0014](docs/adr/0014-aurora-is-a-self-hosted-web-application-governed-by-the-levi.md) | Aurora is a self-hosted web application governed by the Levix Admin Hub | accepted |  | 2026-11-10 |

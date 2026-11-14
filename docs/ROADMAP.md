@@ -23,6 +23,12 @@ Each release: `## vX.Y.Z: <name>` with the fields `Status` (planned, in_progress
 - **Goal**: Aurora runs as a self-hosted web application (ADR-0014): one server per organization with the same core, engines, integrations and interface, packaged as a container image and a Linux binary; without a governing Admin Hub it is a read-only view, and until Admin Hub v0.4.0 it uses a single local development account. It also delivers the Messages chat view (FEAT-039), whose desktop release candidate v0.3.1-rc.1 was cancelled because the move to the web would make that acceptance run obsolete (Levi, 2026-11-10). v0.3.0 "Actions through dcp" (project settings through dcp, Messages through the integrations provider) is not released as desktop either: its items are delivered and ship here, accepted on the web candidate (Levi, 2026-11-10). Messages are read as round tables (ADR-0015): direct messages become two-project tables in the new view, so the pairwise chat is not accepted on its own.
 - **Items**: FEAT-027, BUG-004, ADJ-001, FEAT-029, FEAT-031, FEAT-032, FEAT-033, FEAT-034, BUG-005, BUG-006, ADJ-002, BUG-007, ADJ-003, BUG-008, IMP-004, BUG-009, ADJ-005, IMP-005, IMP-006, FEAT-039, FEAT-041, FEAT-042, FEAT-046, FEAT-047, FEAT-048, FEAT-050
 
+## v0.5.0: Outcomes and readiness
+- **Status**: planned
+- **Target**: after dcp v2.12.0 (DCP FEAT-022 metrics commands) and the Dev Cycle Protocol's readiness report
+- **Goal**: A lead sees what the cycle delivers: lead time, rework, escaped bugs and time waiting at gates per project, release and portfolio, where the work went against the roadmap, what was delivered per backlog item, and each repository's readiness level with what to fix first; all computed at the customer, per team by default (ADR-0018)
+- **Items**: FEAT-028, FEAT-058, FEAT-059, FEAT-060
+
 ## v0.6.0: Integrations
 - **Status**: planned
 - **Target**: after dcp v2.11.0 (DCP FEAT-018)

@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-14T15:58:14.217Z
 subject: "Keep agent instructions, skills and memory in the repository (repo-setup, Migrate)"
-status: open
+status: seen
 reply_to: 
 deferred: 
 thread: 20261114-155814-levix-website-keep-agent-instructions-skills-and-memor

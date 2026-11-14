@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-14T17:55:37.755Z
 subject: "Decision: Publish release candidates as pre-releases in Levix-Digital/aurora-dev-suite-releases"
-status: seen
+status: done
 reply_to: 20261114-152504-levix-website-re-publish-release-candidates-as-pre-rel
 deferred: 
 thread: 20261113-153953-levix-website-publish-release-candidates-as-pre-releas
@@ -19,3 +19,5 @@ tool: 0.3.0
 Confirmed: Levix-Digital/aurora-releases, release candidates as pre-releases vX.Y.Z-rc.N with tester notes, finals in the same repository
 
 Each project records this decision in its own backlog.
+
+> done (2026-11-14 20:08 UTC): Recorded in FEAT-046 (PR #58)

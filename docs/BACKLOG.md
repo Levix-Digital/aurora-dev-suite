@@ -166,7 +166,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-10, 2026-11-10, decision with the Admin Hub
 - **Plan**: -
-- **Description**: ADR-0014. Aurora's product manifest in this repository: roles (approver per project, reader), policy schema (projects that require approval, approver group per project, deadlines) and seat model, registered in the Admin Hub (Hub FEAT-042, FEAT-043).
+- **Description**: ADR-0014. Aurora's product manifest in this repository: roles (approver per project, reader), policy schema (projects that require approval, approver group per project, deadlines) and seat model, registered in the Admin Hub (Hub FEAT-042, FEAT-043). The seat model declares the seat types contributor, approver and reader, counted separately by the license (Hub FEAT-007 and FEAT-026, levix-platform FEAT-025), and the policy schema marks its ceiling fields (FEAT-064); agreed with the Admin Hub on 2026-11-14.
 
 ### FEAT-045: [governance] Integration approvals through the Admin Hub
 - **Priority**: high
@@ -326,7 +326,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
 - **Plan**: -
-- **Description**: ADR-0018. The Aurora policy schema (FEAT-044) separates ceilings from defaults: a ceiling is set by the organization in the Admin Hub and lower levels can only tighten it; a default is chosen by the project inside the ceilings. First ceilings: projects that require approval, the coding agents and model endpoints allowed, and the most a coding agent may do in the project without a person (nothing, edits, local commits, pushes). The project view shows each ceiling, who set it and what the project chose; enforcement stays in dcp and the Hub.
+- **Description**: ADR-0018. The Aurora policy schema (FEAT-044) separates ceilings from defaults: a ceiling is set by the organization in the Admin Hub and lower levels can only tighten it; a default is chosen by the project inside the ceilings. First ceilings: projects that require approval, the coding agents and model endpoints allowed, and the most a coding agent may do in the project without a person (nothing, edits, local commits, pushes). The project view shows each ceiling, who set it and what the project chose; enforcement stays in dcp and the Hub. Depends on Hub FEAT-056 (each field of a product's policy schema marked as a ceiling or a default, inherited down the tree of organizations) and Hub FEAT-055 (nested organizations), both in Hub v0.4.0, and on levix-platform FEAT-012; agreed with the Admin Hub on 2026-11-14.
 
 ### FEAT-067: [governance] Egress declared in the manifest and routed through the Levix network gateway
 - **Priority**: medium

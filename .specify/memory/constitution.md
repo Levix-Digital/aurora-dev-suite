@@ -1,7 +1,7 @@
 <!-- dev-cycle-constitution
 generated-by: dev-cycle-protocol/constitution.py (do not edit; change a source and regenerate)
-sources-sha256: e64d7fc4016339ebc7c793e7026b49c1d453cd1713778faf7e4d4fd34c3e6cf2
-content-sha256: 2145b749a1123c48610832bfeb9206f521b90c03e0dbd2c67e31ed6b07640bd9
+sources-sha256: 1c6763318d66c6b627282bdb6048aed2846fe3a071bd77a05a1e564f00514614
+content-sha256: b7d7245814eecb9e989d7917c6946c7cd5f5759c48fde9fb01f4f7d22c8c6403
 -->
 # aurora-dev-suite Constitution
 
@@ -178,6 +178,7 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - ADR-0016: The integrations coordinator runs in dcp-integrations; dcp gives the phase points and enforces the hold (`docs/adr/0016-the-integrations-coordinator-runs-in-dcp-integrations-dcp-gi.md`)
 - ADR-0017: Each project declares the repositories it writes and reads in .aurora/integrations.json (`docs/adr/0017-each-project-declares-the-repositories-it-writes-and-reads-i.md`)
 - ADR-0018: Aurora names the whole suite, sold in editions by deployment and governance with a license per seat (`docs/adr/0018-aurora-names-the-whole-suite-sold-in-editions-by-deployment.md`)
+- ADR-0019: Release candidates are cut automatically after the merge gate, with notes from the repository (`docs/adr/0019-release-candidates-cut-automatically-after-the-merge-gate-wit.md`)
 
 ## Governance
 
@@ -185,4 +186,4 @@ Accepted decisions; a plan that contradicts one needs a new ADR that supersedes 
 - Amendments change the source, not this file: an ADR for decisions, the technical specification for requirements and constraints, `.dev-cycle.json` for the architecture style, the skills for principles. Then run `constitution.py generate` and commit the result with the change.
 - Gate 3 of the development cycle blocks a plan while this file is stale or edited by hand.
 
-**Version**: 1.13.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-14
+**Version**: 1.14.0 | **Ratified**: 2026-10-27 | **Last Amended**: 2026-11-14

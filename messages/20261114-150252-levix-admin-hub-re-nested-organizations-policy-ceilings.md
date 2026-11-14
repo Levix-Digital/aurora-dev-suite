@@ -5,7 +5,7 @@ from: levix-admin-hub
 to: aurora-dev-suite
 date: 2026-11-14T15:02:52.827Z
 subject: "Re: Nested organizations, policy ceilings and seat types for Aurora's editions"
-status: seen
+status: done
 reply_to: 20261114-142637-aurora-dev-suite-nested-organizations-policy-ceilings-and
 deferred: 
 thread: 20261114-142637-aurora-dev-suite-nested-organizations-policy-ceilings-and
@@ -28,3 +28,5 @@ None. Aurora's schema decides which of its fields are ceilings.
 
 ### Next step
 Aurora: mark its ceiling fields and seat types in its manifest with Hub FEAT-042 (v0.4.0). Admin Hub and levix-platform: merge #23 and #9.
+
+> done (2026-11-14 15:04 UTC): Closed with an agreement; awaiting the owner's decision

@@ -97,7 +97,7 @@ Order: the web application first, then the outcome metrics and readiness, then t
 
 - **The modules are not ready yet.** Gedo's command line arrives with its v0.4.0, `dcp` is finishing its move to one native binary, AnyContext has no versioned `--json` output, and the Admin Hub is at its foundations. Reduced by versioned contracts agreed with each project, and by Aurora degrading clearly when a capability is missing.
 - **Dependence on the Admin Hub's schedule.** Sign-in and approvals wait for Admin Hub v0.4.0. Reduced by the read-only view without a Hub and a single local account for development until then.
-- **The outcome numbers depend on `dcp` metrics** (DCP FEAT-015 and FEAT-022). Reduced by asking the Dev Cycle Protocol to keep them in dcp v2.12.0 and by computing after the fact what Git and the plans already record.
+- **The outcome numbers and the readiness score depend on `dcp`** (DCP FEAT-015 and FEAT-022 for the metrics, DCP FEAT-033 for the readiness report). Reduced by the agreement of 2026-11-14 with the Dev Cycle Protocol that puts the three in dcp v2.12.0, with Aurora reviewing both JSON contracts before they are frozen.
 - **The market is being taught by larger vendors.** Their category ("software factory") and their proof (customers, certifications, partners) are ahead. Assumption: organizations that cannot accept a vendor-hosted control plane are a market those offers serve poorly. Validated with the first pilots.
 - **No managed execution at first.** Competing offers run agents by themselves from a ticket; Aurora starts by governing and showing. Reduced by the entry points (optional adapters) and by the managed runs planned for later.
 - **Many modules, one name.** A buyer must see one product. Reduced by one installer, one license and one console, and by presenting the modules by their job.
@@ -107,6 +107,6 @@ Order: the web application first, then the outcome metrics and readiness, then t
 
 - Exact prices per edition and seat type; after the first pilots.
 - What the Team edition includes without a Hub beyond the read-only view.
-- The levels of the maturity model and the criteria of the readiness report, to be agreed with the Dev Cycle Protocol.
+- The levels of the maturity model, and how they map to the levels and criteria of the readiness report that the Dev Cycle Protocol defines (DCP FEAT-033).
 - Which Aurora release takes initiatives, the entry points and the policy view.
 - Whether the Admin Hub's organizations can be nested (holding, region, business unit, client project), asked to the Admin Hub project.

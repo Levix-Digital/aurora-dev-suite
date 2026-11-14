@@ -278,7 +278,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
 - **Plan**: -
-- **Description**: ADR-0018. Each project shows its readiness level and score (how governed the repository is: plans, gates, tests, review, security checks, documentation, approvals), the failing criteria with what to fix first, and the trend over time; the portfolio shows the organization's level. Read only from the Dev Cycle Protocol's scored readiness report through dcp --json (asked of dev-cycle-protocol on 2026-11-14; levels and criteria agreed with it). No stand-in: without the capability the view says to update dcp (ADR-0006).
+- **Description**: ADR-0018. Each project shows its readiness level and score (how governed the repository is: plans, gates, tests, review, security checks, documentation, approvals), the failing criteria with what to fix first, and the trend over time; the portfolio shows the organization's level. Read only from dcp readiness --json (schema dcp.readiness, capability readiness; DCP FEAT-033, dcp v2.12.0, agreed with dev-cycle-protocol and approved by the user on 2026-11-14, conversation 20261114-142635). The Dev Cycle Protocol defines the levels and criteria and sends the dcp.readiness MAJOR 1 draft to Aurora for review before freezing it. No stand-in: without the capability the view says to update dcp (ADR-0006).
 
 ### FEAT-059: [outcomes] Where the work went and what was delivered
 - **Priority**: medium
@@ -286,7 +286,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
 - **Plan**: -
-- **Description**: ADR-0018. Extends the cycle metrics (FEAT-028) with two views per project, team and portfolio: the split of delivered work by backlog item type (features, bugs, improvements, adjustments) against the roadmap of the period, and the attribution of delivered work to backlog items, plans and pull requests, with the time each spent waiting at gates and at integration decisions. Computed at the customer from Git, the plans and dcp metrics --json; no session content is read.
+- **Description**: ADR-0018. Extends the cycle metrics (FEAT-028) with two views per project, team and portfolio: the split of delivered work by backlog item type (features, bugs, improvements, adjustments) against the roadmap of the period, and the attribution of delivered work to backlog items, plans and pull requests, with the time each spent waiting at gates and at integration decisions. Read from dcp metrics --json, which carries per period the items delivered by backlog type, the time each item waited at each gate and the backlog item, plan and pull request of each delivery (DCP FEAT-022 as extended on 2026-11-14, dcp v2.12.0, conversation 20261114-142635); computed at the customer, no session content is read.
 
 ### FEAT-060: [outcomes] Metrics shown per team by default, per person only by policy
 - **Priority**: medium
@@ -435,7 +435,7 @@ Each item: `### <ID>: <title>` with the fields `Severity` (bugs: critical, high,
 - **Priority**: high
 - **Status**: open
 - **Found**: 2026-11-14, Levi, ADR-0018
-- **Description**: ADR-0018. What a lead uses to judge the result of the cycle: the cycle metrics per project, release and portfolio (FEAT-028), where the work went and what was delivered (FEAT-059), the readiness score of each repository (FEAT-058) and the per-team default of the figures (FEAT-060). Everything is computed at the customer from Git and from dcp's versioned JSON (DCP FEAT-015 and FEAT-022, dcp v2.12.0, and the readiness report asked of dev-cycle-protocol).
+- **Description**: ADR-0018. What a lead uses to judge the result of the cycle: the cycle metrics per project, release and portfolio (FEAT-028), where the work went and what was delivered (FEAT-059), the readiness score of each repository (FEAT-058) and the per-team default of the figures (FEAT-060). Everything is computed at the customer from Git and from dcp's versioned JSON (DCP FEAT-015 and FEAT-022 for the metrics and DCP FEAT-033 for the readiness report, all in dcp v2.12.0, agreed on 2026-11-14).
 
 ### EPIC-013: Managed runs inside the perimeter
 - **Priority**: low

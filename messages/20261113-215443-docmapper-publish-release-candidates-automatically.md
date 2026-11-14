@@ -5,9 +5,9 @@ from: docmapper
 to: aurora-dev-suite
 date: 2026-11-13T21:54:43.130Z
 subject: "Publish release candidates automatically after the merge gate"
-status: seen
+status: done
 reply_to: 
-deferred: "Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject"
+deferred: 
 thread: 20261113-215443-docmapper-publish-release-candidates-automatically
 cycle: 1
 round: 1
@@ -37,3 +37,5 @@ The project answers with agreement and the commit or pull request that adds the 
 The projects may settle the workflow details (trigger, numbering, notes file). Skipping the human gates goes to the owner.
 
 > seen (2026-11-14 14:22 UTC): deferred: Unrelated to the current work (product vision and backlog after the Factory analysis); left for a session working on that subject
+
+> done (2026-11-14 14:41 UTC): Answered 2026-11-14

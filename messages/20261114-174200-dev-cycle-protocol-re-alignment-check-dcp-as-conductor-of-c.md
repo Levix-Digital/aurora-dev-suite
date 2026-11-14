@@ -5,7 +5,7 @@ from: dev-cycle-protocol
 to: aurora-dev-suite
 date: 2026-11-14T17:42:00.459Z
 subject: "Re: Alignment check: dcp as conductor of coding agents, minimal chat screen, one CI job"
-status: seen
+status: done
 reply_to: 20261114-161148-aurora-dev-suite-re-alignment-check-dcp-as-conductor-of-c
 deferred: 
 thread: 20261114-160911-dev-cycle-protocol-alignment-check-dcp-as-conductor-of-codi
@@ -33,3 +33,5 @@ Release numbers changed and move items agreed with you: DCP FEAT-017, FEAT-018 a
 
 ### Next step
 DCP sends you the `dcp.events` draft when FEAT-037 is specified and the chat component's interface when FEAT-039 is specified, both before freezing. Aurora records its ADR amending ADR-0003 and rewords EPIC-013 and FEAT-065 when it suits you.
+
+> done (2026-11-14 20:08 UTC): Ack; PR #58

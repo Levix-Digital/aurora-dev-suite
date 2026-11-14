@@ -1,5 +1,6 @@
 # Release: builds Aurora's packages and publishes them for a version tag (ADR-0008).
-# - vX.Y.Z-rc.N tags (release candidates, pushed on main) publish a PRE-RELEASE, never latest.
+# - vX.Y.Z-rc.N tags (release candidates, cut on main by the candidate workflow or pushed by
+#   hand) publish a PRE-RELEASE, never latest.
 # - vX.Y.Z final tags are created by the promote workflow, which calls this workflow directly
 #   (a tag pushed with GITHUB_TOKEN would not trigger it).
 # - On a pull request that changes the packaging, or run by hand (Actions > Release > Run
@@ -7,7 +8,9 @@
 #   nothing is published.
 # The tag must match the workspace version (`cargo xtask release-check`). Releases go to the
 # repository in the RELEASES_REPOSITORY variable with the RELEASES_TOKEN secret when it is set
-# (the public releases repository of ADR-0005), to this repository otherwise.
+# (the public releases repository of ADR-0005), to this repository otherwise. Final releases are
+# marked latest. The release body is the release notes file of docs/releases (ADR-0019); a tag
+# without notes is not published.
 name: Release
 
 on:
@@ -77,6 +80,37 @@ jobs:
       - name: The tag matches the workspace version
         if: steps.tag.outputs.tag != ''
         run: cargo xtask release-check "${{ steps.tag.outputs.tag }}"
+
+      - name: Release notes
+        if: steps.tag.outputs.tag != ''
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          # A candidate takes its own notes, or the notes shared by the candidates of its version.
+          candidates=("docs/releases/$TAG.md")
+          case "$TAG" in
+            *-rc.*) candidates+=("docs/releases/${TAG%-rc.*}-rc.md") ;;
+          esac
+          git fetch -q --depth 1 origin main
+          NOTES=""
+          for path in "${candidates[@]}"; do
+            if git show "origin/main:$path" > release-notes.md 2>/dev/null; then
+              NOTES="$path"; echo "Release notes: $path on main"; break
+            elif [ -f "$path" ]; then
+              cp "$path" release-notes.md; NOTES="$path"; echo "Release notes: $path in the tagged commit"; break
+            fi
+          done
+          if [ -z "$NOTES" ]; then
+            echo "::error::no release notes: ${candidates[*]} missing on main and in the tagged commit (docs/releases/README.md)"; exit 1
+          fi
+          grep -q '[^[:space:]]' release-notes.md || { echo "::error::$NOTES is empty"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        if: steps.tag.outputs.tag != ''
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
 
   package:
     name: Test and package (${{ matrix.os }})
@@ -209,6 +243,10 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+
       - name: Checksums
         working-directory: dist
         run: |
@@ -232,9 +270,9 @@ jobs:
             repo="$GITHUB_REPOSITORY"
             export GH_TOKEN="$WORKFLOW_TOKEN"
           fi
-          flags=()
           case "$TAG" in
             *-rc.*) flags=(--prerelease --latest=false) ;;
+            *) flags=(--latest) ;;
           esac
-          gh release create "$TAG" dist/* --repo "$repo" --title "Aurora $TAG" --generate-notes "${flags[@]}"
+          gh release create "$TAG" dist/* --repo "$repo" --title "Aurora $TAG" --notes-file release-notes.md "${flags[@]}"
           echo "Published $TAG to $repo" | tee -a "$GITHUB_STEP_SUMMARY"

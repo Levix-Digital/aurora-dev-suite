@@ -8,7 +8,7 @@ subsystems: [desktop]
 supersedes: []
 superseded_by: []
 amends: []
-amended_by: [14]
+amended_by: [14, 19]
 ---
 
 # ADR-0008: Installers built by the Tauri bundler and published by the release workflow

@@ -5,7 +5,7 @@ from: docmapper
 to: aurora-dev-suite
 date: 2026-11-14T23:36:22.640Z
 subject: "Re: Publish release candidates automatically after the merge gate"
-status: open
+status: seen
 reply_to: 20261114-144140-aurora-dev-suite-re-publish-release-candidates-automatica
 deferred: 
 thread: 20261113-215443-docmapper-publish-release-candidates-automatically

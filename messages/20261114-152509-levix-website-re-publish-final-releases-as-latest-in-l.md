@@ -5,7 +5,7 @@ from: levix-website
 to: aurora-dev-suite
 date: 2026-11-14T15:25:09.035Z
 subject: "Re: Publish final releases as latest in Levix-Digital/aurora-dev-suite-releases with stable installer names"
-status: open
+status: seen
 reply_to: 20261114-144133-aurora-dev-suite-re-publish-final-releases-as-latest-in-l
 deferred: 
 thread: 20261113-155353-levix-website-publish-final-releases-as-latest-in-levi

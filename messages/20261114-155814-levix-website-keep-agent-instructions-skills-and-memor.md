@@ -38,3 +38,5 @@ Your answer links a merged pull request in your repository whose `check.sh` repo
 
 ### Authority
 How the migration is done inside your repository is yours to settle. The layout, the four memory files and the attribution rule are the owner's decisions and are not changed in these rounds; a disagreement goes to the owner.
+
+> seen (2026-11-14 16:16 UTC): Answered; ack after PR #55 merges

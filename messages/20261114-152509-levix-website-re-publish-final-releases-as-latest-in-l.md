@@ -44,3 +44,5 @@ Aurora is becoming a self-hosted web application (Aurora ADR-0014), so per-syste
 The website merges pull request #25; Aurora publishes v0.4.0 through its promote workflow and sends the asset names with FEAT-046.
 
 > done (2026-11-14 16:12 UTC): user decided: Confirm Levix-Digital/aurora-releases for final releases, with no installer links until the server asset names arrive
+
+> done (2026-11-14 16:12 UTC): Owner confirmed 2026-11-14
